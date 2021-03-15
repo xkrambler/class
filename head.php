@@ -1,0 +1,111 @@
+<?php
+
+// load page settings
+$page=x::page();
+
+// me
+if (!$page["me"]) $page["me"]=x::me();
+
+// page basefile
+if ($_SERVER["SCRIPT_FILENAME"] && file_exists($_SERVER["SCRIPT_FILENAME"]) && substr($_SERVER["SCRIPT_FILENAME"], -4, 4)==".php")
+	$page["basefile"]=substr(basename($_SERVER["SCRIPT_FILENAME"]), 0, -4);
+
+// classes/include CSS/JS
+$_css=array();
+$_js=array();
+if ($_b=x::inc()) foreach ($_b as $_c) {
+	if (strpos($_c, "/")) {
+		$_f="";
+	} else {
+		$_f=__DIR__;
+		$_c="/".$_c;
+	}
+	if (file_exists($_f.$_c.".css")) $_css[$_c.".css"]=false;
+	if (file_exists($_f.$_c.".js")) $_js[$_c.".js"]=false;
+}
+
+// autoloads
+if (file_exists("kernel.css") && !isset($css["kernel.css"])) $_css["kernel.css"]=false;
+if (file_exists("kernel.js") && !isset($js["kernel.js"])) $_js["kernel.js"]=false;
+if (file_exists($page["basefile"].".css") && !isset($css[$page["basefile"].".css"])) $_css[$page["basefile"].".css"]=false;
+if (file_exists($page["basefile"].".js") && !isset($js[$page["basefile"].".js"])) $_js[$page["basefile"].".js"]=false;
+
+// crypt, if enabled
+if ($page["crypt"]) {
+	require_once(__DIR__."/crypt.php");
+	$_pc=new $page["crypt"]["type"]($page["crypt"]);
+}
+
+// load CSS/JS
+foreach ($_e=array("css","js") as $_i) {
+	$_b="";
+	$_t="_".$_i;
+	$$_t=$$_t+($$_i?$$_i:array());
+	foreach ($$_t as $_n=>$_v) if (!$_v && substr($_n, -strlen($_i)-1)==".".$_i) $_b.=($_b?"|":"").substr($_n, 0, -strlen($_i)-1);
+	if ($_b) {
+		if ($page["crypt"]) $_b=$_pc->encrypt($_b);
+		if ($page["relative"]) $page[$_i]=array(x::alink(array($_i=>$_b)) =>false);
+		else $page[$_i]=array("?".$_i."=".$_b=>false);
+	}
+	foreach ($$_t as $_n=>$_v) if ($_v) $page[$_i][$_n]=$_v;
+	unset($$_t);
+}
+
+// extra common data
+if (!$data["me"]) $data["me"]=$page["me"];
+if (!$data["uri"]) $data["uri"]=$_SERVER["REQUEST_URI"];
+if (x::server() && !$data["server"]) $data["server"]=x::server();
+if (x::base() && !$data["base"]) $data["base"]=($page["base"]?$page["base"]:x::base());
+
+// set charset and document type by default
+if ($page["content-type"]) {
+	foreach ($_e=explode(";", $page["content-type"]) as $_i) {
+		$_i=trim($_i);
+		if (strtolower(substr($_i,0,8))==="charset=") $page["charset"]=strtoupper(substr($_i, 8));
+	}
+	header("Content-Type: ".$page["content-type"]);
+}
+if (!$page["charset"]) $page["charset"]="UTF-8";
+
+// remove temporal variables
+unset($_b);
+unset($_i);
+unset($_e);
+unset($_t);
+unset($_n);
+unset($_v);
+
+// save page settings, this will ensure that settings are global
+x::page($page);
+
+// start page
+echo "<!doctype html>\n";
+echo "<html".($page["lang"]?' lang="'.$page["lang"].'"':'').">\n";
+echo "<head>\n";
+if ($page["content-type"]) { echo "\t".'<meta http-equiv="Content-Type" content="'.x::entities($page["content-type"]).'" />'."\n"; }
+if ($page["description"]) { echo "\t".'<meta name="description" content="'.x::entities($page["description"]).'" />'."\n"; }
+if ($page["generator"]) { echo "\t".'<meta name="generator" content="'.x::entities($page["generator"]).'" />'."\n"; }
+if ($page["keywords"]) { echo "\t".'<meta name="keywords" content="'.x::entities($page["keywords"]).'" />'."\n"; }
+if ($page["title"] || $title) { echo "\t".'<title>'.x::entities(($title?$title." - ".$page["title"]:$page["title"])).'</title>'."\n"; }
+if ($page["base"]) { echo "\t".'<base href="'.$page["base"].'" />'."\n"; }
+if ($page["favicon"]) {
+	echo "\t".'<link rel="icon" href="'.x::entities($page["favicon"]).'" type="image/x-icon" />'."\n";
+	echo "\t".'<link rel="shortcut icon" href="'.x::entities($page["favicon"]).'" />'."\n";
+}
+if ($page["css"]) foreach ($page["css"] as $_n=>$_v) {
+	echo "\t".'<link rel="stylesheet" href="'.x::entities($_n).'" media="all"'.(is_string($_v)?' title="'.x::entities($_v).'"':'').' />'."\n";
+}
+if ($data) {
+	echo "\t".'<script type="text/javascript">'."\n";
+	echo "\t\t".'var data='.json_encode($data).';'."\n";
+	echo "\t".'</script>'."\n";
+}
+if ($page["js"]) foreach ($page["js"] as $_n=>$_v) {
+	echo "\t".'<script type="text/javascript" src="'.x::entities($_n).'"></script>'."\n";
+}
+if ($page["viewport"]) { echo "\t".'<meta name="viewport" content="'.x::entities($page["viewport"]).'" />'."\n"; }
+if ($page["theme-color"]) { echo "\t".'<meta name="theme-color" content="'.x::entities($page["theme-color"]).'" />'."\n"; }
+if ($page["head"]) echo "\t".$page["head"]."\n";
+echo "\t".'<!-- <all your="base" are="belong/to.us" /> -->'."\n";
+echo "</head>\n";
+echo "<body".($page["body"]?" ".$page["body"]:"").">\n";

@@ -1,0 +1,70 @@
+.xcalendar {
+	border-spacing: 0px;
+	background: #FFF;
+	border: 2px solid #FFF;
+	z-index: 800;
+}
+.xcalendar_popup {
+	position: absolute;
+	box-shadow: 3px 5px 9px #999;
+	z-index: 1000;
+}
+.xcalendar_title {
+	background: #F0F0F0;
+	padding: 3px 4px;
+	text-align: center;
+}
+.xcalendar_title a {
+	display: block;
+	text-decoration: none !important;
+	padding: 2px 5px;
+	color: #000;
+}
+.xcalendar_title a:hover {
+	background: #FFF;
+	border: 1px solid #CCC;
+	padding: 1px 4px;
+}
+.xcalendar thead th {
+	color: #FFF;
+	background: #888;
+	padding: 3px 4px;
+}
+.xcalendar tbody td {
+	text-align: right;
+	padding: 0px;
+}
+.xcalendar tbody td a,
+.xcalendar tbody td span {
+	display: block;
+	text-decoration: none;
+	padding: 3px 6px;
+}
+.xcalendar tbody td span {
+	text-decoration: line-through;
+	color: #CCC;
+}
+.xcalendar tbody td .xcalendar_today {
+	background: #EFE;
+	border: 1px solid #8D8;
+	padding: 2px 5px;
+}
+.xcalendar tbody td .xcalendar_selected {
+	background: #000;
+	color: #FFF;
+}
+.xcalendar tbody td .xcalendar_selected:hover {
+	background: #444;
+	color: #FFF;
+}
+.xcalendar tbody td span {
+	text-decoration: line-through;
+}
+.xcalendar tbody td a {
+	color: #000;
+}
+.xcalendar tbody td a:hover {
+	background: #F0F0F0;
+	border: 1px solid #CCC;
+	padding: 2px 5px;
+}

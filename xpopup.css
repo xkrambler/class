@@ -1,0 +1,74 @@
+/* lista */
+.xpopupList {
+	list-style-type: none;
+	padding: 0px;
+	margin: 0px;
+}
+/* fila */
+.xpopupRow {
+	position: relative;
+	display: block;
+	overflow: hidden;
+	z-index: 20;
+}
+/* items */
+.xpopupItem {
+	position: relative;
+	display: block;
+	padding: 2px 6px;
+	text-decoration: none;
+}
+.xpopupItemActive,
+.xpopupItem:hover {
+	border: 1px solid #CCC;
+	padding: 1px 5px;
+}
+.xpopupItemSelected {
+	background-color: #EEE;
+}
+
+/* menú popup */
+.xPopup {
+	background: #FFF;
+	border: 1px solid #CCC;
+	border-top: 0px;
+	border-bottom-left-radius: 3px;
+	border-bottom-right-radius: 3px;
+	padding: 4px 4px;
+	padding-top: 0px;
+	z-index: 21;
+}
+.xPopupItems {
+	position: relative;
+	margin: 0px;
+	padding: 0px;
+	list-style-type: none;
+}
+.xPopupItems div {
+	display: block;
+	padding: 4px 9px 4px 9px;
+}
+.xPopupItems > li > a,
+.xPopupItems > li > span {
+	display: block;
+	cursor: pointer;
+	padding: 4px 9px 4px 29px;
+	background: no-repeat 8px center;
+	text-decoration: none;
+	border-radius: 2px;
+	color: #000;
+}
+.xPopupItems > li > a:hover,
+.xPopupItems > li > span:hover {
+	color: #FFF;
+	background-color: #000;
+}
+.xPopupItems hr {
+	display: block;
+	padding: 0px;
+	height: 1px;
+	margin: 4px -3px;
+	font-size: 1px;
+	background: #CCC;
+	border: 0px;
+}

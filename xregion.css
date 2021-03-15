@@ -1,0 +1,16 @@
+/* xregion especific CSS */
+.xregion_background { color: #666; }
+.xregion_caption { color: #000; font-size: 9px; }
+.xregion_caption_maxsize { font-size: 16px; }
+.xregion_caption_border { border: 1px solid #FFF; }
+.xregion_newregion_line { border: 2px solid #05A; }
+.xregion_region_rect { border: 0px solid #888; }
+.xregion_region_rect_active { border: 1px solid #888; }
+.xregion_building { border: 2px solid #A0A; }
+.xregion_building_backrect { border: 5px solid #FFF; }
+.xregion_building_active { border: 3px solid #F0F; }
+.xregion_building_hover { border: 3px solid #FF0; }
+.xregion_coord { border: 2px solid #888; }
+.xregion_coord_active { border: 2px solid #F00; }
+.xregion_point { border: 2px solid #000; }
+.xregion_point_active { border: 2px solid #F00; }

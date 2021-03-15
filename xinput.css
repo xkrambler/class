@@ -1,0 +1,92 @@
+.xinput {
+}
+.xinput_container {
+	position: relative;
+}
+.xinput_item {
+	position: relative;
+	display: flex;
+	white-space: nowrap;
+}
+.xinput_input_container {
+	position: relative;
+	display: flex;
+	flex: 1;
+	overflow: hidden;
+	cursor: default;
+}
+.widget.xinput_input_container {
+	padding-right: 32px;
+	background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAYCAYAAACbU/80AAAACXBIWXMAAAsTAAALEwEAmpwYAAAABGdBTUEAALGOfPtRkwAAACBjSFJNAAB6JQAAgIMAAPn/AACA6QAAdTAAAOpgAAA6mAAAF2+SX8VGAAAAjElEQVR42uzVoQoCQRAA0Hfit5mumrxisujX2IRLLiaTVbD6N5cEk6zFdKCgsG6ZabM7uzxmB7bJOasZE5UjAAEIQACm3x7oum6L9YeSK9qU0lCqAxv0b/YumGEo/QQr7EdrJ7S4/WMGHlji+MoPmONefAZGiAXO2P16SRPfcQACEIDagCcAAAD//wMAMjkYztpmdvEAAAAASUVORK5CYII=);
+	background-position: right center;
+	background-repeat: no-repeat;
+}
+.xinput_div,
+.xinput_input,
+.widget.xinput_div,
+.widget.xinput_input {
+	cursor: default;
+	display: block;
+	width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	position: relative;
+	/*z-index: 1;*/
+}
+.xinput_action {
+}
+.xinput_popup_container {
+	position: absolute;
+	z-index: 1;
+	width: 100%;
+}
+.xinput_popup,
+.widget.xinput_popup {
+	position: absolute;
+	display: none;
+	background: #FFF;
+}
+.xinput_visible .xinput_popup {
+	display: flex;
+	flex-direction: column-reverse;
+}
+.xinput_align_left    .xinput_popup { left: 0px; }
+.xinput_align_right   .xinput_popup { right: 0px; }
+.xinput_valign_top    .xinput_popup { margin-bottom: 0px; bottom: 0px; box-shadow: 0px -5px 16px rgba(0,0,0,0.3); }
+.xinput_valign_bottom .xinput_popup { margin-top:    0px; top:    0px; box-shadow: 0px  5px 16px rgba(0,0,0,0.3); }
+.xinput_valign_top    .xinput_popup_container { top: 0px; }
+.xinput_valign_bottom .xinput_popup_container { bottom: 0px; }
+.xinput_valign_bottom .xinput_popup { flex-direction: column; }
+.xinput_results {
+	position: relative;
+	max-height: 250px;
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+.xinput_result {
+	display: block;
+	cursor: default;
+	padding: 2px;
+	white-space: nowrap;
+}
+.xinput_result:hover {
+	background: #F0F0F0;
+}
+.xinput_result:active,
+.xinput_result:focus {
+	background: #CCC;
+}
+.xinput_search {
+	display: flex;
+	min-width: 200px;
+	margin-bottom: 2px;
+}
+.xinput_search_input,
+.widget.xinput_search_input {
+	flex: 1;
+	border: 0;
+	padding-right: 32px;
+	background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAYCAYAAACbU/80AAAACXBIWXMAAAsTAAALEwEAmpwYAAAABGdBTUEAALGOfPtRkwAAACBjSFJNAAB6JQAAgIMAAPn/AACA6QAAdTAAAOpgAAA6mAAAF2+SX8VGAAABSElEQVR42uzWPUscURTG8d+atLFIGl8xAQsFCYgQLCwEKxVMkw+QbhsTUexs7FNEos2mS2wsFEHR7GfIuiviBxAbQdLYxHROmrMwSLK6MMM288BwZuaey/PnnHvvTClJEp1Ulw6rACgAnj42sVwuN2978QHzGMAt6viK4/ScSqWSHUBoEjsYiucEzwPkLT5jJa8W9GA3zBt4h1G8CWNYbhegnQosoR+nmMFNaqyGC3zBGrbxK+sKLERcv2fe1CbOoiXTebSgD3c4b5HTiPgyD4A/KOFZi5wXEX/nAdAIgPf/GR9Olb6WB8BWxI9YvDd3NLZnN47yAqhiA09iwZ3gGw7CcCLyBlPnROYH0TKusIrxuJr6EcavA3YutmamAPAJ3zGFV7Hg6vgZAFWM4BBjeQDANfb+8f4Ss9iPb8aDKhW/ZAVApwH+DgCbnD2k6ZgSxAAAAABJRU5ErkJggg==);
+	background-position: right center;
+	background-repeat: no-repeat;
+}

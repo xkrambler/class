@@ -1,0 +1,190 @@
+/* newalert_body de filer */
+#newalert_filer .newalert_body {
+	padding: 2px;
+	background: #F8F8F8;
+}
+
+/* filer principal */
+.filer {
+	position: relative;
+	width: 100%;
+	min-width: 480px;
+	height: 100%;
+	min-height: 200px;
+	overflow: hidden;
+	background: #F8F8F8;
+}
+.filer td {
+	padding: 1px;
+}
+
+/* cabecera */
+.filer_head {
+	position: absolute;
+	top: 0px;
+	width: 100%;
+	height: 60px;
+	z-index: 1;
+}
+
+/* cuerpo */
+.filer_body {
+	position: absolute;
+	top: 60px;
+	bottom: 96px;
+	overflow-y: scroll;
+	width: 100%;
+}
+
+/* pié */
+.filer_foot {
+	position: absolute;
+	bottom: 0px;
+	width: 100%;
+	height: 96px;
+	background: #F0F0F0;
+}
+
+/* table head */
+.filer_thead {
+	position: absolute;
+	width: 100%;
+	bottom: 0px;
+	background: #F0F0F0;
+	z-index: 999;
+}
+
+/* propiedades */
+.filer_size {
+	display: block;
+	position: relative;
+	float: right;
+	width: 120px;
+	text-align: right;
+	z-index: 199;
+}
+.filer_fecha {
+	display: block;
+	position: relative;
+	float: right;
+	width: 120px;
+	text-align: center;
+	z-index: 199;
+}
+.filer_scroll {
+	float: right;
+	width: 16px;
+	height: 18px;
+}
+.filer_file {
+	position: relative;
+	display: block;
+	padding-left: 24px;
+	white-space: nowrap;
+	overflow: hidden;
+	background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAACXBIWXMAAABIAAAASABGyWs+AAAACXZwQWcAAAAQAAAAEABcxq3DAAAA7klEQVQoz41RsY3DMAxkDBaHQAOkMDKHR/BMjwzggYKvPYLxcJEhUqg8PIgghWjK9vsfT6gQqTuSdzrdPm5938vfoQLFOI7DMMj9824v+/V8L+dl89fcXluFQkTEhEYoaCxpiUiR/KnxkogzC1odHcW4aGkWtIImHUpjBZiISFMbmHeIfda7ReoEkgVKcrP96r7XsG+8kF3J8toc99ONUBoD4KJ3hv60OIYcTAi+T9CthkNDKsL2RjW1qgcqY3K4p1CIChLK/9elAZFaQUKp6DRNXdet7YeCJID4nDLhMT9yzqd0Tpf2Iv+I/Mw55zchd9ir0al+hAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAxMC0wMy0yNVQxNDo1NzozMSswMTowMCkzw14AAAAldEVYdGRhdGU6bW9kaWZ5ADIwMDgtMDUtMDVUMTA6MDU6NDErMDI6MDCe1Zz8AAAAAElFTkSuQmCC) 2px 0px no-repeat;
+	z-index: 1;
+}
+.filer_fecha, .filer_th {
+	color: #444;
+	background-image: url('');
+}
+.filer_entry .filer_size,
+.filer_entry .filer_fecha {
+	/*background: #F8F8F8;*/
+}
+
+/* fila */
+.filer_row {
+	display: block;
+	height: 18px;
+	padding: 2px;
+	text-decoration: none;
+}
+.filer_row:hover {
+	background: #FFF;
+	text-decoration: none;
+}
+
+/* imagen */
+.filer_image {
+	float: left;
+	width: 130px;
+	height: 140px;
+	background: no-repeat center 1px;
+	text-decoration: none;
+}
+.filer_image div {
+	position: relative;
+	top: 96px;
+	height: 42px;
+	overflow: hidden;
+	text-align: center;
+}
+
+/* selección */
+.filer_selected,
+.filer_selected:hover {
+	background-color: #AFF;
+}
+
+/* dirección */
+.filer_address {
+	padding: 4px;
+}
+.filer_address table {
+	width: 100%;
+	border-spacing: 0px;
+	border-collapse: collapse;
+}
+.filer_address table td {
+	padding: 0px;
+}
+.filer_address .cmb,
+.filer_address .cmb:active,
+.filer_address .cmb:focus {
+	padding-left: 24px;
+	background: #FFF 5px 5px no-repeat;
+	width: 100%;
+	border-color: #CCC;
+}
+.filer_address .cmb option {
+	padding-left: 24px;
+	background: #FFF 2px 0px no-repeat;
+}
+.filer_address .cmb:focus,
+.filer_address .cmb option {
+	background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAABGdBTUEAALGOfPtRkwAAACBjSFJNAAB6JQAAgIMAAPn/AACA6AAAdTAAAOpgAAA6lwAAF2+XqZnUAAADiUlEQVR4nGLQMzJl0NIzYNDXVucw01ZWNzAwkNQxNAGKGQLFNDmsDTQNoxyNslpi7Nb0Rps+NzPSdzYyMWUwBuL///8zAAQQQ7S9VlFrrNOKte35Ny6t6PpbG2ZzLtxWL7cx2nHh2pakO1eXlvx+f7D5//9bvf/PT/L4r6upkairrclgbmwoAzIAIAAAQQC+/wClc0/i//bW///1wf//9sD/89av/+/HkP//25f//9iC//7Sc//1vVX/8rBF/9OGMP99UjnJrYBh1HJLLd3///8AAgBBAL7/AIJdRLj/56f/+ddv//jSb//813f/+Mlj//G2Tf/qqUn/455O/+Sqcf/nuZD/8NS2///50//87LX/Z0guw////wACiCHD06z3x9VZ/39dyPn/cV/c/yeLA/4/XVME1vD+0rb/P95e+P/31zmg2qP///9bC6Tn/X9xOPW/h7n2TJABAAHEEGJvnP56X+v/32fS/z+Z7/n/073z///+vg6UOw3Em/7//7Pg///vU/7//9j7//+bTiDd8f/8HK//prrauSADAAKIwdFU3+XuioL/v44k/n88P+z/r09X/v//Oxei6dPE///fdv///6Ll///Htf//3y////9B/v81Veb/9HX07UAGAAQQgxkwWE9PS/r+c1f4/8dLMv7/+XISaEvP//+vO/7/f9bw///Div//7xT+/3896///Kyn//58L+98dq/1RU89EEmQAQAAxGOpo8W1ujnjxdaXL/6drK////7z9//9HZf//3yv9//8m0JVX0/7/Px8H9FH4//8nA///2+X4P9tN7ZS2gRkLyACAAGLQ0dVnmV3gd/LTLLP/z7cBnft6NlBT8v//FxOAmiL//z8eCAw/LyB2+///kP3/Z1O1/ntbaM/XN4IkJIAAYtDSN2ZoirRc9WGWw//Xh4CabwCdeyLg//9jvkBN7v//H7D//3Od6f8bvZr/5yar/IuyU79gbGziYGJiAjYAIIAYtA1NGbI9tLueTvP6//n8/P//zwT9/3/Q/v+fTeb/707Q+r8oXeVfirPaZWtD3W5tPRNLXSMzZpBmmAEAAcQAygth9npZdztc/n873vv/Zp/G/2VZqv9z3NRu2xnr9unoGTvqGJqxGQLTPkwjsgEAAcRgZGzCYGNuZFnppfYy1UX7lI2hTouunpEzMJB4DI0xNaEbABBAYIISDBBAFBsAEGAAg6Rt6VBtWbkAAAAASUVORK5CYII=);
+}
+.filer_address .cmb:active {
+	border-color: #000;
+}
+
+/* herramientas */
+.filer_tools {
+	width: 96px;
+	height: 16px;
+}
+.filer_tools a {
+	display: block;
+	float: left;
+	width: 16px;
+	height: 16px;
+	margin: 0px 4px;
+}
+.filer_tools a span {
+	display: none;
+}
+
+/* selectores */
+.filer_selectors a {
+	display: block;
+}
+.filer_selectors th {
+	text-align: right;
+	color: #666;
+	font-weight: normal;
+}
+.filer_selectors a {
+	margin-left: 6px;
+}

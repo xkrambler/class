@@ -1,0 +1,141 @@
+html {
+	font-size: 15px;
+	font-family: 'Segoe UI','Arial','Trebuchet MS','Nimbus Sans L','Lucida Grande','Lucida Sans Unicode','Luxi Sans','Helvetica','Sans Serif','sans-serif';
+}
+*, *:before, *:after {
+	font-size: inherit;
+	font-family: inherit;
+}
+html {
+	box-sizing: border-box;
+}
+*, *:before, *:after {
+	box-sizing: inherit;
+}
+:focus { outline:none; }
+::-moz-focus-inner { border: 0; }
+body { margin: 0px; }
+img { border: 0px; vertical-align: middle; }
+hr { border: 0px; height: 0px; margin: 9px 0px; padding: 0px; }
+label { cursor: pointer; }
+p { margin: 12px 0px; }
+h1 { font-size: 24px; margin: 12px 0px; font-weight: normal; }
+h2 { font-size: 18px; margin: 12px 0px; font-weight: normal; }
+h3 { font-size: 16px; margin: 12px 0px; font-weight: normal; }
+h4 { font-size: 14px; margin: 12px 0px; font-weight: normal; }
+h5 { font-size: 12px; margin: 12px 0px; font-weight: normal; }
+h6 { font-size: 12px; margin: 12px 0px; font-weight: normal; }
+.cmd { cursor: pointer; }
+.tdiv { border-collapse: collapse; }
+.tdiv td { padding: 0px; }
+.pad { padding: 12px; }
+.padh { padding-left: 12px; padding-right: 12px; }
+.padv { padding-top: 12px; padding-bottom: 12px; }
+.mar { margin: 12px; }
+.marh { margin-left: 12px; margin-right: 12px; }
+.marv { margin-top: 12px; margin-bottom: 12px; }
+.nomar { margin: 0px; }
+.nomarv { margin-top: 0px; margin-bottom: 0px; }
+.nomarh { margin-left: 0px; margin-right: 0px; }
+.sangria { margin-left: 16px; }
+.tab1 { margin-left: 16px; }
+.tab2 { margin-left: 32px; }
+.tab3 { margin-left: 48px; }
+.tab4 { margin-left: 64px; }
+.show { display: block; }
+.hide { display: none; }
+.visible { visibility: visible; }
+.hidden { visibility: hidden; }
+.nowrap { white-space: nowrap; }
+.div1 { width: 1%; float: left; }
+.div2 { width: 2%; float: left; }
+.div3 { width: 3%; float: left; }
+.div4 { width: 4%; float: left; }
+.div5 { width: 5%; float: left; }
+.div6 { width: 6%; float: left; }
+.div7 { width: 7%; float: left; }
+.div8 { width: 8%; float: left; }
+.div9 { width: 9%; float: left; }
+.div10 { width: 10%; float: left; }
+.div15 { width: 15%; float: left; }
+.div20 { width: 20%; float: left; }
+.div25 { width: 25%; float: left; }
+.div30 { width: 30%; float: left; }
+.div33 { width: 33.3333%; float: left; }
+.div34 { width: 34%; float: left; }
+.div35 { width: 35%; float: left; }
+.div40 { width: 40%; float: left; }
+.div45 { width: 45%; float: left; }
+.div50 { width: 50%; float: left; }
+.div55 { width: 55%; float: left; }
+.div60 { width: 60%; float: left; }
+.div65 { width: 65%; float: left; }
+.div66 { width: 66.6666%; float: left; }
+.div70 { width: 70%; float: left; }
+.div75 { width: 75%; float: left; }
+.div80 { width: 80%; float: left; }
+.div85 { width: 85%; float: left; }
+.div90 { width: 90%; float: left; }
+.div95 { width: 95%; float: left; }
+.div100 { width: 100%; position: relative; }
+.iblock { display: inline-block; }
+.fleft { float: left; }
+.fright { float: right; }
+.clear { clear: both; }
+.pointer { cursor: pointer; }
+.scroll,
+.scrollx,
+.scrolly,
+.scrollxy {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+}
+.scrollx { overflow-x: scroll; }
+.scrolly { overflow-y: scroll; }
+.scrollxy { overflow: scroll; }
+.template { position: absolute; top: 0px; left: 0px; display: none; float: left; }
+.nolist { list-style-type: none; margin: 0px; padding: 0px; }
+.aleft { text-align: left; }
+.acenter { text-align: center; }
+.aright { text-align: right; }
+.ajustify { text-align: justify; }
+.vtop { vertical-align: top; }
+.vmiddle { vertical-align: middle; }
+.vbottom { vertical-align: bottom; }
+.icon { padding-left: 20px; background: no-repeat left center; }
+.block { display: block; }
+.inline { display: inline; }
+.opacity0 { opacity: 0; }
+.opacity1 { opacity: 1; }
+.mtable {
+	border: 0px;
+	padding: 0px;
+	margin: 0px;
+	border-spacing: 0px;
+	border-collapse: collapse;
+}
+.mtable>tr>th,
+.mtable>tr>td,
+.mtable>*>tr>th,
+.mtable>*>tr>td { margin: 0px; padding: 0px; }
+.noselect {
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+.ellipsis {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+#xpage {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+}
+@media not print { .print { display: none !important; } }
+@media print { .noprint { display: none !important; } }

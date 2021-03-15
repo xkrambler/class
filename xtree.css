@@ -1,0 +1,27 @@
+.xtree {
+}
+.xtree ul {
+	list-style-type: none;
+	margin: 0px;
+	padding: 0px;
+}
+.xtree ul li {
+	margin: 0px;
+	padding: 0px;
+	overflow: hidden;
+}
+.xtree ul li.xtree_li_mar {
+	margin-left: 18px;
+}
+.xtree ul li img {
+	float: left;
+}
+.xtree ul li a {
+	float: left;
+	display: block;
+}
+.xtree_nodes { display: none; }
+.xtree_nodes_expanded { display: block; }
+.xtree_clickable {
+	cursor: pointer;
+}

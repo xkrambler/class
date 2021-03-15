@@ -1,0 +1,28 @@
+.xcalendar {
+	border-collapse: collapse;
+	background: #FFF;
+	border: 2px solid #FFF;
+}
+.xcalendar thead th {
+	text-align: center;
+	background: #444;
+	color: #FFF;
+	padding: 2px 4px;
+	font-weight: normal;
+}
+.xcalendar tbody th {
+	text-align: center;
+	background: #F8F8F8;
+	color: #000;
+}
+.xcalendar tbody td {
+	text-align: right;
+	padding: 1px;
+	cursor: default;
+}
+.xcalendar tbody td a,
+.xcalendar tbody td span {
+	display: block;
+	padding: 1px 4px;
+	text-decoration: none;
+}
