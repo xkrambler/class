@@ -1,0 +1,805 @@
+base 0.2
+========
+
+Licencia: GPL (http://www.gnu.org/licenses/gpl.txt)
+Autores.: Pablo Rodríguez Rey
+          https://mr.xkr.es/
+          Javier Gil Motos
+          http://cucaracha.inertinc.org/
+
+Estas librerías y helpers PHP/JS/CSS pretenden ofrecer:
+- Una base para hacer aplicaciones ligeras.
+- Unificación para compatibilizar diferentes entornos (cliente/servidor).
+- Evitar la dependencia con un framework (puede combinarse con otros).
+- Clases actualizadas en el tiempo que sean retrocompatibles.
+- Clases independientes, que pueden usarse sin framework.
+- Ayuda a operaciones habituales.
+
+Las clases o librerías pueden alojarse en cualquier carpeta e incluirse
+de forma manual, aunque dependiendo de las clases usadas, puede optarse
+por el esquema de carpetas recomendado:
+
+	bin/
+		Binarios dependientes del sistema, p.e. compilados para arquitecturas
+		específicas, scripts de shell, etc.
+	class/
+		Aquí se alojan las clases y librerías base.
+	conf/
+		Ficheros de inicialización.
+	data/
+		Carpeta con permisos de escritura para el usuario de ejecución de PHP.
+	edit/
+		Carpeta que incluiría información de edición, datos originales, u otros
+		ficheros que participan en el desarrollo. Está en subversion, pero debe
+		excluirse en la subida a web.
+	extra/
+		Clases base específicas, obsoletas, en desarrollo, adaptaciones de otras
+		clases.
+	fonts/
+		Carpeta con tipos de letra.
+	lib/
+		Librerías específicas de la aplicación.
+	local/
+		Carpeta excluida habitualmente de subversion.
+	images/
+		Carpeta contenedora de imágenes.
+	plugins/
+		Plugins de la aplicación.
+	templates/
+		Plantillas de la aplicación.
+	vendor/
+		Paquetes de terceros.
+
+
+Despliegue en servidores
+========================
+
+Hay carpetas que no deben ser accesibles en servidores en producción,
+como la carpeta "edit". Después de hacer un checkout es aconsejable
+excluirla de las actualizaciones.
+
+	Por ejemplo, en subversion:
+		svn checkout https://server/project
+		cd project
+		svn update --set-depth=exclude edit
+
+También deben incluirse en la lista de ignorados las siguientes
+carpetas y ficheros por seguridad, integridad y tecnología
+en el repositorio del proyecto:
+
+	class/
+	conf/
+	data/
+	local/
+	.htaccess
+	.htpasswd
+
+
+Aplicación típica
+=================
+
+	<?php // siempre comenzar sin short_open_tags
+
+	require_once("class/init.php"); // inicializa el framework
+
+
+Aplicación web típica
+=====================
+
+	<?php // siempre comenzar sin short_open_tags
+
+	// configuración de página web
+	// (ver más en Librerías init.php y head.php)
+	$page=[
+		"sessionname"=>"sesion",
+		"title"=>"Título",
+	];
+
+	require_once("class/init.php"); // inicializa el framework
+
+	require_once("class/head.php"); // crea una web HTML
+
+	// contenido de la web, alternativamente puede usarse
+	// un require a una vista en un fichero externo.
+	?><div>
+		<h1>Bienvenido a <?=x::page("title")?></h1>
+	</div><?
+
+	require_once("class/foot.php"); // termina una web HTML
+
+
+Librería init (PHP)
+===================
+
+Esta clase ofrece una inicialización estándar para entornos web o de linea
+de comandos. Al incluirla, se realizarán los siguientes pasos:
+
+- Establecer error_reporting a E_ALL & ~E_NOTICE
+
+- Crear la clase estática x, que implementará ayudas habituales.
+
+- Comprobar la configuración del servidor por seguridad, compatibilizar
+  constantes y variables (p.e. no permite ejecución con register_globals=On).
+
+- Incluir configuraciones almacenadas en conf/*.php.
+
+- Incluir las clases declaradas en el array $classes y $include (sin
+  extensión .php).
+  Ejemplo: $classes=array("ajax"); // incluirá class/ajax.php y class/ajax.js
+
+- Inicializar sesión si se declara en $page. Puede incluirse en algún fichero
+  de configuración.
+  Ejemplo: $page["sessionname"]="nombre";
+
+- Trata los parámetros GET js y css para automáticamente incluir las clases
+  JS/CSS respectivamente.
+
+Uso:
+
+	require_once("class/init.php");
+
+Configuración:
+
+	$page - array con los siguientes parámetros (todos opcionales):
+		base
+			Especifica la URL base de referencia.
+		charset
+			Especifica el charset de la página actual.
+		crypt
+			Array que inicializa la clase especificada en "type"
+			para encriptar datos y parámetros.
+		no_gzip
+			Deshabilita acciones que puedan usar gzip si establecido a true.
+		sessionname
+			Especifica un nombre de sesión PHP a iniciar.
+
+Implementa (init.php):
+
+	debug($variable)
+		Vuelca en HTML una variable para su depuración.
+		Si una clase la crea antes, no se crea.
+
+	module($ruta)
+		Carga una clase PHP/JS/CSS fuera de $class y $include.
+		Si una clase la crea antes, no se crea.
+
+	perror($msg="Unexpected error")
+		Vuelca un error y detiene la ejecución. Adapta la salida al contexto
+		(texto/ajax/HTML). Puede omitirse el mensaje de error.
+
+	xob()
+		Inicia output buffering, y devuelve una cadena con
+		el contenido del buffer desde la anterior llamada.
+		Si una clase la crea antes, no se crea.
+
+	x::page()
+		Devuelve las propiedades de la página como array.
+
+	x::page($k)
+		Consulta una propiedad $k de la página.
+
+	x::page($k, $v)
+		Establece una propiedad $k de la página y asigna el valor $v.
+
+	x::ishttps()
+		Devuelve true si la página se solicita con HTTPS.
+
+	x::ismobile()
+		Devuelve true si se está ejecutando desde un dispositivo móvil.
+
+	x::isie()
+		Devuelve true si el navegador es Internet Explorer.
+
+	x::self()
+		Equivalente a $_SERVER["PHP_SELF"].
+
+	x::server()
+		Devuelve la URL base con HTTP_HOST sin REQUEST_URI.
+		Ejemplo: https://server (de https://server/path/url?get=value)
+
+	x::request()
+		Devuelve REQUEST_URI o SCRIPT_NAME si no está disponible.
+		Ejemplo: /path/url?get=value (de https://server/path/url?get=value)
+
+	x::path()
+		Devuelve x::request() sin los parámetros.
+		Ejemplo: /path/url (de https://server/path/url?get=value)
+
+	x::me()
+		Devuelve de x::path() que no es carpeta.
+		Ejemplo: url (de https://server/path/url?get=value)
+
+	x::url()
+		Devuelve de x::server().x::request().
+		Ejemplo: https://server/path/url?get=value
+
+	x::base()
+		Devuelve la base de la página.
+		Ejemplo: https://server/path/ (de https://server/path/url?get=value)
+
+	x::base($base)
+		Establece la base de la página.
+
+	x::link()
+		Equivalente a x::me().
+
+	x::link($get)
+		Crea enlace con los parámetros GET especificados como array, partiendo
+		de x::me().
+		Ejemplo: x::link(array("n"=>"v")) // desde https://server/path/url
+		Devuelve: url?n=v
+
+	x::link($get, $url)
+		Crea enlace con los parámetros GET especificados como array, partiendo
+		de una URL.
+		Ejemplo: x::link(array("n"=>"v"), "https://server/path/url")
+		Devuelve: https://server/path/url?n=v
+
+	x::alink()
+		Equivalente a x::request().
+
+	x::alink($get)
+		Modifica enlace con los parámetros GET especificados como array,
+		partiendo de x::request(). Los parámetros especificados como null,
+		se eliminan de la URL.
+		Ejemplo: // desde https://server/path/url?a=b&x=y
+		         // modifica parámetro a, borra x, añade n
+		         x::alink(array("a"=>"B", "x"=>null, "n"=>"v"))
+		Devuelve: url?a=B&n=v
+
+	x::alink($get, $url)
+		Modifica enlace con los parámetros GET especificados como array,
+		partiendo de una URL. Los parámetros especificados como null,
+		se eliminan de la URL.
+		Ejemplo: // modifica parámetro a, borra x, añade n
+		         x::alink(
+		            array("a"=>"B", "x"=>null, "n"=>"v"),
+		           "https://server/path/url?a=b&x=y"
+		         )
+		Devuelve: https://server/path/url?a=B&n=v
+
+	x::redir()
+		Redirecciona a x::base() via header Location.
+
+	x::redir($url)
+		Redirecciona a una URL via header Location.
+
+	x::forcehttps()
+		Si x::ishttps() es false, fuerza redirección a HTTPS via header Location.
+
+	x::charset()
+		Devuelve el charset de la página actual. Si no está especificado,
+		por defecto asume y devuelve UTF-8.
+
+	x::charset($charset)
+		Establece el charset de la página actual.
+
+	x::entities($t)
+		Devuelve entidades HTML con el charset de la página actual.
+
+Ejemplo:
+
+	// declarar configuración en $page
+	$page=array(
+		"base"=>"https://www.servidor.com/app/",
+		"charset"=>"UTF-8",
+		"crypt"=>Array(
+			"type"=>"Crypt",
+			"key"=>"thisisakey9301293012",
+			"iv"=>"initialization.vector",
+		),
+		"sessionname"=>"mysession",
+	);
+
+	// inicializar aplicación
+	require_once("class/init.php");
+
+
+Librería ajax (PHP/JS)
+======================
+
+Esta clase ofrece una forma rápida y eficiente de realizar peticiones AJAX
+y tratarlas. Se basa en funciones simples en la parte cliente y servidor.
+También ofrece una función para hacer peticiones a webservices básicos.
+
+Implementa (ajax.js):
+
+	ajaxVersion()
+		Devuelve una cadena de versión de la librería.
+
+	ajaxEnabled()
+		Indica si el cliente soporta AJAX o no.
+
+	httpObject()
+		Devuelve el objeto XMLHTTP compatible con el navegador.
+
+	httpStateString(state)
+		Devuelve una cadena dado el estado numérico.
+
+	gescape(string)
+		Escapa una cadena para ser enviada por GET/POST.
+
+	hescape(string)
+		Escapa una cadena también con los bytes <32 y >127.
+
+	json(variable)
+		Devuelve un JSON dada una variable JavaScript.
+
+	ajax(parameters)
+		Lanza una petición AJAX con los parámetros indicados:
+			ajax
+				Cadena con la acción AJAX a codificar como parámetro GET.
+			data
+				Objecto a codificar como JSON y enviar como variable POST "data".
+			get
+				Objeto con los parámetros para enviar por GET.
+			post
+				Objeto con los parámetros para enviar por POST.
+			url
+				URL a solicitar petición. Por defecto, location.href.
+			sync(callback(response))
+				Callback con el objeto response de la petición de forma síncrona.
+			async(callback(response))
+				Callback con el objeto response de la petición de forma asíncrona.
+			error(callback(error))
+				Callback indicando que ha habido un error, con un objeto de error.
+
+	ajax(action, data, response)
+		Lanza una petición AJAX. "action" indica la acción, pasada como
+		parámetro ajax en la petición. "data" son los datos a enviar,
+		que serán codificados como JSON UTF-8. "response" es la función
+		callback con el objeto respuesta, en caso de no haber errores.
+
+	ajax(action, data, always, response)
+		Idéntica a la anterior, pero indicando un callback "always" que siempre
+		será invocado, haya respuesta o no. Es útil para terminar mensajes
+		de espera que hayan sido invocados antes de llamar a la función.
+
+Objetos (ajax.js):
+
+	El objeto "response" devolverá:
+		state
+			Número de estado XMLHTTP, p.e. 4 para completado.
+		stateString
+			La cadena de httpStateString(state).
+		complete
+			Booleano indicando si la petición ha sido completada.
+		status
+			El código HTTP de estado, si alcanzado.
+		http
+			Objeto XMLHTTP.
+		data
+			Datos convertidos de JSON a JS, en caso de haberlos podido convertir.
+		xml
+			Datos convertidos de XML a JS, en caso de haberlos podido convertir.
+		text
+			Datos como texto crudo.
+
+	El objeto "error" devolverá:
+		status
+			El código de estado HTTP.
+		error
+			Una cadena de error.
+		show()
+			Función que al llamarse mostrará un diálogo con el error.
+			Si la librería newalert está incluída, se lanzará con esta, en otro
+			caso se llamará con alert() simple.
+
+Implementa (ajax.php):
+
+	ajax($values)
+		Envía los datos pasados como parámetro por AJAX y termina la ejecución,
+		cambiando el charset a UTF-8. De no recibir parámetros, se asume que
+		los datos han sido previamente preparados con llamadas a aput.
+
+	ajson($values)
+		Idéntica a json_encode($values, true), pero también permite charsets
+		diferentes a UTF-8.
+
+	aget($value)
+		Devuelve un parámetro parseado como JSON, eliminando las magic_quotes
+		si estuviesen habilitadas.
+
+	ws($url, $fields=array(), $options=array()) {
+		Realiza una petición a un webservice en una URL mediante POST usando
+		los parámetros establecidos en $fields con las opciones CURL indicadas
+		en $options.
+
+Variables (ajax.php):
+
+	$ajax
+		Devuelve la acción de la petición AJAX.
+		Equivalente a $ajax=$_REQUEST["ajax"].
+
+	$adata
+		Devuelve los datos solicitados en la petición AJAX desde su JSON.
+		Equivalente a $adata=aget($_REQUEST["data"]).
+
+Ejemplos:
+
+	Implementar AJAX JSON (PHP) *TIPICO*:
+		// tratar petición
+		if ($ajax == "time") ajax(array(
+			"time"=>time(),
+			"echo"=>substr($adata["echo"], 0, 256),
+			"ok"=>true,
+		));
+
+	Solicitar petición AJAX JSON (JS) *TIPICO*:
+		ajax("time", {"echo":"hola"}, function(){
+			// petición terminada
+		},function(r){
+			// resultado de la petición
+			alert(r.data.time+" "+r.data.echo);
+		});
+
+	Solicitar petición AJAX cruda equivalente (JS):
+		ajax({
+			"get":{"ajax":"time"},
+			"post":{"data":json({"echo":"hola"})},
+			"always":function(){
+				// petición terminada
+			},
+			"async":function(r){
+				// resultado de la petición
+				alert(r.data.time+" "+r.data.echo);
+			},
+			"error":function(error){
+				// tratamiento de errores
+				error.show();
+			}
+		});
+
+	Convertir datos a JSON:
+		alert(json({"clave":"valor"}));
+
+	Implementación de un webservice (PHP):
+		if ($_REQUEST["action"] == "time") ajax(array(
+			"time"=>time(),
+			"echo"=>substr($_REQUEST["echo"], 0, 256),
+			"ok"=>true,
+		));
+
+	Llamar al webservice (PHP):
+		echo ws("https://inertinc.com/?action=time", array("echo"=>"hola"));
+		// {"time":1548935573,"echo":"hola","ok":true}
+
+
+Librería common (JS)
+====================
+
+Esta librería contiene funciones de abstracción de navegadores y helpers JS.
+Soporta desde Internet Explorer 6, Firefox 2, Chrome 1 en adelante.
+
+	isset(variable)
+		Comprueba si una variable está definida.
+		Equivalente a typeof(v)!="undefined".
+
+	gid(id)
+		Devuelve el elemento DOM dado su identificador, o el propio elemento.
+		Equivalente a document.getElementById(id).
+
+	template(template, replaces)
+		Sustituye todas las cadenas de las claves especificadas en el objeto
+		"replaces" por sus valores en la cadena "template".
+
+	adump(variable)
+		Vuelca como texto una variable. Útil para depuración.
+		Ejemplo: alert(adump(variable));
+
+	getLeft(id)
+		Devuelve la posición X (en píxeles) a la que se encuentra un elemento
+		en la página o de forma relativa.
+
+	getTop(id)
+		Devuelve la posición Y (en píxeles) a la que se encuentra un elemento
+		en la página o de forma relativa.
+
+	getScrollLeft(id)
+		Devuelve el scroll horizontal (en píxeles) que se ha desplazado
+		un elemento.
+
+	getScrollTop(id)
+		Devuelve el scroll vertical (en píxeles) que se ha desplazado
+		un elemento.
+
+	getWidth(id)
+		Devuelve la anchura (en píxeles) de un elemento.
+
+	getHeight(id)
+		Devuelve la altura (en píxeles) de un elemento.
+
+	style(id, styles)
+		Establece los estilos especificados en el objeto "styles" a un elemento.
+		Recordar que los estilos son en formato JS no en CSS.
+		p.e. style("identificador", {"fontFamily":"Sans", "fontSize":"5em"});
+
+	classAdd(id, class_name)
+		Añade una clase CSS a un elemento.
+		p.e. classAdd("identificador", "elemento_visible");
+
+	classDel(id, class_name)
+		Suprime una clase CSS a un elemento.
+
+	classEnable(id, class_name, enabled)
+		Habilita/deshabilita dado "enabled" una clase CSS en un elemento.
+		p.e. classEnable("identificador", "elemento_visible", true);
+
+	hasClass(id, class_name)
+		Comprueba si un elemento tiene una clase CSS aplicada.
+
+	scrollLeft()
+		Devuelve el scroll horizontal de la ventana visible (en píxeles).
+
+	scrollTop()
+		Devuelve el scroll vertical de la ventana visible (en píxeles).
+
+	windowWidth()
+		Devuelve la anchura de la ventana visible (en píxeles).
+
+	windowHeight()
+		Devuelve la altura de la ventana visible (en píxeles).
+
+	documentWidth()
+		Devuelve la anchura del documento (en píxeles).
+
+	documentHeight()
+		Devuelve la altura del documento (en píxeles).
+
+	naturalWidth(id)
+		Devuelve la anchura natural de una imagen (en píxeles).
+
+	naturalHeight(id)
+		Devuelve la altura natural de una imagen (en píxeles).
+
+	setCursor(cursor)
+		Establece el cursor CSS por defecto del documento.
+
+	getBorderWidth(id)
+		Devuelve la anchura computada de los bordes de un elemento (en píxeles).
+
+	getBorderHeight(id)
+		Devuelve la altura computada de los bordes de un elemento (en píxeles).
+
+	getBorderTopHeight(id)
+		Devuelve la anchura computada del borde superior de un elemento
+		(en píxeles).
+
+	getBorderBottomHeight(id)
+		Devuelve la anchura computada del borde inferior de un elemento
+		(en píxeles).
+
+	getBorderLeftHeight(id)
+		Devuelve la anchura computada del borde izquierdo de un elemento
+		(en píxeles).
+
+	getBorderRightHeight(id)
+		Devuelve la anchura computada del borde derecho de un elemento
+		(en píxeles).
+
+	getPaddingWidth(id)
+		Devuelve la anchura computada del padding de un elemento (en píxeles).
+
+	getPaddingHeight(id)
+		Devuelve la altura computada del padding de un elemento (en píxeles).
+
+	getStyle(id, propiedad)
+		Devuelve el estilo computado de una propiedad de un elemento.
+		Ejemplo: alert(getStyle("identificador", "padding-bottom"));
+
+	crossInnerWidth(id)
+		Devuelve la anchura interna de un elemento sin márgenes, paddings
+		o bordes (en píxeles).
+
+	crossInnerHeight(id)
+		Devuelve la altura interna de un elemento sin márgenes, paddings
+		o bordes (en píxeles).
+
+	imagePreload(url)
+		Precarga la imagen indicada en la "url" en segundo plano.
+
+	scrollWidth()
+		Devuelve la anchura de la zona de scroll.
+
+	getCookie(name)
+		Devuelve una cookie por su nombre.
+
+	setCookie(name, value, days)
+		Establece una cookie de nombre "name" con el valor "value",
+		durante "days" días (si especificado).
+
+	delCookie(name)
+		Borra una cookie por su nombre.
+
+	isie()
+		Verdadero si el navegador es Internet Explorer o una de sus variantes.
+
+	ismoz()
+		Verdadero si el navegador es Mozilla Firefox o una de sus variantes.
+
+	ischrome()
+		Verdadero si el navegador es Google Chrome o una de sus variantes.
+
+	hideSelects(hidden)
+		Si hidden es true, se ocultan todos los selectores HTML de la página.
+		Estos es útil porque en antiguas versiones de Internet Explorer
+		los selectores HTML se renderizaban como ventanas independientes,
+		no respetando la ordenación z-index e imposibilitando mostrar capas
+		sobre ellas. Sólo funciona en Internet Explorer.
+
+	includejs(url, callback)
+		Carga un JS desde una URL, y lanza un callback al ejecutarse onload.
+		Ejemplo: includejs("class/ajax.js", function(){ alert("OK"); });
+
+	nl2br(string)
+		Convierte cualquier \n en <br /> de una cadena.
+
+	br2nl(string)
+		Convierte una cadena con <br /> en \n.
+
+	array_count(array)
+		Cuenta los elementos de un objeto.
+
+	array_copy(array)
+		Copia un array en profundidad.
+
+	array_merge(array1, array2)
+		Mezcla array1 con array2 y devuelve el array resultante
+
+	array_remove(array1, array2)
+		Borra las claves de array1 especificadas por array2.
+
+	array_delete(array, index)
+		Borra el elemento en la posición index, incluso si el array es un objeto.
+
+	array_get(array1, array2)
+		Devuelve las claves del array1 especificadas por array2.
+
+	array_isclean(array)
+		Indica si un array o objeto está vacío o no, incluso si el array
+		es un objeto.
+
+	array_keys(array)
+		Devuelve sólo las claves de un objeto como array.
+
+	array_values(array)
+		Devuelve sólo los valores de un objeto como array.
+
+	in_array(elemento, array)
+		Comprueba si un elemento está en un array.
+
+	init(callback)
+	unload(callback)
+	resize(callback)
+	scroll(callback)
+	keyup(callback)
+	keydown(callback)
+	mouseup(callback)
+	mousedown(callback)
+	mouseenter(callback)
+	mouseleave(callback)
+	mousewheel(callback)
+		Agrega listeneres que invocarán a la función callback() cuando
+		se invoque el evento window.onload. Permite ser llamado varias veces,
+		no borrando el evento anterior.
+
+	selectionEnabled(id, enabled)
+		Permite habilitar o no la selección de texto en un elemento HTML.
+
+	gInputInt(id, negatives)
+		Agrega eventos a un INPUT HTML para que sólo permita valores enteros,
+		"negatives" habilita los negativos.
+
+	gInputFloat(id, negatives)
+		Idéntico al anterior, pero permite decimales, solo admite el decimal
+		americano como punto.
+
+	autogrow(id)
+		Agrega eventos a un TEXTAREA HTML para que su altura varíe en proporción
+		a su contenido de forma automática.
+
+	trim(string)
+		Devuelve una cadena sin espacios a la izquierda y derecha.
+
+	basename(path)
+		Devuelve la parte de una ruta que no es directorio.
+
+	spd(integer)
+		Devuelve un número entero en formato español X.XXX.
+
+	spf(float)
+		Devuelve un número decimal en formato español X.XXX,XX.
+
+	getElementsByClassName(oElm, strTagName, strClassName)
+		Implementación de getElementsByClassName compatible con IE,
+		el único que no lo soporta.
+
+	intval(value)
+		Convertir cadena a número entero.
+
+	doubleval(value)
+		Convertir cadena a número decimal.
+
+	militime()
+		Devuelve el timestamp actual con resolución de milisegundos.
+
+	alink()
+		Equivalente a x::alink(), en JS.
+
+	alink(get)
+		Equivalente a x::alink($get), en JS.
+
+	alink(get, url)
+		Equivalente a x::alink($get, $url), en JS.
+
+	preventDefaultDrag()
+		Previene la acción de carga de ficheros al arrastrarlos sobre la página.
+		o sobre un elemento de ella.
+
+	preventDefaultDrag(id)
+		Previene la acción de carga de ficheros al arrastrarlos sobre
+		un elemento de la página.
+
+	strip_tags(html)
+		Suprime tags HTML de una cadena "html".
+
+	strip_tags(html, allowed)
+		Suprime tags HTML de una cadena "html", permitiendo los tags indicados
+		en "allowed".
+
+	htmlentities(string, quote_style, charset, double_encode)
+		Convierte un texto a entidades HTML al estilo PHP.
+		http://php.net/manual/es/function.htmlentities.php
+
+	windowOpen(url, pw, ph, o)
+		Abre una ventana con window.open centrada con unas proporciones unitarias
+		indicadas en "pw" (proporción de anchura) y "ph" (proporción de altura).
+		"o" permite indicarse opciones adicionales (soportadas por window.open):
+			toolbar
+				1 si se muestra la barra de herramientas (defecto: 0)
+			location
+				1 si se muestra la barra de direcciones (defecto: 0)
+			directories
+				1 si se muestra el directorio (defecto: 0)
+			resizable
+				1 si se permite cambiar el tamaño (defecto: 1)
+			scrollbars
+				1 si se permiten las barras de desplazamiento (defecto: 1)
+			left
+				Posición X.
+			top
+				Posición Y.
+			width
+				Anchura.
+			height
+				Altura.
+
+	bytesToString(bytes)
+		Devuelve una cadena en el formato numérico español (XXX,XX UD)
+		para abreviar bytes.
+		Ejemplo: bytesToString(1024) // 1,00 KB
+	
+	sqlDate(date) - obsoleta
+		Convierte una fecha SQL en formato ISO YYYY-MM-DD con o sin HH:II:SS
+		a formato JavaScript.
+
+	sqlFromDate(date) - obsoleta
+		Convierte una fecha Javascript a formato SQL ISO YYYY-MM-DD HH:II:SS.
+
+	sqlDateSP(date) - obsoleta
+		Convierte una cadena YYYY-MM-DD HH:II:SS a DD/MM/YYYY HH:II:SS.
+
+	spDateSQL(date) - obsoleta
+		Convierte una cadena DD/MM/YYYY HH:II:SS a YYYY-MM-DD HH:II:SS.
+
+	spDate(date) - obsoleta
+		Devuelve una fecha JavaScript en formato DD/MM/YYYY.
+
+	spTime(date) - obsoleta
+		Devuelve una hora JavaScript en formato HH:MM:SS
+
+	spDateNow() - obsoleta
+		Devuelve la fecha actual en formato DD/MM/YYYY.
+
+	spTimeNow() - obsoleta
+		Devuelve la hora actual en formato HH:MM:SS.
