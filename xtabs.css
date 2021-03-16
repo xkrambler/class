@@ -62,6 +62,16 @@
 	background-repeat: no-repeat;
 	background-position: 9px center;
 }
+.xtabs ul.xtabs_horizontal li:focus,
+.xtabs ul.xtabs_vertical li:focus {
+	border-style: dotted;
+}
+.xtabs ul.xtabs_horizontal li:focus {
+	border-color: #000 #000 transparent #000;
+}	
+.xtabs ul.xtabs_vertical li:focus {
+	border-color: #000 transparent #000 #000;
+}	
 .xtabs .xfull {
 	position: relative;
 	width: 100%;

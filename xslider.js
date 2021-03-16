@@ -208,7 +208,7 @@ function xslider(o) {
 		}
 	};
 	a.startTimer=function(options){
-		if (a.o.slides.length<=1) return;
+		if (a.o.slides.length <= 1 || a.o.noduration) return;
 		var options=(options?options:{});
 		a.endTimer();
 		a.timeout=setTimeout(function(){ a.doTransition({"start":true}); },(options.duration?options.duration:a.o.duration));

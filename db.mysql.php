@@ -1,4 +1,4 @@
-<?php
+<?php if (!class_exists("dbbase")) die();
 
 /*
 	Clase PHP de Acceso a MySQL v0.4, desarrollado por Pablo Rodríguez Rey

@@ -90,6 +90,13 @@ function comboValue(combo, value, newvalue) {
 	}
 }
 
+// establecer valor, si existe en la lista de opciones
+function comboValueIfExists(combo, value) {
+	var exists=comboValueExists(combo, value);
+	if (exists === true) comboValue(combo, value);
+	return exists;
+}
+
 // cambiar texto de una opción
 function comboText(combo, id, text) {
 	var combo=gid(combo);
@@ -143,14 +150,30 @@ function comboClearFill(combo,lista,valorActual,formaMostrar,indiceValor,filtro)
 	comboFill(combo,lista,valorActual,formaMostrar,indiceValor,filtro, {"clear":true});
 }
 
+// comprobar si el objeto es un elemento HTML
+function comboIsElement(o) {
+	return (typeof HTMLElement === "object"
+		?o instanceof HTMLElement
+		:o && (typeof o === "object") && (o !== null) && (o.nodeType === 1) && (typeof o.nodeName === "string")
+	);
+}
+
 // rellenar combo
 function comboFill(combo, lista, renderer, formaMostrar, indiceValor, filtro, o) {
-	if (typeof renderer=="function") {
+	if (typeof combo == "object" && !comboIsElement(combo)) {
+		var valorActual=(typeof combo.value != "undefined"?combo.value:gidval(combo.id));
+		if (combo.clear) comboClear(combo.id);
+		if (combo.empty) comboAdd(combo.id, combo.empty, "", ("" === valorActual));
+		if (combo.items) for (var i in combo.items) {
+			var item=combo.item(combo.items[i], i);
+			if (item) comboAdd(combo.id, item.caption, item.value, (item.value === valorActual), item);
+		}
+	} else if (typeof renderer=="function") {
 		var valorActual=gidval(combo);
 		if (o && o.clear) comboClear(combo);
 		for (var i in lista) {
 			var item=renderer(lista[i], i);
-			if (item!==null) comboAdd(combo, item.caption, item.value, (item.value===valorActual), item);
+			if (item !== null) comboAdd(combo, item.caption, item.value, (item.value===valorActual), item);
 		}
 	} else {
 		var valorActual=renderer;

@@ -1,4 +1,4 @@
-<?php
+<?php if (!class_exists("dbbase")) die();
 
 // WordPress DataBase compatibility layer with base
 class dbWordPressDB extends dbbase {

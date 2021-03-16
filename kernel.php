@@ -642,37 +642,41 @@ class Kernel {
 	}
 
 	// convertir a entidades HTML UTF-8 incluidas comillas dobles y simples
-	function entities($s) {
+	static function entities($s) {
 		return htmlentities($s, ENT_QUOTES, "UTF-8");
 	}
 
-	// limpia los campos de entrada, quitando espacios y tags
-	function sanitize($value,$exclude=array()) {
+	// sanea los campos de entrada, quitando espacios y tags
+	static function sanitize($value, $exclude=array()) {
 		if (is_array($value)) {
 			$a=array();
 			foreach ($value as $i=>$v)
 				if (!$exclude[$i])
-					$a[$i]=$this->sanitize($v);
+					$a[$i]=self::sanitize($v);
 			return $a;
 		} else {
-			return ($value===null || $value===true || $value===false?$value:strip_tags(trim($value)));
+			return ($value === null || $value === true || $value === false?$value:trim(strip_tags($value)));
 		}
 	}
 
-	// execute mediante tuberías (piped exec).
-	// Parámetros:
-	//   cmd  Comando a ejecutar. Obligatorio.
-	//   o    Opciones, un array que puede contener:
-	//     in        Datos de entrada a enviar al comando.
-	//     cwd       Directorio de ejecución.
-	//     env       Datos de entorno adicionales.
-	//     buffer    Buffer. Por defecto, 4KB.
-	//     callback  Función de callback, se llama con los parámetros $data, $pipes y $proc.
-	//   out  Salida del comando, se pasa por referencia.
-	// Devuelve:
-	//   Código de retorno, o false si ha ocurrido algún error
-	function pexec($cmd, &$out=null, $o=array()) {
-		
+	/*
+		pexec.
+		Ejecutar mediante tuberías (piped exec).
+
+		Parámetros:
+	   cmd  Comando a ejecutar. Obligatorio.
+	   out  Salida del comando, se pasa por referencia.
+	   o    Opciones, un array que puede contener:
+	     in        Datos de entrada a enviar al comando.
+	     cwd       Directorio de ejecución.
+	     env       Datos de entorno adicionales.
+	     buffer    Buffer. Por defecto, 4KB.
+	     callback  Función de callback, se llama con los parámetros $data, $pipes y $proc.
+	 Devuelve:
+	   Código de retorno, o false si ha ocurrido algún error
+	*/
+	static function pexec($cmd, &$out=null, $o=array()) {
+
 		// lanzar comando
 		$proc=proc_open(
 			$cmd,
@@ -687,7 +691,7 @@ class Kernel {
 			($o["options"]?$o["options"]:null)
 		);
 		if (is_resource($proc)) {
-			
+
 			// escribir datos iniciales en entrada del comando
 			if ($o["in"]) fwrite($pipes[0], $o["in"]);
 
@@ -700,7 +704,7 @@ class Kernel {
 				}
 				$out.=$data;
 			}
-			
+
 			// cerrar tuberías
 			fclose($pipes[0]);
 			fclose($pipes[1]);
@@ -712,10 +716,10 @@ class Kernel {
 			$out="";
 			$ret=false;
 		}
-		
+
 		// devolver código de error
 		return $ret;
-		
+
 	}
 
 	/**
@@ -727,7 +731,7 @@ class Kernel {
 	 * @param String Texto cuya codificación se va a detectar.
 	 * @return Encoding (UTF-8, ASCII o ISO-8859-1)
 	 */
-	function getEncoding($text) {
+	static function getEncoding($text) {
 		$c = 0;
 		$ascii = true;
 		for ($i=0;$i<strlen($text);$i++) {
@@ -763,9 +767,9 @@ class Kernel {
 	 * @param String Cadena de caracteres válidos.
 	 * @return Boolean true si cadena correcta, false en caso contrario.
 	 */
-	function validate($s, $validCharset) {
+	static function validate($s, $validCharset) {
 		for ($i=0; $i<strlen($s); $i++)
-			if (strpos($validCharset, $s[$i])===false)
+			if (strpos($validCharset, $s[$i]) === false)
 				return false;
 		return true;
 	}

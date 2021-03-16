@@ -306,7 +306,7 @@ class xForm3 {
 		$field=$this->fields[$f];
 		switch ($field["type"]) {
 		case "integer": return intval($value);
-		case "number": return intval($value);
+		case "number": return doubleval($value);
 		case "positive": return abs(doubleval($value));
 		case "decimal": return doubleval($value);
 		case "datetime": return $this->spdate($value);
@@ -374,7 +374,7 @@ class xForm3 {
 		if ($field["uppercase"]) $value=strtoupper($value);
 		if ($field["capitalize"]) $value=ucwords(strtolower_utf8($value));
 		if ($field["integer"]) $value=intval($value);
-		if ($field["number"]) $value=intval($value);
+		if ($field["number"]) $value=doubleval($value);
 		if ($field["positive"]) $value=abs(doubleval($value));
 		if ($field["decimal"]) $value=doubleval($value);
 		if ($field["nozero"] && !$value) $value="";
@@ -388,7 +388,7 @@ class xForm3 {
 	function verify() {
 		$this->errors=array();
 		foreach ($this->fields as $field=>$f) {
-			$prefix=($f["caption"]?$f["caption"].": ":"");
+			$prefix=($f["caption"]?$f["caption"].": ":($f["label"]?$f["label"].": ":""));
 			// si requerido, verificar
 			$v=$this->value($field);
 			if ($f["required"] && !trim($v))
@@ -396,7 +396,7 @@ class xForm3 {
 					"id"=>$this->id($field),
 					"field"=>$field,
 					"type"=>"required",
-					"err"=>$prefix."Campo requerido.",
+					"err"=>(is_string($f["required"])?$f["required"]:$prefix."Campo requerido."),
 				);
 			// si tengo un intervalo, comprobar cualquiera de ellos
 			if ($f["minlength"] && $f["maxlength"] && (

@@ -1,14 +1,17 @@
 <?php
 
+// if init not loaded, cancel startup
+if (!class_exists("x")) return false;
+
 // load page settings
 $page=x::page();
 
-// me
-if (!$page["me"]) $page["me"]=x::me();
+// me+base
+if (!isset($page["me"])) $page["me"]=x::me();
+if (!isset($page["base"])) $page["base"]=x::base();
 
-// page basefile
-if ($_SERVER["SCRIPT_FILENAME"] && file_exists($_SERVER["SCRIPT_FILENAME"]) && substr($_SERVER["SCRIPT_FILENAME"], -4, 4)==".php")
-	$page["basefile"]=substr(basename($_SERVER["SCRIPT_FILENAME"]), 0, -4);
+// restrictions
+if (isset($page["shorttags"]) && ((bool)$page["shorttags"] != (bool)ini_get("short_open_tag"))) perror("short_open_tag = ".(x::page("shorttags")?"On":"Off")." required");
 
 // classes/include CSS/JS
 $_css=array();
@@ -24,11 +27,16 @@ if ($_b=x::inc()) foreach ($_b as $_c) {
 	if (file_exists($_f.$_c.".js")) $_js[$_c.".js"]=false;
 }
 
-// autoloads
+// general autoloads
 if (file_exists("kernel.css") && !isset($css["kernel.css"])) $_css["kernel.css"]=false;
 if (file_exists("kernel.js") && !isset($js["kernel.js"])) $_js["kernel.js"]=false;
-if (file_exists($page["basefile"].".css") && !isset($css[$page["basefile"].".css"])) $_css[$page["basefile"].".css"]=false;
-if (file_exists($page["basefile"].".js") && !isset($js[$page["basefile"].".js"])) $_js[$page["basefile"].".js"]=false;
+
+// page basefile and page autoloads
+if ($_SERVER["SCRIPT_FILENAME"] && file_exists($_SERVER["SCRIPT_FILENAME"]) && substr($_SERVER["SCRIPT_FILENAME"], -4, 4) == ".php") {
+	$page["basefile"]=substr(basename($_SERVER["SCRIPT_FILENAME"]), 0, -4);
+	if (file_exists($page["basefile"].".css") && !isset($css[$page["basefile"].".css"])) $_css[$page["basefile"].".css"]=false;
+	if (file_exists($page["basefile"].".js") && !isset($js[$page["basefile"].".js"])) $_js[$page["basefile"].".js"]=false;
+}
 
 // crypt, if enabled
 if ($page["crypt"]) {
@@ -36,15 +44,18 @@ if ($page["crypt"]) {
 	$_pc=new $page["crypt"]["type"]($page["crypt"]);
 }
 
-// load CSS/JS
-foreach ($_e=array("css","js") as $_i) {
+// load CSS/JS: false=internal true=external 0=disabled
+foreach ($_e=array("css", "js") as $_i) {
 	$_b="";
 	$_t="_".$_i;
 	$$_t=$$_t+($$_i?$$_i:array());
-	foreach ($$_t as $_n=>$_v) if (!$_v && substr($_n, -strlen($_i)-1)==".".$_i) $_b.=($_b?"|":"").substr($_n, 0, -strlen($_i)-1);
+	foreach ($$_t as $_n=>$_v)
+		if ($_v !== 0)
+			if (!$_v && substr($_n, -strlen($_i)-1) == ".".$_i)
+				$_b.=($_b?"|":"").substr($_n, 0, -strlen($_i)-1);
 	if ($_b) {
 		if ($page["crypt"]) $_b=$_pc->encrypt($_b);
-		if ($page["relative"]) $page[$_i]=array(x::alink(array($_i=>$_b)) =>false);
+		if ($page["relative"]) $page[$_i]=array(x::alink(array($_i=>$_b))=>false);
 		else $page[$_i]=array("?".$_i."=".$_b=>false);
 	}
 	foreach ($$_t as $_n=>$_v) if ($_v) $page[$_i][$_n]=$_v;
@@ -52,16 +63,16 @@ foreach ($_e=array("css","js") as $_i) {
 }
 
 // extra common data
-if (!$data["me"]) $data["me"]=$page["me"];
-if (!$data["uri"]) $data["uri"]=$_SERVER["REQUEST_URI"];
-if (x::server() && !$data["server"]) $data["server"]=x::server();
-if (x::base() && !$data["base"]) $data["base"]=($page["base"]?$page["base"]:x::base());
+if (!isset($data["me"]) && $page["me"]) $data["me"]=$page["me"];
+if (!isset($data["base"]) && $page["base"]) $data["base"]=$page["base"];
+if (!isset($data["uri"]) && ($_v=$_SERVER["REQUEST_URI"])) $data["uri"]=$_v;
+if (!isset($data["server"]) && ($_v=x::server())) $data["server"]=$_v;
 
 // set charset and document type by default
 if ($page["content-type"]) {
 	foreach ($_e=explode(";", $page["content-type"]) as $_i) {
 		$_i=trim($_i);
-		if (strtolower(substr($_i,0,8))==="charset=") $page["charset"]=strtoupper(substr($_i, 8));
+		if (strtolower(substr($_i, 0, 8)) === "charset=") $page["charset"]=strtoupper(substr($_i, 8));
 	}
 	header("Content-Type: ".$page["content-type"]);
 }
@@ -69,8 +80,10 @@ if (!$page["charset"]) $page["charset"]="UTF-8";
 
 // remove temporal variables
 unset($_b);
+unset($_c);
 unset($_i);
 unset($_e);
+unset($_f);
 unset($_t);
 unset($_n);
 unset($_v);
@@ -78,7 +91,7 @@ unset($_v);
 // save page settings, this will ensure that settings are global
 x::page($page);
 
-// start page
+// render HTML5 page head
 echo "<!doctype html>\n";
 echo "<html".($page["lang"]?' lang="'.$page["lang"].'"':'').">\n";
 echo "<head>\n";

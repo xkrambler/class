@@ -235,7 +235,7 @@
 			if (!$border) $imt=imagecreatetruecolor($nw,$nh);
 			else $imt=imagecreatetruecolor($maxwidth,$maxheight);
 			// if border, paint with color ($border must be an array(R,G,B))
-			$color=(count($border)==3
+			$color=(is_array($border) && count($border) == 3
 				?imagecolorallocate($imt,$border[0],$border[1],$border[2])
 				:imagecolorallocate($imt,$background[0],$background[1],$background[2])
 			);

@@ -282,6 +282,17 @@ abstract class TPV {
 		if ($_exit) exit;
 	}
 
+	// devolver respuesta por código
+	function responsecode($code) {
+		$codes=$this->responsecodes();
+		return $codes[(string)$code];
+	}
+
+	// mensajes de respuestas de TPV (vacío, sobreescribible)
+	function responsecodes() {
+		return array();
+	}
+
 	// string with basic info
 	function __toString() {
 		return "(".get_class($this).") TPV-".$this->type().":".($this->test()?"TEST":"PRODUCTION");

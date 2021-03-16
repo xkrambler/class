@@ -127,6 +127,7 @@ function newElement(element, o) {
 		if (o.id) e.id=o.id;
 		if (o.class) e.className=o.class;
 		if (o.html) e.innerHTML=o.html;
+		if (o.title) e.title=o.title;
 		if (o.value) e.value=o.value;
 		if (o.attributes)
 			for (var i in o.attributes)
@@ -205,9 +206,12 @@ function classDel(id, c) {
 		if (a[i]!=c) cs+=" "+a[i];
 	gid(id).className=trim(cs);
 	return true;
-}
+} 
 function classEnable(id, c, enabled) {
 	return (enabled?classAdd(id, c):classDel(id, c));
+}
+function classSwap(id, c) {
+	return (hasClass(id, c)?classDel(id, c):classAdd(id, c));
 }
 function hasClass(id, c){
 	if (!gid(id) || !gid(id).className) return;
@@ -386,35 +390,46 @@ function scrollWidth() {
 	return(w1-w2);
 }
 
-// almacenar cookie
-function setCookie(name, value, days) {
-	var expires="";
-	value=""+value;
-	if (days) {
-		var date=new Date();
-		date.setTime(date.getTime()+(days*86400000));
-		expires="; expires="+date.toGMTString();
-	}
-	document.cookie=name.replace(/=/gi,"_")+"="+value.replace(/\\/gi,"\\\\").replace(/\n/gi,"\\n").replace(/;/gi,"\\,").replace(/;/gi,"_")+expires+"; path=/";
-}
-
 // obtener cookie
 function getCookie(name) {
 	var nameEQ=name.replace(/=/gi,"_")+"=";
 	var ca=document.cookie.split(';');
-	for (i=0;i<ca.length;i++) {
+	for (i=0; i<ca.length; i++) {
 		var c=ca[i];
-		while (c.charAt(0)==' ')
-			c=c.substring(1,c.length);
-		if (c.indexOf(nameEQ)==0)
-			return c.substring(nameEQ.length,c.length).replace(/\\\\/gi,"\\").replace(/\\n/gi,"\n").replace(/\\,/gi,";");
+		while (c.charAt(0) == ' ')
+			c=c.substring(1, c.length);
+		if (c.indexOf(nameEQ) == 0)
+			return c.substring(nameEQ.length, c.length).replace(/\\\\/gi,"\\").replace(/\\n/gi,"\n").replace(/\\,/gi,";");
 	}
-	return("");
+	return "";
+}
+
+// almacenar cookie
+function setCookie(name, value, o) {
+	var o=(Number.isFinite(o)?{"days":o}:o||{});
+	if (o.days) o.expires=o.days*86400000;
+	var expires="";
+	if (o.expires) {
+		var date=new Date();
+		date.setTime(date.getTime()+o.expires);
+		expires="; expires="+date.toGMTString();
+	}
+	document.cookie
+		=name.replace(/=/gi,"").replace(/;/gi,"")
+		+"="+(""+value).replace(/\\/gi,"\\\\").replace(/\n/gi,"\\n").replace(/;/gi,"\\,").replace(/;/gi,"_")
+		+expires
+		+"; path="+(o.path||"/")
+		+"; sameSite="+(o.samesite||"Lax")
+		+(o.secure?"; Secure":"")
+	;
 }
 
 // borrar cookie
 function delCookie(name) {
-	setCookie(name,"",-1);
+	setCookie(name, "", {"expires":-1, "samesite":"Strict"});
+	setCookie(name, "", {"expires":-1, "samesite":"Lax"});
+	setCookie(name, "", {"expires":-1, "samesite":"None", "secure":true});
+	setCookie(name, "", {"expires":-1, "samesite":"None"});
 }
 
 // borrar todas las cookies accesibles
@@ -424,7 +439,7 @@ function delAllCookies() {
 		var cookie=cookies[i];
 		var eqPos=cookie.indexOf("=");
 		var name=(eqPos>-1?cookie.substr(0, eqPos):cookie);
-		document.cookie=name+"=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+		delCookie(name);
 	}
 }
 
@@ -932,17 +947,13 @@ function gInputFloat(id, negatives) {
 	gInputInt(id,negatives,true);
 }
 
+// comprobación autogrow
 function autogrowcheck(id) {
-	var e=gid(id);
-	function offset() {
-		var s=window.getComputedStyle(e, null), p=['paddingTop', 'paddingBottom'], o=0;
-		for (var i=0; i<p.length; i++)
-			o+=parseInt(s[p[i]]);
-		return o;
-	}
+	var e=gid(id), h=0, p=['padding-top', 'padding-bottom'];
+	var s=window.getComputedStyle(e, null);
+	for (var i in p) h+=parseInt(s[p[i]]);
 	e.style.height='auto';
-	var nh=e.scrollHeight - offset();
-	e.style.height=nh+'px';
+	e.style.height=(e.scrollHeight+(s["box-sizing"] == "border-box"?h:-h))+'px';
 }
 
 // textarea autogrowing
@@ -973,18 +984,21 @@ function br2nl(s) {
 }
 
 // mostrar un número en formato X.XXX,XX
-function spf(n) {
-	var n=Math.round(n*100)/100;
-	var d=Math.abs(Math.round((n-parseInt(n))*100));
+function spf(n, f) {
+	if (isNaN(n)) return "";
+	var f=f || 2;
+	var e=Math.pow(10, f || 2);
+	var n=Math.round(n*e)/e;
+	var d=Math.abs(Math.round((n-parseInt(n))*e));
 	var x=""+parseInt(n);
 	var rgx=/(\d+)(\d{3})/;
-	while (rgx.test(x))
-		x=x.replace(rgx,'$1'+'.'+'$2');
-	return x+","+(d.toString().length<2?"0":"")+d;
+	while (rgx.test(x)) x=x.replace(rgx,'$1'+'.'+'$2');
+	return x+","+"0".repeat(f-d.toString().length)+d;
 }
 
 // mostrar un número en formato X.XXX
 function spd(n) {
+	if (isNaN(n)) return "";
 	var n=Math.round(n*100)/100;
 	var x=""+parseInt(n);
 	var rgx=/(\d+)(\d{3})/;
@@ -992,6 +1006,40 @@ function spd(n) {
 		x=x.replace(rgx,'$1'+'.'+'$2');
 	return x;
 }
+
+// mostrar un número en formato X.XXX o X.XXX,XX (solo si tiene decimales)
+function spn(n, f) {
+	return (parseInt(n) == parseFloat(n)?spd(n):spf(n, f));
+}
+
+// devuelve fecha y hora en formato ISO YYYY-MM-DD HH:II:SS desde fecha JavaScript (o fecha y hora actual)
+function isoDatetime(f) {
+	var
+		f=f||new Date(),
+		y=f.getFullYear(),
+		m=f.getMonth()+1,
+		d=f.getDate(),
+		h=f.getHours(),
+		i=f.getMinutes(),
+		s=f.getSeconds()
+	;
+	return y+"-"+(m>9?"":"0")+m+"-"+(d>9?"":"0")+d
+		+ " "+(h>9?"":"0")+h+":"+(i>9?"":"0")+i+":"+(s>9?"":"0")+s
+	;
+}
+
+// devuelve fecha en formato ISO YYYY-MM-DD desde fecha JavaScript (o fecha actual)
+function isoDate(f) {
+	return isoDatetime(f).substring(0, 10);
+}
+
+// devuelve fecha en formato ISO HH:II:SS desde fecha JavaScript (o fecha actual)
+function isoTime(f) {
+	return isoDatetime(f).substring(11, 19);
+}
+
+// convierte una fecha Javascript a format SQL YYYY-MM-DD HH:II:SS (alias OBSOLETO)
+function sqlFromDate(f) { return isoDatetime(f); }
 
 // convierte una fecha SQL en formato YYYY-MM-DD con o sin HH:II:SS a formato JavaScript
 function sqlDate(fecha) {
@@ -1006,19 +1054,6 @@ function sqlDate(fecha) {
 	} catch(e) {
 		return null;
 	}
-}
-
-// convierte una fecha Javascript a format SQL YYYY-MM-DD HH:II:SS
-function sqlFromDate(f) {
-	if (!f) f=new Date();
-	var d=f.getDate();
-	var m=f.getMonth()+1;
-	var h=f.getHours();
-	var i=f.getMinutes();
-	var s=f.getSeconds();
-	return f.getFullYear()+"-"+(m>9?"":"0")+m+"-"+(d>9?"":"0")+d
-		+ " "+(h>9?"":"0")+h+":"+(i>9?"":"0")+i+":"+(s>9?"":"0")+s
-	;
 }
 
 // convierte una cadena YYYY-MM-DD HH:II:SS a DD/MM/YYYY HH:II:SS
@@ -1042,7 +1077,7 @@ function spDate(f) {
 	return String(dd+"/"+mm+"/"+yyyy);
 }
 
-// devuelve una hora JavaScript en formato HH:MM:SS
+// devuelve una hora JavaScript en formato HH:II:SS
 function spTime(f) {
 	var f=f || new Date();
 	var hh=f.getHours(); if (hh<=9) hh='0'+hh;
@@ -1056,7 +1091,7 @@ function spDateNow() {
 	return spDate(new Date());
 }
 
-// devuelve la hora actual en formato HH:MM:SS
+// devuelve la hora actual en formato HH:II:SS
 function spTimeNow() {
 	return spTime(new Date());
 }
@@ -1085,49 +1120,64 @@ function doubleval(t) { t=t+""; while (t.substring(0,1)=="0") t=t.substring(1); 
 // devuelve el timestamp con resolución de milisegundos
 function militime() { return new Date().getTime(); }
 
-// procesa los parámetros de un enlace
-function alink(f, href) {
-	if (!f) var f={};
-	if (!isset(href)) var href=location.href;
-	var alink_escape=function(torg){
-		var d=""+torg;
-		try { var d=d.replace(/%/gi,"%25"); } catch(e) {} // mantener primero!
-		try { var d=d.replace(/\//gi,"%2F"); } catch(e) {}
-		try { var d=d.replace(/\"/gi,"%22"); } catch(e) {}
-		try { var d=d.replace(/\\/gi,"%5C"); } catch(e) {}
-		try { var d=d.replace(/\?/gi,"%3F"); } catch(e) {}
-		try { var d=d.replace(/&/gi,"%26"); } catch(e) {}
-		try { var d=d.replace(/=/gi,"%3D"); } catch(e) {}
-		try { var d=d.replace(/\+/gi,"%2B"); } catch(e) {}
-		try { var d=d.replace(/ /gi,"%20"); } catch(e) {}
-		return d;
-	};
+// devuelve parámetros GET (si no se especifican) o un parámetro GET de una URL o de la URL actual
+function get(n, url) {
+	var url=url || location.href;
+	var i=url.indexOf("?");
+	if (i !== -1) {
+		url=url.substring(i+1);
+		var i=url.indexOf("#");
+		if (i !== -1) url=url.substring(0, i);
+		var items=url.split("&");
+		var k, v;
+		if (typeof(n) === "undefined" || n === null) {
+			var a={};
+			for (var i=0; i<items.length; i++) {
+				[k, v]=items[i].split("=");
+				a[decodeURIComponent(k)]=(typeof(v) == "undefined"?"":decodeURIComponent(v));
+			}
+			return a;
+		} else {
+			for (var i=0; i<items.length; i++) {
+				[k, v]=items[i].split("=");
+				if (decodeURIComponent(k) === n) return (typeof(v) == "undefined"?"":decodeURIComponent(v));
+			}
+		}
+	}
+	return null;
+}
+
+// modifica parámetros (de una URL)
+function alink(p, url) {
+	var p=p||{};
+	var url=url||location.href;
+	var get={};
 	var marker="";
-	var i=href.indexOf("#");
-	if (i!=-1) {
-		marker=href.substring(i);
-		href=href.substring(0,i);
+	var i=url.indexOf("#");
+	if (i !== -1) {
+		marker=url.substring(i);
+		url=url.substring(0, i);
 	}
-	var i=href.indexOf("?");
-	if (i==-1 && !isset(f)) return href+marker;
-	var params=(i==-1?[]:href.substring(i+1).split("&"));
-	var href=(i==-1?href:href.substring(0,i));
-	var par={};
-	for (var i in params) {
-		var fv=params[i].split("=");
-		if (f[fv[0]]!==null)
-			par[fv[0]]=(isset(f[fv[0]])?f[fv[0]]:(isset(fv[1])?fv[1]:""));
+	var i=url.indexOf("?");
+	if (i !== -1) {
+		var g=url.substring(i+1).split("&");
+		url=url.substring(0, i);
+		for (var i in g) {
+			[k, v]=g[i].split("=");
+			get[decodeURIComponent(k)]=(typeof(v) == "undefined"?"":decodeURIComponent(v));
+		}
 	}
-	if (!f) return href;
-	for (var p in f) {
-		p=alink_escape(p);
-		if (!par[p] && f[p]!==null)
-			par[p]=(isset(f[p])?alink_escape(f[p]):"");
+	for (var k in p) {
+		var v=p[k];
+		if (v === null) delete get[k];
+		else get[k]=v;
 	}
-	var fparams="";
-	for (var p in par)
-		fparams+=(fparams?"&":"?")+p+(par[p]===""?"":"="+par[p]);
-	return href+fparams+marker;
+	var qs="";
+	for (var k in get) {
+		var v=get[k];
+		qs+=(qs?"&":"")+encodeURIComponent(k)+(v===""?"":"="+encodeURIComponent(v));
+	}
+	return url+(qs?"?"+qs:"")+marker;
 }
 
 // evita la acción de carga de ficheros al arrastrarlos sobre la página o sobre un elemento de ella

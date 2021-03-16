@@ -46,9 +46,9 @@ class x {
 		foreach ($GLOBALS as $i=>$d)
 			if (substr($i, 0, 1) != "_" && $i != "GLOBALS")
 				global $$i;
-		if (file_exists($_module.".php")) { $_modulec++; require_once($_module.".php"); }
 		if (file_exists($_module.".css")) { $_modulec++; $GLOBALS["css"][$_module.".css"]=false; }
 		if (file_exists($_module.".js")) { $_modulec++; $GLOBALS["js"][$_module.".js"]=false; }
+		if (file_exists($_module.".php")) { $_modulec++; require_once($_module.".php"); }
 		$v=get_defined_vars();
 		unset($v["_module"]);
 		unset($v["_modulec"]);
@@ -149,7 +149,7 @@ class x {
 			if ($geturl) $get=array_merge($geturl, $get);
 		}
 		// build query
-		$p=($get?http_build_query($get):"");
+		$p=($get?http_build_query($get, "", "&", PHP_QUERY_RFC3986):"");
 		// supress alone equals
 		$p=str_replace("=&", "&", $p);
 		if (substr($p, -1, 1) === "=") $p=substr($p, 0, -1);
@@ -185,6 +185,42 @@ class x {
 	static public function entities($t) {
 		$charset=self::page("charset");
 		return htmlentities($t, ENT_QUOTES | ENT_SUBSTITUTE, self::charset());
+	}
+
+	// generic set cookie
+	static public function setcookie(string $name, string $value, array $o=[]) {
+		if (!$o["path"]) $o["path"]="/";
+		if (strnatcmp(phpversion(), '7.3.0') >= 0) {
+			setcookie($name, $value, $o);
+		} else {
+			setcookie($name, $value, (is_numeric($o['expires'])?$o['expires']:0),
+				(isset($o["path"])?(string)$o["path"]:"").(($v=$o['samesite'])?';samesite='.$v:''),
+				(isset($o["domain"])?(string)$o["domain"]:""),
+				(bool)$o["secure"],
+				(bool)$o["httponly"]
+			);
+		}
+	}
+
+	// generic delete cookie
+	static public function delcookie(string $name, array $o=[]) {
+		self::setcookie($name, "", ["expires"=>1]+$o);
+	}
+
+	// set http max age (default: 10 minutes)
+	static public function maxage($maxage=true) {
+		if ($maxage === true || $maxage <= 0) $maxage=600;
+		header("Expires: ".gmdate("D, d M Y H:i:s", time()+$maxage)." GMT");
+		header("Cache-Control: max-age=".$maxage);
+		header("Pragma: cache");
+		return true;
+	}
+
+	// isolated require
+	static public function irequire($file, $data=[]) {
+		extract($data);
+		unset($data);
+		require($file);
 	}
 
 }
@@ -268,7 +304,8 @@ if ($_x=x::inc()) foreach ($_x as $_c) {
 }
 
 // session control
-if (x::has("sessionname")) {
+if (is_string(x::page("sessionname"))) {
+	session_set_cookie_params(0, '/; samesite=Lax', '');
 	if ($_x=x::page("sessionname")) session_name($_x);
 	if ($_REQUEST["sessionid"]) session_id($_REQUEST["sessionid"]);
 	session_start();
@@ -355,9 +392,10 @@ if ($_GET["css"] || $_GET["js"]) {
 	$_x=false;
 	if ($_GET["css"]) { $_x="css"; $_m="text/css"; }
 	else if ($_GET["js"])  { $_x="js";  $_m="text/javascript"; }
-	if (!$_x) perror("/* BOOM: No ext! */");
-	if ($page["crypt"]) $_GET[$_x]=$_pc->decrypt($_GET[$_x]); // if cyphering specified, apply
-	if ($_GET[$_x] && !$_i=explode("|", $_GET[$_x])) die("/* No includes */");
+	if (!$_x) perror("/* BOOM: No ext! */"); // allowed extension
+	if ($page["crypt"]) $_GET[$_x]=$_pc->decrypt($_GET[$_x]); // cypher
+	if (strpos($_GET[$_x], "\0") !== false) die("/* BOOM: 0x00 Headshot! */"); // null character detected
+	if ($_GET[$_x] && !$_i=explode("|", $_GET[$_x])) die("/* No includes */"); // no includes
 
 	// caching
 	if (@$page["cache_".$_x]) {
@@ -365,6 +403,9 @@ if ($_GET["css"] || $_GET["js"]) {
 		$xcache=new xCache();
 		$xcache->modified($page["cache_".$_x]);
 	}
+
+	// caching via headers (in seconds)
+	if (@$page["maxage"]) x::maxage($page["maxage"]);
 
 	// send with gzip compression, if available and enabled
 	if (!$page["no_gzip"] && extension_loaded('zlib') && array_search("gzip", explode(",", $_SERVER["HTTP_ACCEPT_ENCODING"]))!==false)
@@ -380,9 +421,16 @@ if ($_GET["css"] || $_GET["js"]) {
 		$_f=(substr($_c, 0, 1) == "/"?__DIR__:"");
 		$_e=$_f.$_c.".".$_x;
 		if (file_exists($_e)) {
-			$_d=file_get_contents($_e);
 			echo "/** ".$_c.".".$_x." **/\n";
-			echo (strpos($_d, "<?") === false?$_d:"// disabled")."\n\n";
+			if (x::page("d".$_x)) { // dangerous method
+				x::irequire($_e, array(
+					"base"=>dirname($_c).(dirname($_c)?"/":""),
+					"name"=>basename($_c).".".$_x,
+				));
+			} else {
+				$_d=str_replace("%base%", dirname($_c).(dirname($_c)?"/":""), file_get_contents($_e));
+				echo (strpos($_d, "<?") === false?$_d:"// disabled")."\n\n";
+			}
 		}
 	}
 

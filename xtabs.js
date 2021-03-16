@@ -164,9 +164,17 @@ function xtabs(id, o) {
 		ul.className=(self.o.vertical?"xtabs_vertical":"xtabs_horizontal");
 		var tabs=ul.getElementsByTagName("li");
 		for (i=0;i<tabs.length;i++) {
-			if (tabs[i].parentNode.parentNode.id!=self.id) continue;
+			if (tabs[i].parentNode.parentNode.id != self.id) continue;
 			tabs[i].id=self.id+"_t"+i;
 			tabs[i].setAttribute("data-index", i);
+			tabs[i].setAttribute("tabindex", "0");
+			tabs[i].onkeypress=function(e){
+				if (!e) var e=window.event;
+				if (e.keyCode == 13 || e.keyCode == 32) {
+					var i=this.getAttribute("data-index");
+					self.go(parseInt(i));
+				}
+			};
 			tabs[i].onmousedown=function(){
 				var i=this.getAttribute("data-index");
 				self.go(parseInt(i));

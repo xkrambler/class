@@ -3,7 +3,7 @@
 	left: 50%;
 	bottom: 32px;
 	margin-bottom: 0;
-	z-index: 100;
+	z-index: 995;
 	opacity: 0;
 	transition: 0.3s all ease-in-out;
 	transform: scale(0.9);

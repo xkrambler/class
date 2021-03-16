@@ -13,26 +13,15 @@
 		});
 	
 */
-
-var xEditors=[];
 function xEditor(o) {
 	var a=this;
 	a.o=o;
 
 	// agregar objeto a la lista global
-	a.num=xEditors.length;
-	xEditors[a.num]=a;
-	a.me="xEditors["+a.num+"]";
-
-	// aux: strip_tags (original by Kevin van Zonneveld - http://kevin.vanzonneveld.net)
-	function strip_tags(input, allowed) {
-	  allowed = (((allowed || "") + "").toLowerCase().match(/<[a-z][a-z0-9]*>/g) || []).join(''); // making sure the allowed arg is a string containing only tags in lowercase (<a><b><c>)
-	  var tags = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi,
-	    commentsAndPhpTags = /<!--[\s\S]*?-->|<\?(?:php)?[\s\S]*?\?>/gi;
-	  return input.replace(commentsAndPhpTags, '').replace(tags, function ($0, $1) {
-	    return allowed.indexOf('<' + $1.toLowerCase() + '>') > -1 ? $0 : '';
-	  });
-	}
+	if (!window.xEditors) window.xEditors=[];
+	a.num=window.xEditors.length;
+	window.xEditors[a.num]=a;
+	a.me="window.xEditors["+a.num+"]";
 
 	// guardar HTML en input
 	a.store=function(){
@@ -55,13 +44,23 @@ function xEditor(o) {
 			{"cmd":"justifyleft","caption":"Justificar Izquierda"},
 			{"cmd":"justifycenter","caption":"Justificar Centro"},
 			{"cmd":"justifyright","caption":"Justificar Derecha"},
+			//{"cmd":"justifyfull","caption":"Justificación Total"},
 			{"cmd":"unorderedlist","caption":"Lista No Ordenada"},
 			{"cmd":"orderedlist","caption":"Lista Ordenada"},
-			//{"cmd":"justifyfull","caption":"Justificación Total"},
 			{"cmd":"image","caption":"Insertar imagen"},
 			{"cmd":"link","caption":"Enlazar"},
 			{"cmd":"unlink","caption":"Desenlazar"},
+			{"cmd":"fontsize","caption":"Tamaño de letra","select":[
+				{"cmd":"fontsize-2","caption":"-2"},
+				{"cmd":"fontsize-1","caption":"-1"},
+				{"cmd":"fontsize+1","caption":"+1"},
+				{"cmd":"fontsize+2","caption":"+2"},
+				{"cmd":"fontsize+3","caption":"+3"},
+				{"cmd":"fontsize+4","caption":"+4"},
+				{"cmd":"fontsize+5","caption":"+5"}
+			]},
 			{"cmd":"heading","caption":"Encabezado","select":[
+				{"cmd":"div","caption":"&lt;DIV&gt;"},
 				{"cmd":"p","caption":"&lt;P&gt;"},
 				{"cmd":"h1","caption":"&lt;H1&gt;"},
 				{"cmd":"h2","caption":"&lt;H2&gt;"},
@@ -131,23 +130,17 @@ function xEditor(o) {
 			a.toolbox_lasth=false;
 			a.toolbox=document.createElement("div");
 			a.toolbox.id=a.toolbox_id;
-			a.toolbox.onmouseover=function(){
-				a.cancelBlur=true;
-			};
-			a.toolbox.onmouseout=function(){
-				a.cancelBlur=false;
-			};
+			a.toolbox.onmouseover=function(){ a.cancelBlur=true; };
+			a.toolbox.onmouseout=function(){ a.cancelBlur=false; };
 			// ver si se va a fijar, o se queda flotante
 			if (a.o.toolbox) {
 				gidset(a.o.toolbox, "");
 				gid(a.o.toolbox).appendChild(a.toolbox);
 			} else {
-				var h=getTop(editor);
-				style(a.toolbox,{
-					"display":"block",
-					"position":"absolute"
-				});
-				document.body.appendChild(a.toolbox);
+				a.toolbox_container=document.createElement("div");
+				a.toolbox_container.style.position="relative";
+				editor.parentNode.insertBefore(a.toolbox_container, editor);
+				a.toolbox_container.appendChild(a.toolbox);
 			}
 		}
 		// si tengo toolbox
@@ -159,8 +152,9 @@ function xEditor(o) {
 				var tool=tools[i];
 				if (tool.select) {
 					h+="<select id='"+a.toolbox_id+"_"+tool.cmd+"'"
-						+" class='xeditor_toolbox_"+tool.cmd+"'"
+						+" class='xeditor_toolbox_cmd xeditor_toolbox_"+tool.cmd+"'"
 						+" onChange='javascript:"+a.me+".selectClick(\""+tool.cmd+"\",this);return false;'"
+						+" tabindex='-1'"
 						+" title='"+tool.caption+"'"
 						+">";
 					h+="<option value='' selected></option>";
@@ -186,23 +180,15 @@ function xEditor(o) {
 				a.toolbox.innerHTML=h;
 			}
 		}
-		// ver si es flotante
+		// si no es flotante
 		if (a.o.toolbox) {
 			// si no lo es, cambiar la clase
-			if (editor === document.activeElement) {
-				classAdd(a.o.toolbox, "xeditor_toolbox_enabled");
-				classDel(a.o.toolbox, "xeditor_toolbox_disabled");
-			} else {
-				classDel(a.o.toolbox, "xeditor_toolbox_enabled");
-				classAdd(a.o.toolbox, "xeditor_toolbox_disabled");
-			}
+			var activo=(editor === document.activeElement);
+			classEnable(a.o.toolbox, "xeditor_toolbox_enabled", activo);
+			classEnable(a.o.toolbox, "xeditor_toolbox_disabled", !activo);
 		} else {
-			// si es flotante, actualizar clase y posición
+			// si es flotante, actualizar clase
 			classAdd(a.toolbox, "xeditor_toolbox_enabled");
-			style(a.toolbox,{
-				"top":(getTop(editor)-getHeight(a.toolbox))+"px",
-				"left":getLeft(editor)+"px"
-			});
 		}
 	};
 
@@ -222,56 +208,35 @@ function xEditor(o) {
 
 	// convetir un post en editable
 	a.editable=function() {
-		
+
 		// establecer editable
 		var editor=gid(a.o.id);
 		editor.contentEditable='true';
-		
-		// es necesario controlar el retorno de carro en Android y hacer la inserción manual de salto de línea
-		editor.onkeypress=function(e){
-			if (navigator.userAgent.indexOf("Android")!=-1) {
-				if (!e) var e=window.event;
-				if (e.keyCode==13) {
-					document.execCommand("inserthtml",false,"<div><br></div>");
-					return false;
-				}
-			} else {
-				if (e.keyCode==13) {
-					//document.execCommand("inserthtml",false,"<div><br /></div>\n");
-					//document.execCommand('formatBlock', false, 'p');
-					//return false;
-				}
-			}
+
+		// eventos
+		editor.oninput=function(){
+			if (a.o.oninput) a.o.oninput(a, editor.innerHTML);
 		};
-	
+
 		// verificar tags HTML sean correctos
 		editor.onkeyup=a.check;
 		editor.onmouseup=a.check;
-	
+
 		// crear barra de herramientas en la parte superior al enfocar
 		editor.onfocus=function(){
 			a.toolboxUpdate();
+			document.execCommand("defaultParagraphSeparator", false, "br");
+			document.execCommand("enableObjectResizing", false, "true")
 		};
-	
+
 		// destruir barra de herramientas al perder el foco
 		editor.onblur=function(){
-			a.toolboxUpdate();
-			a.store();
-			// si es flotante, quitar barra de herramientas
-			if (!a.o.toolbox) {
-				//editor.contentEditable='false';
-				if (!a.cancelBlur) {
-					a.toolbox.parentNode.removeChild(a.toolbox);
-					delete a.toolbox;
-				}
-			}
+			a.close();
+			if (a.o.onblur) a.o.onblur(a, editor.innerHTML);
 		};
 	
 		// estilo
-		style(editor, {
-			"outline":"0px transparent",
-			"position":"relative"
-		});
+		classAdd(editor, "xeditor_editing");
 	
 		// guardar valor inicial
 		a.store();
@@ -282,22 +247,31 @@ function xEditor(o) {
 
 	};
 
-	// parseo de tags indeseables -que no elimina los atributos xD-
-	/*"editCheckTimed":function(){
-		if (this.timer) clearTimeout(this.timer);
-		this.timer=setTimeout(function(){
-			alas.post.editCheck();
-			alas.post.editCheckTimed();
-		},1);
-	};*/
+	// cerrar edición
+	a.close=function(){
+		a.toolboxUpdate();
+		a.store();
+		// si es flotante, quitar barra de herramientas
+		if (!a.o.toolbox) {
+			if (!a.cancelBlur) {
+				a.toolbox.parentNode.removeChild(a.toolbox);
+				if (a.toolbox_container) {
+					a.toolbox_container.parentNode.removeChild(a.toolbox_container);
+					delete a.toolbox_container
+				}
+				delete a.toolbox;
+			}
+		}
+	};
+
+	// parseo de tags indeseables -que no elimina los atributos-
 	a.check=function(){
 		if (a.plain) return;
 		var editor=gid(a.o.id);
 		var org=editor.innerHTML;
 		if (a.o.sanitize) {
-			var msg=strip_tags(org, "<p><br><br/><div><img><a><b><i><u><s><ul><ol><li><h1><h2><h3><h4><h5><h6>");
-			//if (msg!=org) alert(msg+"/"+org);
-			if (msg!=org) editor.innerHTML=msg;
+			var msg=strip_tags(org, "<p><br><br/><span><div><img><a><b><i><u><s><ul><ol><li><h1><h2><h3><h4><h5><h6>");
+			if (msg != org) editor.innerHTML=msg;
 		}
 		// debug
 		/*var sel=window.getSelection();
@@ -317,46 +291,34 @@ function xEditor(o) {
 	};
 
 	// editar html
-	a.edithtml=function(){
-
+	a.edithtml=function(nofocus){
 		var editor=gid(a.o.id);
 		a.toolboxUpdate();
-
-		//alert(gid(a.o.toolbox));
-		//var toolbox_html_id=gid(gid(a.o.toolbox).id+"_html");
 		if (a.plain) {
-			//if (gid(a.o.toolbox)) classDel(a.o.toolbox, "xeditor_toolbox_editing_html");
-			//if (toolbox_html_id) classDel(toolbox_html_id, "xeditor_toolbox_active");
+			classDel(editor, "xeditor_coding");
 			editor.contentEditable='true';
 			editor.innerHTML=a.plain.value;
 			delete a.plain;
-			editor.focus();
+			if (!nofocus) editor.focus();
 		} else {
-			//if (gid(a.o.toolbox)) classAdd(a.o.toolbox, "xeditor_toolbox_editing_html");
-			//if (toolbox_html_id) classAdd(toolbox_html_id, "xeditor_toolbox_active");
+			classAdd(editor, "xeditor_coding");
 			editor.contentEditable='false';
-			a.plain=document.createElement("textarea");
-			a.plain.value=trim(editor.innerHTML);
-			style(a.plain, {
-				"position":"absolute",
-				"display":"block",
-				"border":"0px",
-				"padding":"0px",
-				"top":"0",
-				"left":"0",
-				"width":"100%",
-				"height":"100%",
-				"resize":"none",
-				//"min-height":"100px",
-				/*"height":(
-					editor.clientHeight
-					-getPaddingHeight(editor)
-					-getBorderHeight(editor)
-				)+"px"*/
+			a.plain=newElement("textarea", {
+				"class":"xeditor_code",
+				"value":trim(editor.innerHTML),
+				"properties":{
+					oninput:function(){
+						if (a.o.oninput) a.o.oninput(a, editor.innerHTML);
+					},
+					onblur:function(){
+						a.edithtml(true);
+						a.close();
+					}
+				}
 			});
-			editor.innerHTML="";
 			editor.appendChild(a.plain);
 			a.plain.focus();
+			a.plain.setSelectionRange(0, 0);
 		}
 	};
 
@@ -369,8 +331,6 @@ function xEditor(o) {
 		var selectionText=selection.toString();
 		var selectionLen=(selection.focusOffset-selection.anchorOffset);
 		var selectionHTML="";
-		/*if (cmd!="html" && editor !== document.activeElement)
-			return;*/
 		if (typeof window.getSelection != "undefined") {
 			var sel=window.getSelection();
 			if (sel.rangeCount) {
@@ -391,7 +351,7 @@ function xEditor(o) {
 				var sC=range.startContainer,eC=range.endContainer;
 				A=[]; while (sC!==editor) { A.push(getNodeIndex(sC)); sC=sC.parentNode; }
 				B=[]; while (eC!==editor) { B.push(getNodeIndex(eC)); eC=eC.parentNode; }
-				return {"sC":A,"sO":range.startOffset,"eC":B,"eO":range.endOffset};
+				return {"sC":A, "sO":range.startOffset, "eC":B, "eO":range.endOffset};
 			} catch (e) {
 				return false;
 			}
@@ -410,6 +370,19 @@ function xEditor(o) {
 			sel.removeAllRanges();
 			sel.addRange(range)
 		}
+		function insertImage(o) {
+			var element=document.createElement("img");
+			element.src=o.url;
+			if (o.alt) element.alt=o.alt;
+			if (o.title) element.title=o.title;
+			a.insert(element.outerHTML);
+		}
+		function insertLink(o) {
+			var element=document.createElement("a");
+			element.href=o.href;
+			element.innerHTML=o.href;
+			a.insert(element.outerHTML);
+		}
 		// lanzar comando
 		switch (cmd) {
 		case "html": a.edithtml(); break;
@@ -417,27 +390,31 @@ function xEditor(o) {
 			if (a.o.onlink) {
 				a.o.onlink(a); // TODO: parametros
 			} else {
-				if (selectionLen) {
-					var text=prompt("Indique URL",(selectionHTML.indexOf("::")!=-1?selectionHTML:""));
-					if (!text) return;
-					document.execCommand("createlink", false, text);
+				var url=prompt("Indique URL", (selectionHTML.indexOf("::")!=-1?selectionHTML:""));
+				if (url) {
+					if (selectionLen) {
+						document.execCommand("createlink", false, url);
+					} else {
+						insertLink({"href":url});
+					}
 				}
 			}
 			break;
 		case "strike":
-			document.execCommand("insertHTML", false, "<s>"+selectionHTML+"</s>");
+			a.insert("<s>"+selectionHTML+"</s>");
 			break;
 		case "removeformat":
-			document.execCommand("insertHTML", false, nl2br(selectionText));
+			a.insert(nl2br(selectionText));
 			break;
 		case "unorderedlist":
-			//document.execCommand("insertHTML", false, "<ul><li>"+selectionHTML+"</li></ul>");
+			//a.insert("<ul><li>"+selectionHTML+"</li></ul>");
 			document.execCommand("insertunorderedlist", false, null);
 			break;
 		case "orderedlist":
-			//document.execCommand("insertHTML", false, "<ol><li>"+selectionHTML+"</li></ol>");
+			//a.insert("<ol><li>"+selectionHTML+"</li></ol>");
 			document.execCommand("insertorderedlist", false, null);
 			break;
+		case "div": document.execCommand("formatBlock", false, "<div>"); break;
 		case "p": document.execCommand("formatBlock", false, "<p>"); break;
 		case "h1": document.execCommand("formatBlock", false, "<h1>"); break;
 		case "h2": document.execCommand("formatBlock", false, "<h2>"); break;
@@ -445,35 +422,44 @@ function xEditor(o) {
 		case "h4": document.execCommand("formatBlock", false, "<h4>"); break;
 		case "h5": document.execCommand("formatBlock", false, "<h5>"); break;
 		case "h6": document.execCommand("formatBlock", false, "<h6>"); break;
+		case "fontsize-2": if (selectionHTML) a.insert("<span style='font-size:0.5em;'>"+selectionHTML+"</span>"); break;
+		case "fontsize-1": if (selectionHTML) a.insert("<span style='font-size:0.8em;'>"+selectionHTML+"</span>"); break;
+		case "fontsize+1": if (selectionHTML) a.insert("<span style='font-size:1.2em;'>"+selectionHTML+"</span>"); break;
+		case "fontsize+2": if (selectionHTML) a.insert("<span style='font-size:1.5em;'>"+selectionHTML+"</span>"); break;
+		case "fontsize+3": if (selectionHTML) a.insert("<span style='font-size:1.8em;'>"+selectionHTML+"</span>"); break;
+		case "fontsize+4": if (selectionHTML) a.insert("<span style='font-size:2.2em;'>"+selectionHTML+"</span>"); break;
+		case "fontsize+5": if (selectionHTML) a.insert("<span style='font-size:3em;'>"+selectionHTML+"</span>"); break;
 		/*case "test":
-			document.execCommand("insertHTML", false, "asd<b>asd</b>");
+			a.insert("asd<b>asd</b>");
 			break;*/
 		case "image":
-			function insertImage(o) {
-				document.execCommand("insertHTML", false, "<img src='"+o.url+"' alt='"+(o.alt?o.alt:"")+"' />");
-			}
 			// si hay newalert, lanzar ventana avanzada
-			if (typeof(newalert)!="undefined") {
+			if (typeof(newalert) != "undefined") {
 				newalert({
 					"title":"Insertar imagen",
 					"msg":""
 						+"<div class='xeditor_field'>"
 							+"<div class='xeditor_field_caption'>URL de la imagen:</div>"
-							+"<div class='xeditor_field_input'><input id='xeditor_url' class='txt' type='text' value='' style='width:400px;' /></div>"
+							+"<div class='xeditor_field_input'><input id='xeditor_src' class='txt' type='text' value='' style='width:400px;' /></div>"
 						+"</div>"
 						+"<div class='xeditor_field'>"
 							+"<div class='xeditor_field_caption'>Texto alternativo:</div>"
 							+"<div class='xeditor_field_input'><input id='xeditor_alt' class='txt' type='text' value='' style='width:400px;' /></div>"
 						+"</div>"
+						+"<div class='xeditor_field'>"
+							+"<div class='xeditor_field_caption'>Título:</div>"
+							+"<div class='xeditor_field_input'><input id='xeditor_title' class='txt' type='text' value='' style='width:400px;' /></div>"
+						+"</div>"
 					,
 					"buttons":[
 						{"caption":"Insertar","action":function(){
 							var o={
-								"url":trim(gidval("xeditor_url")),
-								"alt":gidval("xeditor_alt")
+								"src":trim(gidval("xeditor_src")),
+								"alt":gidval("xeditor_alt"),
+								"title":gidval("xeditor_title")
 							};
 							newalert_close();
-							if (o.url) insertImage(o);
+							if (o.src) insertImage(o);
 						}},
 						{"caption":"Cancelar"}
 					],
@@ -484,13 +470,10 @@ function xEditor(o) {
 				gidval("xeditor_url", "");
 				gidval("xeditor_alt", strip_tags(selectionHTML));
 				gidfocus("xeditor_url");
-			
 			// en caso contrario, prompt simple
 			} else {
-				
 				var url=prompt("Indique URL de la imagen", "");
-				if (url) insertImage({"url":url});
-				
+				if (url) insertImage({"src":url});
 			}
 			break;
 		default:
@@ -500,13 +483,11 @@ function xEditor(o) {
 					if (a.o.tools[i].cmd==cmd) {
 						cmd_found=true;
 						var html=a.o.tools[i].action(a, o, a.o.tools[i]);
-						if (typeof html=="string")
-							document.execCommand("insertHTML", false, html);
+						if (typeof html == "string") a.insert(html);
 						break;
 					}
-			if (!cmd_found)
-				document.execCommand(cmd, false, null);
-		
+			if (!cmd_found) document.execCommand(cmd, false, null);
+
 		}
 		a.check();
 	};
@@ -523,7 +504,9 @@ function xEditor(o) {
 
 	// devolver contenido
 	a.value=function(){
-		return (a.plain?a.plain.value:trim(gid(a.o.id).innerHTML));
+		var value=(a.plain?a.plain.value:trim(gid(a.o.id).innerHTML));
+		if (value.length >= 4 && value.substring(value.length-4) == "<br>") value=value.substring(0, value.length-4); // quita el último <br> agregado
+		return value;
 	};
 
 	// inicializar

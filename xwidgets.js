@@ -10,8 +10,209 @@ var xwidgets={
 
 	/*
 
+		xwidgets.selector()
+		HTML ComboBox.
+
+		Example:
+
+			var selector=new xwidgets.selector({
+				"id":"element",
+				"items":[
+					{"caption":"Default", "value":""},
+					{"caption":"Item 1", "value":"1"},
+					{"caption":"Item 2", "value":"2"},
+					{"caption":"Item 3", "value":"3"}
+				],
+				"value":"",
+				"onchange":function(selector, item){
+					alert(item.value);
+				}
+			});
+
+		Parameters:
+
+			id:string (required)
+				Element or Element identifier.
+
+			items:object (optional)
+				List of items.
+
+			item:object
+				Return current item
+
+			value:integer|string (optional)
+				Select an item by its index/key (if defined).
+
+			render (optional)
+				Render item.
+				:function(self, item, index, selected)
+					Renderer item using custom function.
+					Parámeters:
+						self - same class
+						item - item to render
+						key - item key (can be null if empty caption)
+						selected - is item selected?
+					Return:
+						HTML string or DOM Element
+
+		Events:
+
+			onchange(self, item)
+				Fires on item selection change.
+
+	*/
+	selector:function(o) {
+		var self=this;
+		self.o=o;
+		if (!isset(self.o.value)) self.o.value=null;
+
+		// select by index
+		self.select=function(index){
+			if (isset(self.o.value)) for (var i in self.o.items) if (self.o.value === self.o.items[i].value) {
+				classDel(self.items[i], "widget_selector_item_active");
+				break;
+			}
+			classAdd(self.items[index], "widget_selector_item_active");
+			self.o.value=self.o.items[index].value;
+			if (self.o.onchange) self.o.onchange(self, self.item());
+		};
+
+		// get selected item
+		self.item=function(){
+			for (var i in self.o.items) if (self.o.value === self.o.items[i].value) {
+				return self.o.items[i];
+			}
+			return false;
+		};
+
+		// get/set value
+		self.value=function(value){
+			if (isset(value)) {
+				self.o.value=value;
+				if (self.o.onchange) self.o.onchange(self, self.o);
+				self.refresh();
+			}
+			return self.o.value;
+		};
+
+		// refresh element
+		self.refresh=function(){
+
+			// render items
+			self.items=[];
+			for (var index in self.o.items) {
+				var item=self.o.items[index];
+				var down=(isset(self.o.down)?self.o.down(self, item):false);
+				var selected=(self.o.value === item.value);
+				var caption=item.caption;
+				if (self.o.render) caption=self.o.render(self, item, index, selected);
+				var child=(
+					typeof(caption) == "function"
+					?caption
+					:newElement("div", {
+						"class":"widget_selector_item_caption",
+						"html":caption
+					})
+				);
+				self.items.push(newElement("div", {
+					"class":"widget_selector_item"+(selected?" widget_selector_item_active":""),
+					"attributes":{
+						"tabindex":0, // selectable
+						"data-index":index
+					},
+					"properties":{
+						"onkeypress":function(e){
+							if (e.keyCode == 32 || e.keyCode == 13) {
+								var index=this.getAttribute("data-index");
+								self.select(index);
+								e.preventDefault();
+							}
+						},
+						"onclick":function(){
+							var index=this.getAttribute("data-index");
+							self.select(index);
+						}
+					},
+					"childs":(child?[child]:[])
+				}));
+			}
+
+			// widget container
+			self.widget=newElement("div", {
+				"class":"noselect",
+				"childs":self.items
+			});
+
+			// selector
+			self.selector=newElement("span", {
+				"class":"widget_selector",
+				"childs":[self.widget]
+			});
+
+			// render
+			gidset(self.o.id, "");
+			gid(self.o.id).appendChild(self.selector);
+
+		};
+
+		// refresh
+		self.refresh();
+
+		// register self
+		xwidgets.widgets[self.o.id]=self;
+
+	},
+
+
+	/*
+
 		xwidgets.hcombo()
 		HTML ComboBox.
+
+		Example:
+
+			var items=[
+				{"id":1,"caption":"Option oen"},
+				{"id":3,"caption":"Option two"},
+				{"id":4,"caption":"Option four (no three)"},
+				{"id":5,"caption":"Option five"},
+				{"id":6,"caption":"Option six"},
+				{"id":7,"caption":"Option seven"},
+				{"id":8,"caption":"Option eight"},
+				{"id":9,"caption":"Option nine"},
+				{"id":10,"caption":"Option ten"}
+			];
+
+			var hcombo=new xwidgets.hcombo({
+				id:"element",
+				items:items,
+				key:"id",
+				render:"caption",
+				empty:"- Select one or more -",
+				multiple:true,
+				index:2,
+				keys:5
+			});
+			//alert(hcombo.index());
+
+			var hcombo=new xwidgets.hcombo({
+				id:"element",
+				items:items,
+				key:"id",
+				caption:function(self, items){
+					if (!items || !array_count(items)) return null;
+					var h="";
+					for (var i in items)
+						h+=(h?", ":"")+items[i].caption;
+					return h;
+				},
+				render:function(self, item, index, selected){
+					return "* <b>"+item.caption+"</b>";
+				},
+				multiple:true,
+				index:[2,3] //values:[4,5]
+			});
+			//alert(hcombo.values());
 
 		Parameters:
 
@@ -195,12 +396,18 @@ var xwidgets={
 			.init()
 				Initialize combobox (called at startup).
 
-		Properties
+		Properties:
 
 			.opened:boolean (readonly)
 				Returns current dropdown state.
 
+		Events:
 
+			onselect(self, item, index)
+				Fires on item selection.
+
+			onclick(self, item, index)
+				Fires on item click. If returns false, cancel item selection.
 
 	*/
 	hcombo:function(o){
@@ -225,7 +432,7 @@ var xwidgets={
 			}
 		};
 
-		// focos searchbox
+		// focus searchbox
 		self.focusSearch=function(){
 			if (self.e.cmb_search) {
 				self.e.cmb_search.select();
@@ -275,7 +482,7 @@ var xwidgets={
 				else self.o.selected[index]=self.o.options[index];
 				item=self.o.selecteditem=(self.o.selected[index]?self.o.selected[index]:false);
 				if (self.o.key) {
-					var lastitem=self.o.options[index];
+					var lastitem=(index > self.o.options.length-1?null:self.o.options[index]);
 					var key=(lastitem === null?"":(self.o.key?lastitem[self.o.key]:index));
 					if (item) {
 						self.o.selectedkeys[key]=item;
@@ -301,7 +508,8 @@ var xwidgets={
 					if (typeof(self.o.editable) == "function") value=self.o.editable(self, item, value);
 					self.e.cmb_input.value=value;
 				}
-				if (self.o.onitemselect) self.o.onitemselect(self, item, index);
+				if (self.o.input) gidval(self.o.input, self.value());
+				if (self.o.onselect) self.o.onselect(self, item, index);
 			}
 			return item;
 		};
@@ -383,7 +591,7 @@ var xwidgets={
 
 		// return first index
 		self.indexFirst=function(){
-			if (self.o.empty) return null;
+			if (self.o.empty && !self.o.del) return null;
 			if (self.e.items) for (var i in self.e.items) if (i !== "null") return parseInt(i);
 			return false;
 		};
@@ -503,7 +711,7 @@ var xwidgets={
 						switch (e.keyCode) {
 						case 13:
 							if (!self.isselected(index)) self.select(index);
-							if (self.o.onitemclick) r=self.o.onitemclick(self, item, index);
+							if (self.o.onclick) r=self.o.onclick(self, item, index);
 							if (!isset(r) || r) {
 								self.focus();
 								self.close();
@@ -512,7 +720,7 @@ var xwidgets={
 
 						case 32:
 							self.select(index);
-							if (self.o.onitemclick) r=self.o.onitemclick(self, item, index);
+							if (self.o.onclick) r=self.o.onclick(self, item, index);
 							if (!isset(r) || r) {
 								if (!self.o.multiple) {
 									self.close();
@@ -531,7 +739,7 @@ var xwidgets={
 						var index=this.getAttribute("data-index");
 						var r=true;
 						self.select(index);
-						if (self.o.onitemclick) r=self.o.onitemclick(self, item, index);
+						if (self.o.onclick) r=self.o.onclick(self, item, index);
 						if (!isset(r) || r) {
 							if (self.o.multiple) {
 								self.focusItem(index);
@@ -672,7 +880,7 @@ var xwidgets={
 			// clear items
 			self.clear();
 			// add empty item (if defined)
-			if (self.o.empty && !self.o.multiple) self.e.empty=self.add(null, null);
+			if (self.o.empty && !self.o.multiple && !self.o.del) self.e.empty=self.add(null, null);
 			// add items from array
 			if (self.o.items) for (index in self.o.items) {
 				var item=self.o.items[index];
@@ -722,10 +930,10 @@ var xwidgets={
 		// refresh combo elements
 		self.refresh=function(){
 
-			// elemento principal
+			// main element
 			if (self.o.editable) {
 
-				// input de caption
+				// caption input
 				self.e.cmb_input=newElement("input", {
 					"class":"cmb_input",
 					"attributes":{
@@ -738,7 +946,7 @@ var xwidgets={
 							classAdd(self.e.cmb_group, "cmb_focus");
 						},
 						"input":function(){
-							// items de combo
+							// combo items
 							if (!self.o.multiple) self.unselect();
 							self.open();
 							self.refreshItems();
@@ -752,12 +960,12 @@ var xwidgets={
 
 			} else {
 
-				// contenedor de caption
+				// caption container
 				self.e.cmb_caption=newElement("span", {
 					"class":"cmb_caption"
 				});
 
-				// contenedor de combo
+				// combo container
 				self.e.cmb_combo=newElement("div", {
 					"class":"cmb_combo",
 					"html":"&nbsp;",
@@ -766,10 +974,8 @@ var xwidgets={
 
 			}
 
-			// elemento principal
+			// search input
 			if (self.o.search) {
-
-				// input de búsqueda
 				self.e.cmb_search=newElement("input", {
 					"class":"cmb_search",
 					"attributes":{
@@ -845,7 +1051,6 @@ var xwidgets={
 						}
 					}
 				});
-
 			}
 
 			// combobox
@@ -921,15 +1126,9 @@ var xwidgets={
 			self.e.actions=[];
 			if (!self.o.actions) self.o.actions=[];
 
-			// add action
-			if (self.o.add) self.o.actions.push(array_merge({
-				"class":"cmd_add",
-				"html":"＋"
-			}, (self.o.add === true?{}:self.o.add)));
-
 			// delete action
 			if (self.o.del) self.o.actions.push(array_merge({
-				"class":"cmd_del",
+				"class":"cmd cmd_del",
 				"html":"⨯",
 				"action":function(self, action, index){
 					self.unselect();
@@ -943,9 +1142,12 @@ var xwidgets={
 			if (self.o.actions) for (var i in self.o.actions) {
 				(function(action, index){
 					var a=array_copy(action);
-					a["class"]="cmd"+(action["class"]?" "+action["class"]:"");
+					a["class"]=(isset(action["class"])?action["class"]:"cmd");
 					delete a["action"];
 					self.e.actions[index]=newElement("button", array_merge({
+						"attributes":{
+							"tabindex":(self.o.tabindex?self.o.tabindex+index+1:0),
+						},
 						"properties":{
 							"onclick":function(){
 								if (action.action) action.action(self, action, index);
@@ -964,7 +1166,7 @@ var xwidgets={
 					+(self.o.class?" "+self.o.class:"")
 				,
 				"attributes":{
-					"tabindex":(self.o.editable?"-1":"0")
+					"tabindex":(self.o.editable?"-1":(self.o.tabindex?self.o.tabindex:"0"))
 				},
 				"events":{
 					"focus":function(e){
@@ -1079,10 +1281,8 @@ var xwidgets={
 			});
 
 			// window/combo resize event
-			if (ResizeObserver) {
-				self.resizeobserver=new ResizeObserver(self.resize).observe(self.e.cmb);
-				window.addEventListener("resize", self.resize);
-			}
+			if (typeof(ResizeObserver) == "function") self.resizeobserver=new ResizeObserver(self.resize).observe(self.e.cmb);
+			if (typeof(window.addEventListener) == "function") window.addEventListener("resize", self.resize);
 
 			// add all to the combo container
 			classAdd(self.o.id, "cmb_container");
@@ -1094,16 +1294,21 @@ var xwidgets={
 
 		};
 
+		// scroll top relative to parent
+		self.parentScrollTop=function(){
+			return (self.o.parent?gid(self.o.parent).scrollTop:scrollTop());
+		};
+
 		// resize event
 		self.resize=function(){
 
-			// datos iniciales
+			// initial setup
 			var maxWidth=(self.o.parent?getLeft(self.o.parent)+getWidth(self.o.parent):windowWidth());
 			var maxHeight=(self.o.parent?getTop(self.o.parent)+getHeight(self.o.parent):windowHeight());
 			if (maxWidth > windowWidth()) maxWidth=windowWidth();
 			if (maxHeight > windowHeight()) maxHeight=windowHeight();
 
-			// alineaciones
+			// calculate best alignment
 			var alignRight, valignTop;
 			switch (self.o.align) {
 			case "left": alignRight=false; break;
@@ -1113,17 +1318,17 @@ var xwidgets={
 			switch (self.o.valign) {
 			case "top": valignTop=true; break;
 			case "bottom": valignTop=false; break;
-			default: valignTop=((getTop(self.o.id) - scrollTop()) > (maxHeight / 2)); // calcular
+			default: valignTop=((getTop(self.o.id) - self.parentScrollTop()) > (maxHeight / 2)); // calcular
 			}
 
-			// establecer alineaciones
+			// set class alignments
 			classEnable(self.o.id, "cmb_align_left",    !alignRight);
 			classEnable(self.o.id, "cmb_align_right",    alignRight);
 			classEnable(self.o.id, "cmb_valign_top",     valignTop);
 			classEnable(self.o.id, "cmb_valign_bottom", !valignTop);
 
-			// establecer dimensiones para optimizar la selección
-			var margin=20;
+			// calculate dimensions to optimize selection
+			var margin=(isset(self.o.margin)?parseInt(self.o.margin):20);
 			var inputWidth=getWidth(self.e.cmb);
 			var inputHeight=getHeight(self.e.cmb);
 			var resultsWidth=(alignRight
@@ -1132,17 +1337,18 @@ var xwidgets={
 			);
 			var resultsHeight=-inputHeight-margin;
 			if (valignTop) {
-				var bigger=(!self.o.parent || scrollTop() > getTop(self.o.parent)?scrollTop():getTop(self.o.parent));
+				var bigger=(!self.o.parent || self.parentScrollTop() > getTop(self.o.parent)?self.parentScrollTop():getTop(self.o.parent));
 				resultsHeight+=(getTop(self.e.cmb)-bigger);
 			} else {
-				resultsHeight+=maxHeight-(getTop(self.e.cmb)-scrollTop());
+				resultsHeight+=maxHeight-(getTop(self.e.cmb)-self.parentScrollTop());
 			}
-			//alert(alignRight+"/"+valignTop+"/"+maxHeight+"/"+resultsHeight);
+
+			// set sizes
 			self.e.cmb_options.style.minWidth=inputWidth+"px";
 			self.e.cmb_options.style.maxWidth =parseInt(resultsWidth  < inputWidth ?inputWidth :resultsWidth )+"px";
-			self.e.cmb_options.style.maxHeight=parseInt(resultsHeight < inputHeight?inputHeight:resultsHeight)+"px";
+			self.e.cmb_options.style.maxHeight=parseInt(resultsHeight < inputHeight?inputHeight*2:resultsHeight)+"px";
 
-			// guardar alineaciones
+			// save alignments
 			self.o.alignRight=alignRight;
 			self.o.valignTop=valignTop;
 
@@ -1231,6 +1437,11 @@ var xwidgets={
 			);
 		};
 
+		// get item
+		self.item=function(){
+			return self.o.selecteditem;
+		};
+
 		// get/set input value or get selected keys/indexes
 		self.value=function(value){
 			if (self.e.cmb_input) {
@@ -1294,18 +1505,11 @@ var xwidgets={
 				},function(r){
 					if (r.data.err) newerror(r.data.err);
 					if (r.data.ok) {
-						/*if (self.o.ajaxdata) {
-							for (index in self.o.ajaxdata.data) {
-								var item=self.o.ajaxdata.data[index];
-								var key=(item === null?"":(self.o.key?item[self.o.key]:index));
-								delete self.o.items[key];
-							}
-						}*/
-						// actualizar datos
+						// update ajax data
 						self.o.ajaxdata=r.data;
-						// actualizar lista
+						// refresh item list
 						self.refreshItems();
-						// si es primera recepción, marcar
+						// if first request, autoselect item
 						if (first_request) self.firstselect();
 					}
 				});
@@ -1321,11 +1525,17 @@ var xwidgets={
 			}
 		};
 
-		// aux: first value selection (called twice)
+		// aux: first item/index/key/value selection (called twice, on refresh and on update)
 		self.firstselect=function(){
-			if (isset(self.o.index)) self.index(self.o.index); else if (!self.o.editable && !self.o.multiple) self.index(0);
-			if (isset(self.o.keys)) self.keys(self.o.keys);
-			if (isset(self.o.value)) self.value(self.o.value);
+			if (self.o.item) {
+				self.o.selecteditem=self.o.item;
+				if (self.o.key) self.o.selectedkeys[self.o.item[self.o.key]]=self.o.item;
+				if (self.e.cmb_caption) gidset(self.e.cmb_caption, self.renderItem(self.o.item));
+			} else {
+				if (isset(self.o.index)) self.index(self.o.index); else if (!self.o.editable && !self.o.multiple) self.index(0);
+				if (isset(self.o.keys)) self.keys(self.o.keys);
+				if (isset(self.o.value)) self.value(self.o.value);
+			}
 		};
 
 		// startup
@@ -1340,8 +1550,10 @@ var xwidgets={
 			self.o.multiple=self.o.multiple || false;
 			self.o.emptyCaption="<div class='cmb_caption_empty'>"+(typeof(self.o.empty) == "string"?self.o.empty:"- Seleccione -")+"</div>";
 			self.refresh();
-			self.update();
+			if (!self.o.item && (isset(self.o.index) || isset(self.o.keys) || isset(self.o.value))) self.update(); // if no item or no index/key/value is provided, no update is needed
+			else self.o.requested=true; // if not, mark as requested, to prevent automatic item selection
 			self.firstselect();
+			// register self
 			xwidgets.widgets[self.o.id]=self;
 		};
 

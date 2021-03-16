@@ -1,7 +1,8 @@
 /*
 
-	newalert: makes modal dialogs using JS/HTML
-	* requires common.js
+	newalert
+	Creates modal dialogs using JS/HTML.
+	* requires: common.js
 	
 	Examples:
 		newalert("Hello world!");
@@ -22,10 +23,10 @@
 				{"caption":"Alternate Close","ico":"images/ico16/cancel.png"}
 			]
 		});
-	
+
 */
 
-if (typeof(_newalert)=="undefined") var _newalert={};
+var _newalert=_newalert || {};
 _newalert.id="newalert_"; // reference id
 _newalert.openWindows=0; // windows counter
 _newalert.mobile=1000; // less than this pixels, is considered mobile
@@ -61,8 +62,14 @@ function newalert_ismobile() {
 	return (windowWidth()<_newalert.mobile); // auto
 }
 
+function newalert_open(id) {
+	return newalerts[id];
+}
+
 function newalert_exec_button(id, i) {
+	var activeElement=document.activeElement
 	newalerts[id].buttons[i].action(id, newalerts[id].buttons[i]);
+	if (activeElement != document.activeElement) newalerts[id].return_focus=false; // prevents action custom focus modification
 }
 
 function newalert_back_close(id, e) {
@@ -115,11 +122,12 @@ function newalert(o) {
 	}
 	if (newalerts[id]) newalert_remove(id, true);
 	newalerts[id]=o;
-	if (buttons==null) buttons=[{"caption":newalert_T("accept")}];
+	if (buttons == null) buttons=[{"caption":newalert_T("accept")}];
 	newalerts[id].backClass=function(){
 		var use_mobile=(!this.nomobile && newalert_ismobile());
 		return (use_mobile?"newalert_mobile":(this.full?"newalert_full":"newalert_desktop"));
 	};
+	newalerts[id].return_focus=document.activeElement;
 	newalerts[id].return_function=o.func;
 	newalerts[id].buttons=[];
 	if (newalerts[id].transition_timer) {
@@ -186,9 +194,9 @@ function newalert(o) {
 							+(buttons[i].ico?"</span>":"")
 						+"</button>"
 					;
-					newalerts[id].buttons=buttons;
 				}
 			}
+			newalerts[id].buttons=buttons;
 			s+"</td></tr>";
 		}
 		s+="</table>";
@@ -202,15 +210,15 @@ function newalert(o) {
 		classAdd(_newalert.id+id,"newalert_container_transition_in");
 	},20);
 	_newalert.openWindows++;
-	// evento resize
+	// resize event
 	if (!isset(_newalert.last_ismobile)) {
 		_newalert.last_ismobile=newalert_ismobile();
 		window.addEventListener("resize", function(){ newalert_resize({"auto":true}); }, false);
 	}
 	newalert_resize({"forced":true});
-	// enfocar primer botón
+	// focus first button
 	try { gid(_newalert.id+id+"_cmd_"+index_default).focus(); } catch(e) {}
-	// devolver información de ventana
+	// return window information
 	return {
 		"id":id,
 		"o":o,
@@ -300,10 +308,12 @@ function newalert_remove(id, notransition) {
 
 function newalert_close(id) {
 	if (!id) var id="";
-	if (newalerts[id] && newalerts[id].onclose)
-		newalerts[id].onclose(id, newalerts[id]);
+	if (newalerts[id]) {
+		try { if (newalerts[id].return_focus) newalerts[id].return_focus.focus(); } catch(e) {};
+		if (newalerts[id].onclose) newalerts[id].onclose(id, newalerts[id]);
+		try { if (newalerts[id].return_function) newalerts[id].return_function(id); } catch(e) {};
+	}
 	newalert_remove(id);
-	try { newalerts["id"].return_function(id); } catch(e) {}
 }
 
 function newwait_close(id) {

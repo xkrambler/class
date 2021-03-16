@@ -291,13 +291,21 @@
 		}
 
 		// formatear un número flotante como X.XXX,DD
-		static function spf($n,$flo=2,$sflo=",",$sdec=".") {
+		static function spf($n, $flo=2, $sflo=",", $sdec=".") {
 			return number_format($n, $flo, $sflo, $sdec);
 		}
-		
+
 		// formatear un número entero como X.XXX
-		static function spd($n,$sflo=",",$sdec=".") {
+		static function spd($n, $sflo=",", $sdec=".") {
 			return number_format($n, 0, $sflo, $sdec);
+		}
+
+		// formatear un número flotante como X.XXX,DD, o bien, X.XXX si no tiene decimales
+		static function spn($n, $flo=2, $sflo=",", $sdec=".") {
+			return (intval($n) == doubleval($n)
+				?self::spd($n, $sflo, $sdec)
+				:self::spf($n, $flo, $sflo, $sdec)
+			);
 		}
 
 		// muestra una tabla de resultados de un array

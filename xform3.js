@@ -149,24 +149,26 @@ function xForm3(o) {
 		var f=a.o.fields[field];
 		if (!f) return null;
 		var id=a.id(field);
-		//if (!gid(id)) alert("xform3: id "+a.id(field)+" not found!");
 		if (f.type) {
 			switch (f.type) {
+			case "files":
+			case "images":
+				return a.filter(field, a.files.value(field));
 			case "date":
+				if (!gid(id)) return null;
 				if (!a.isInputDateSupported()) {
 					if (isset(value)) gidval(id, a.filter(field, sqlDateSP(value)));
 					else return spDateSQL(gidval(id));
 				}
 				if (isset(value)) gidval(id, a.filter(field, value));
 				break;
-			case "files":
-			case "images":
-				return a.filter(field, a.files.value(field));
 			case "html":
 			case "div":
+				if (!gid(id)) return null;
 				if (isset(value)) gidset(id, a.filter(field, value));
 				return a.filter(field, gidget(id));
 			case "checkbox":
+				if (!gid(id)) return null;
 				if (f.values) {
 					if (isset(value)) gid(id).checked=(value==f.values[1]?true:false);
 					return f.values[(gid(id).checked?1:0)];
@@ -174,6 +176,7 @@ function xForm3(o) {
 				if (isset(value)) gid(id).checked=(value?true:false);
 				return gid(id).checked;
 			case "radio":
+				if (!gid(id)) return null;
 				if (isset(value))
 					for (var i=0,e=false;e=gid(id+"-"+i);i++)
 						if ((""+e.value)==(""+value)) e.checked=true;
@@ -182,13 +185,13 @@ function xForm3(o) {
 						return e.value;
 				return null;
 			default:
+				if (!gid(id)) return null;
 				if (isset(value)) gidval(id, a.filter(field, value));
 			}
 			return a.filter(field, a.formValue(id));
 		}
 		return null;
 	};
-
 
 	// obtener/establecer el placeholder de un campo
 	a.placeholder=function(field, placeholder){
@@ -926,10 +929,12 @@ function xForm3(o) {
 			switch (field.type) {
 			case "number":
 			case "text":
-				if (field.integer)  gInputInt(id);
-				if (field.number)   gInputInt(id, true);
-				if (field.positive) gInputFloat(id);
-				if (field.decimal)  gInputFloat(id, true);
+				if (gid(id)) {
+					if (field.integer)  gInputInt(id);
+					if (field.number)   gInputInt(id, true);
+					if (field.positive) gInputFloat(id);
+					if (field.decimal)  gInputFloat(id, true);
+				}
 				break;
 			case "audio":
 				a.audio.init(f);

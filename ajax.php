@@ -37,7 +37,7 @@
 // convertir datos de un parámetro enviado con la librería AJAX
 function aget($data=null) {
 	if ($data === "") return "";
-	$json=(get_magic_quotes_gpc()?stripslashes($data):$data);
+	$json=(doubleval(phpversion()) < 5.4 && get_magic_quotes_gpc()?stripslashes($data):$data);
 	return json_decode($json, true); // siempre es UTF-8
 }
 
@@ -100,27 +100,33 @@ function ajaxws($action, $data, $url=null) {
 }
 
 // petición WebService
-function ws($url, $fields=array(), $options=array()) {
+function ws($url, $fields=null, $options=array()) {
 	// preparar URL si es relativa a la actual
-	if (strpos($url,"://") === false)
-		$url="http".($_SERVER["HTTPS"]?"s":"")."://".$_SERVER["SERVER_NAME"].(substr($url,0,1)=="/"?"":"/").$url;
+	if (strpos($url, "://") === false)
+		$url="http".($_SERVER["HTTPS"]?"s":"")."://".$_SERVER["SERVER_NAME"].(substr($url, 0, 1)=="/"?"":"/").$url;
 	// acciones CURL
 	if (!function_exists("curl_init")) return false;
 	$ch=curl_init();
 	$o=array(
 		CURLOPT_URL=>$url,
-		CURLOPT_POST=>1,
-		CURLOPT_FRESH_CONNECT=>1,
 		CURLOPT_RETURNTRANSFER=>1,
-		CURLOPT_FORBID_REUSE=>1,
-		CURLOPT_POSTFIELDS=>http_build_query($fields),
+		//CURLOPT_FRESH_CONNECT=>1,
+		//CURLOPT_FORBID_REUSE=>1,
 	);
+	if ($fields != null) {
+		$o[CURLOPT_POST]=1;
+		$o[CURLOPT_POSTFIELDS]=(is_array($fields)?http_build_query($fields):$fields);
+	}
 	foreach ($options as $n=>$v)
 		$o[$n]=$v;
 	curl_setopt_array($ch, $o);
 	$r=curl_exec($ch);
+	if ($options[CURLINFO_HEADER_OUT]) {
+		$rinfo=curl_getinfo($ch);
+		$rinfo["content"]=$r;
+	}
 	curl_close($ch);
-	return $r;
+	return ($rinfo?$rinfo:$r);
 }
 
 // envío de datos AJAX

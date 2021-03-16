@@ -12,31 +12,31 @@ html {
 *, *:before, *:after {
 	box-sizing: inherit;
 }
-:focus { outline:none; }
+:focus { outline: none; }
 ::-moz-focus-inner { border: 0; }
-body { margin: 0px; }
-img { border: 0px; vertical-align: middle; }
-hr { border: 0px; height: 0px; margin: 9px 0px; padding: 0px; }
+body { margin: 0; }
+img { border: 0; vertical-align: middle; }
+hr { border: 0; height: 0; margin: 9px 0; padding: 0; }
 label { cursor: pointer; }
-p { margin: 12px 0px; }
-h1 { font-size: 24px; margin: 12px 0px; font-weight: normal; }
-h2 { font-size: 18px; margin: 12px 0px; font-weight: normal; }
-h3 { font-size: 16px; margin: 12px 0px; font-weight: normal; }
-h4 { font-size: 14px; margin: 12px 0px; font-weight: normal; }
-h5 { font-size: 12px; margin: 12px 0px; font-weight: normal; }
-h6 { font-size: 12px; margin: 12px 0px; font-weight: normal; }
+p { margin: 12px 0; }
+h1 { font-size: 24px; margin: 12px 0; font-weight: normal; }
+h2 { font-size: 18px; margin: 12px 0; font-weight: normal; }
+h3 { font-size: 16px; margin: 12px 0; font-weight: normal; }
+h4 { font-size: 14px; margin: 12px 0; font-weight: normal; }
+h5 { font-size: 12px; margin: 12px 0; font-weight: normal; }
+h6 { font-size: 12px; margin: 12px 0; font-weight: normal; }
 .cmd { cursor: pointer; }
 .tdiv { border-collapse: collapse; }
-.tdiv td { padding: 0px; }
+.tdiv td { padding: 0; }
 .pad { padding: 12px; }
 .padh { padding-left: 12px; padding-right: 12px; }
 .padv { padding-top: 12px; padding-bottom: 12px; }
 .mar { margin: 12px; }
 .marh { margin-left: 12px; margin-right: 12px; }
 .marv { margin-top: 12px; margin-bottom: 12px; }
-.nomar { margin: 0px; }
-.nomarv { margin-top: 0px; margin-bottom: 0px; }
-.nomarh { margin-left: 0px; margin-right: 0px; }
+.nomar { margin: 0; }
+.nomarv { margin-top: 0; margin-bottom: 0; }
+.nomarh { margin-left: 0; margin-right: 0; }
 .sangria { margin-left: 16px; }
 .tab1 { margin-left: 16px; }
 .tab2 { margin-left: 32px; }
@@ -95,8 +95,8 @@ h6 { font-size: 12px; margin: 12px 0px; font-weight: normal; }
 .scrollx { overflow-x: scroll; }
 .scrolly { overflow-y: scroll; }
 .scrollxy { overflow: scroll; }
-.template { position: absolute; top: 0px; left: 0px; display: none; float: left; }
-.nolist { list-style-type: none; margin: 0px; padding: 0px; }
+.template { position: absolute; top: 0; left: 0; display: none; float: left; }
+.nolist { list-style-type: none; margin: 0; padding: 0; }
 .aleft { text-align: left; }
 .acenter { text-align: center; }
 .aright { text-align: right; }
@@ -109,17 +109,20 @@ h6 { font-size: 12px; margin: 12px 0px; font-weight: normal; }
 .inline { display: inline; }
 .opacity0 { opacity: 0; }
 .opacity1 { opacity: 1; }
+.flex { display: flex; }
+.full { width: 100%; }
+.fill { flex: 1; }
 .mtable {
-	border: 0px;
-	padding: 0px;
-	margin: 0px;
-	border-spacing: 0px;
+	border: 0;
+	padding: 0;
+	margin: 0;
+	border-spacing: 0;
 	border-collapse: collapse;
 }
 .mtable>tr>th,
 .mtable>tr>td,
 .mtable>*>tr>th,
-.mtable>*>tr>td { margin: 0px; padding: 0px; }
+.mtable>*>tr>td { margin: 0; padding: 0; }
 .noselect {
 	-webkit-touch-callout: none;
 	-webkit-user-select: none;

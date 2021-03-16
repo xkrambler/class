@@ -7,7 +7,6 @@
 	display: block;
 	width: 100%;
 	visibility: hidden;
-	z-index: 10;
 }
 .xslider_prevlink,
 .xslider_nextlink {
@@ -16,10 +15,8 @@
 	top: 0px;
 	bottom: 0px;
 	width: 80px;
-	z-index: 20;
 	background: center center no-repeat;
 	cursor: pointer;
-	z-index: 20;
 	opacity: .1;
 	filter: alpha(opacity=10);
 }

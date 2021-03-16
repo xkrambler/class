@@ -1,14 +1,17 @@
-<?php
+<?php if (!class_exists("TPV")) die();
 
-// TPV CECA
 /*
-	Tarjetas OK:
+
+	Gestión de TPV CECA.
+
+	Tarjetas OK (AAAA=Año en curso):
 		5540500001000004 12/AAAA 989
 		5020470001370055 12/AAAA 989
 		5020080001000006 12/AAAA 989
 		4507670001000009 12/AAAA 989
 	Tarjeta KO:
 		1111111111111111 12/2015 989
+
 */
 class TPVCECA extends TPV {
 
@@ -30,7 +33,9 @@ class TPVCECA extends TPV {
 	}
 
 	// tipo de TPV
-	function type() { return "CECA"; }
+	function type() {
+		return "CECA";
+	}
 
 	// traducir una cantidad al tipo CECA
 	function amountTranslate($amount) {
@@ -92,6 +97,21 @@ class TPVCECA extends TPV {
 		return hash('sha256', $this->setup['ClaveCifrado'].$key);
 	}
 
+	// firma de la cancelacion
+	function getCancelSignature($fields) {
+		return $this->getSignature($fields, array(
+			'MerchantID',
+			'AcquirerBIN',
+			'TerminalID',
+			'Num_operacion',
+			'Importe',
+			'TipoMoneda',
+			'Exponente',
+			'Referencia',
+			'Cifrado', // fijo SHA2
+		));
+	}
+
 	// comprobar firma de la operación
 	function getNotifySignature($fields) {
 		return $this->getSignature($fields, array(
@@ -106,19 +126,9 @@ class TPVCECA extends TPV {
 		));
 	}
 
-	// firma de la cancelacion
-	function getCancelSignature($fields) {
-		return $this->getSignature($fields, array(
-			'MerchantID',
-			'AcquirerBIN',
-			'TerminalID',
-			'Num_operacion',
-			'Importe',
-			'TipoMoneda',
-			'Exponente',
-			'Referencia',
-			'Cifrado', // fijo SHA2
-		));
+	// devolver código de transacción correcta
+	function getSuccess() {
+		return $this->setup["Success"];
 	}
 
 	// comprobar transacción online
@@ -145,11 +155,6 @@ class TPVCECA extends TPV {
 			"referencia"=>$_POST['Referencia'],
 			"firma"=>$_POST['Firma'],
 		);
-	}
-
-	// devolver código de transacción correcta
-	function getSuccess() {
-		return $this->setup["Success"];
 	}
 
 	// cancelar operación

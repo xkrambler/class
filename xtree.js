@@ -1,219 +1,229 @@
-/* xtree class */
-
+/*
+	xtree class 0.1c
+*/
 var xtrees={};
 function xtree(o) {
 	if (!o) return false;
-	var a=this;
-	a.o=o;
-	a.noevents=false;
-	a.id=gid(a.o.id);
-	a.tree=(a.o.tree?a.o.tree:[]);
-	if (typeof(a.tree.expanded)=="undefined") a.tree.expanded=true;
-	a._extra={};
-	a.base=(a.o.base?a.o.base:"images/xtree16/");
-	a.imgs={
-		"empty":"empty.png",
-		"line":"line.png",
-		"minus":"minus.png",
-		"plus":"plus.png",
-		"join":"join.png",
-		"minusbottom":"minusbottom.png",
-		"plusbottom":"plusbottom.png",
-		"joinbottom":"joinbottom.png",
-		"checkbox":"checkbox.png",
-		"checkboxok":"checkboxok.png",
-		"checkboxmed":"checkboxmed.png"
+	var self=this;
+	self.o=o;
+	self.noevents=false;
+	self.id=gid(self.o.id);
+	self.tree=(self.o.tree?self.o.tree:[]);
+	self.data={};
+
+	// return if a route is checked
+	self.checked=function(route, check){
+		self.data[route].node.checked=!check;
+		self.noevents=true;
+		self.swap(route);
+		self.noevents=false;
 	};
-	a.checked=function(route,check){
-		a._extra[route].node.checked=!check;
-		a.noevents=true;
-		a.swap(route);
-		a.noevents=false;
+
+	// get checkbox class by its state
+	self.getCheckboxClass=function(route){
+		var node=self.data[route].node;
+		var partial=self.data[route].partial;
+		var selectable=(typeof(node.selectable) == "undefined"?true:node.selectable);
+		return "xtree_ico"+(selectable?" xtree_clickable":"")+" xtree_ico_"
+			+(selectable
+				?(node.checked
+					?"checked"
+					:(partial
+						?"partial"
+						:"check"
+					)
+				)
+				:(partial
+					?"disabled_partial"
+					:"disabled"
+				)
+			)
+		;
 	};
-	a.swap=function(route){
-		var id="tree_"+a.id.id+"_checkbox_"+route;
-		var e=a._extra[route];
+
+	// get connection class by its state
+	self.getConnectionClass=function(route){
+		var node=self.data[route].node;
+		return ""
+			+"xtree_expcon xtree_ico_"
+			+(node.nodes
+				?(node.expanded
+					?(node.last?"minus":"minusbottom")
+					:(node.last?"plus":"plusbottom")
+				)
+				:(node.last?"join":"joinbottom")
+			)
+			+(node.nodes?"":" xtree_expcon_nodes")
+		;
+	};
+
+	// swap a node
+	self.swap=function(route){
+		var id="tree_"+self.id.id+"_checkbox_"+route;
+		var e=self.data[route];
 		e.node.checked=!e.node.checked;
-		if (gid(id))
-			gid(id).src=a.base+(e.node.checked?a.imgs.checkboxok:(e.partial?a.imgs.checkboxmed:a.imgs.checkbox));
+		if (gid(id)) gid(id).className=self.getCheckboxClass(route);
 		var lp=e.par;
 		if (lp) {
-			for (var j=0;j<e.n;j++) {
-				var id="tree_"+a.id.id+"_checkbox_"+lp.route;
-				var ne=a._extra[lp.route];
-				ne.partial=(ne.partial?ne.partial:0)+(e.node.checked?1:-1);
-				if (gid(id))
-					gid(id).src=a.base+(lp.checked?a.imgs.checkboxok:(ne.partial?a.imgs.checkboxmed:a.imgs.checkbox));
-				lp=a._extra[lp.route].par;
+			for (var j=0; j < e.n; j++) {
+				var id="tree_"+self.id.id+"_checkbox_"+lp.route;
+				var ne=self.data[lp.route];
+				self.data[lp.route].partial=(ne.partial?ne.partial:0)+(e.node.checked?1:-1);
+				if (gid(id)) gid(id).className=self.getCheckboxClass(lp.route);
+				lp=self.data[lp.route].par;
 			}
 		}
-		if (!a.noevents && e.node.onchange) {
-			e.node.onchange(e.node,e,a);
-			a.update();
+		if (!self.noevents && e.node.onchange) {
+			e.node.onchange(e.node, e, self);
+			self.update();
 		}
+		if (self.o.onchange) self.o.onchange(self, route, e.node);
 	};
-	a.expanded=function(route,expand){
-		if (!route) a.expcon();
+
+	// check if a route is expanded
+	self.expanded=function(route, expand){
+		if (!route) self.expcon();
 		else {
-			a._extra[route].node.expanded=!expand;
-			a.expcon(route);
+			self.data[route].node.expanded=!expand;
+			self.expcon(route);
 		}
 	};
-	a.expcon=function(route){
+
+	// expand swap
+	self.expcon=function(route){
 		if (route) {
-			var id="tree_"+a.id.id+"_exp_"+route;
-			var cmd="tree_"+a.id.id+"_expcon_"+route;
-			var e=a._extra[route];
+			var id="tree_"+self.id.id+"_exp_"+route;
+			var cmd="tree_"+self.id.id+"_expcon_"+route;
+			var e=self.data[route];
 			e.node.expanded=!e.node.expanded;
 			if (gid(id)) {
 				if (e.node.expanded) show(id); else hide(id);
-				style(cmd,{"backgroundImage":"url('"+a.base+(e.node.expanded
-					?(e.last?a.imgs.minusbottom:a.imgs.minus)
-					:(e.last?a.imgs.plusbottom:a.imgs.plus)
-				)+"')"});
+				gid(cmd).className=self.getConnectionClass(route);
 			}
 		} else {
-			var recexpand=function(t,expand){
+			var recexpand=function(t, expand){
 				for (var i in t) {
 					if (expand)
 						t[i].expanded=false;
 					else
-						if (t[i].checked || a._extra[t[i].route].partial)
+						if (t[i].checked || self.data[t[i].route].partial)
 							t[i].expanded=true;
 					if (t[i].nodes)
 						recexpand(t[i].nodes,expand);
 				}
 			};
 			var someexpanded=false;
-			for (var i in a.tree.nodes)
-				if (a.tree.nodes[i].expanded)
+			for (var i in self.tree.nodes)
+				if (self.tree.nodes[i].expanded)
 					someexpanded=true;
-			recexpand(a.tree.nodes,someexpanded);
-			a.update();
+			recexpand(self.tree.nodes,someexpanded);
+			self.update();
 		}
 	};
+
 	// evento de click
-	a.onclick=function(route){
+	self.onclick=function(route){
 		var ni=route.substring(1).split(".");
-		var n=a.tree;
+		var n=self.tree;
 		for (var i in ni)
 			n=n.nodes[ni[i]];
-		o.onclick(n,a);
+		o.onclick(n, self);
 	};
+
 	// recursiva de cálculo
-	a.calc=function(p,t,n,r){
-		//if (!this.h) this.h="";
-		if (!n) a._extra={};
-		var nchecked=0;
-		for (var i in t) {
-			var route=r+"."+i;
-			i=parseInt(i);
-			t[i].route=route;
-			a._extra[route]={
-				"route":route,
-				"i":i,
-				"n":n,
-				"last":((i+1)<t.length?false:true),
-				"par":p,
-				"base":t,
-				//"partial":0,
-				"node":t[i]
-			};
-			if (t[i].checked) {
-				var lp=p;
-				for (var j=0;j<n;j++) {
-					//if (!lp.checked) {
-						var e=a._extra[lp.route];
+	self.calc=function(p, t, n, r){
+		if (typeof(self.tree.expanded) == "undefined") self.tree.expanded=true;
+		function rec(p, t, n, r){
+			if (!n) self.data={};
+			var nchecked=0;
+			for (var i in t) {
+				var node=t[i];
+				var route=r+"."+i;
+				var len=t.length-1;
+				i=parseInt(i);
+				node.route=route;
+				self.data[route]={
+					"route":route,
+					"i":i,
+					"n":n,
+					"last":(i < len?false:true),
+					"par":p,
+					"base":t,
+					//"partial":0,
+					"node":node
+				};
+				if (node.checked) {
+					var lp=p;
+					for (var j=0; j<n; j++) {
+						var e=self.data[lp.route];
 						e.partial=(e.partial?e.partial+1:1);
-					//}
-					lp=a._extra[lp.route].par;
+						lp=self.data[lp.route].par;
+					}
+					nchecked++;
 				}
-				nchecked++;
+				if (node.nodes) rec(node, node.nodes, n+1, route);
 			}
-			//this.h+="<div style='padding-left:"+(n*20)+"px;'>"+t[i].caption+" ("+(t[i].nodes?"MAS":"")+")</div>";
-			if (t[i].nodes)
-				a.calc(t[i],t[i].nodes,n+1,route);
-			//this.h+="<div style='padding-left:"+(n*20)+"px;'>"+t[i].caption+" ("+(t[i].nodes?"MAS":"")+")</div>";
-		}
-		//gidset(a.id,this.h);
+		};
+		rec(null, self.tree.nodes, 0, "");
 	};
-	a.recalc=function(){
-		a.calc(null,a.tree.nodes,0,"");
-	};
-	a.update=function(){
-		a.recalc();
-		var h
-			="<div class='xtree'>"
-			+(typeof(a.tree.caption)=="undefined"
-				?""
-				:"<div><img src='"+(a.tree.ico?a.tree.ico:a.base+"tree.png")+"' align='absmiddle' width='16' height='16' alt='' />"
-					+" <a href='javascript:void(xtrees[\""+a.id.id+"\"].expcon())'>"+(a.o.render?a.o.render(a, a.tree):a.tree.caption)+"</a>"
-					+"</div>"
-			);
+
+	// update tree
+	self.update=function(){
+		self.calc();
+		var h=""
+			+"<div class='xtree'>"
+			+(typeof(self.tree.caption) == "undefined"?"":""
+				+"<div>"
+					+"<span class='xtree_ico xtree_ico_tree'></span>"
+					+"<a class='xtree_caption' href='javascript:void(xtrees[\""+self.id.id+"\"].expcon())'>"+(self.o.render?self.o.render(self, self.tree):self.tree.caption)+"</a>"
+				+"</div>"
+			)
+		;
 		// recursiva principal
-		var rec=function(p,t,n,r){
-			h+="<div id='tree_"+a.id.id+"_exp_"+r+"' style='display:"+(p.expanded?"block":"none")+";'>"
+		var rec=function(p, t, n, r){
+			h+="<div id='tree_"+self.id.id+"_exp_"+r+"' class='' style='display:"+(p.expanded?"block":"none")+";'>"
 			h+="<ul>";
 			for (var i in t) {
-				i=parseInt(i);
+				var node=t[i];
 				var route=r+"."+i;
-				if ((i+1)<t.length) {
-					h+="<li class='xtree_li"+(n?" xtree_li_mar":"")+"' style='background:url("+a.base+a.imgs.line+") repeat-y left top;'>";
-				} else {
-					h+="<li class='xtree_li"+(n?" xtree_li_mar":"")+"'>";
-				}
-				var ico=a.base+(
-					t[i].nodes
-					?(
-						t[i].expanded
-						?(i+1<t.length?a.imgs.minus:a.imgs.minusbottom)
-						:(i+1<t.length?a.imgs.plus:a.imgs.plusbottom)
-					)
-					:(i+1<t.length?a.imgs.join:a.imgs.joinbottom)
-				);
-				var expcon_link="javascript:void(xtrees[\""+a.id.id+"\"].expcon(\""+route+"\"));";
-				var checkbox_link="javascript:void(xtrees[\""+a.id.id+"\"].swap(\""+route+"\"));";
-				if (i+1<t.length)
-					h+="<div style='background:url("+a.base+a.imgs.line+") repeat-y left top;'>";
-				h+="<div id='tree_"+a.id.id+"_expcon_"+route+"' style='background:url("+ico+") no-repeat left top;border:0px solid #F0F;"+(t[i].nodes?"":"padding-left:18px;")+"'>";
-				if (t[i].nodes)
-					h+="<img src='"+a.base+a.imgs.empty+"' align='absmiddle' width='16' height='16' class='xtree_clickable' onClick='"+expcon_link+"' />";
-				if (!o.nochecks && (!a.o.checkonlyleafs || (a.o.checkonlyleafs && !t[i].nodes))) {
-					h+="<img id='tree_"+a.id.id+"_checkbox_"+route+"' class='xtree_clickable' src='"+a.base+(
-						t[i].checked
-						?a.imgs.checkboxok
-						:(
-							a._extra[route].partial
-							?a.imgs.checkboxmed
-							:a.imgs.checkbox
-						)
-					)+"' align='absmiddle' width='16' height='16' onClick='"+checkbox_link+"' />";
-				}
-				if (t[i].ico) h+="<img src='"+t[i].ico+"' align='absmiddle' width='16' height='16' />";
-				h+=(o.onclick
-						?"<a href='javascript:xtrees[\""+a.id.id+"\"].onclick(\""+route+"\")'>"
-						:"<a href='"+(t[i].nodes?expcon_link:checkbox_link)+"'>"
-					)+(a.o.render?a.o.render(a, t[i]):t[i].caption)+"</a>"
-				;
-				h+=(t[i].extra?t[i].extra:"");
-				h+="<div style='clear: both;'></div>";
-				h+="</div>";
-				// 'oldDiv = Object.replaceChild(newDiv, oldDiv)';
-				if (i+1<t.length)
+				var len=t.length-1;
+				var selectable=(typeof(node.selectable) == "undefined"?true:node.selectable);
+				i=parseInt(i);
+				h+="<li class='xtree_li"+(i < len?" xtree_ico_line":"")+(n?" xtree_li_mar":"")+"'>";
+				var expcon_link="xtrees[\""+self.id.id+"\"].expcon(\""+route+"\")";
+				var checkbox_link=(selectable?"xtrees[\""+self.id.id+"\"].swap(\""+route+"\")":"");
+				h+="<div class='xtree_item"+(i < len?" xtree_ico_line":"")+"'>";
+					h+="<div id='tree_"+self.id.id+"_expcon_"+route+"' class='"+self.getConnectionClass(route)+"'>";
+					if (node.nodes)
+						h+="<span class='xtree_ico xtree_ico_empty xtree_clickable' onClick='"+expcon_link+"'></span>"
+					if (!o.nochecks && (!self.o.checkonlyleafs || (self.o.checkonlyleafs && !node.nodes)) && (!self.o.checkbox || self.o.checkbox(self, route, node)))
+						h+="<span id='tree_"+self.id.id+"_checkbox_"+route+"' class='"+self.getCheckboxClass(route, node)+"' onClick='"+checkbox_link+";'></span>"
+					if (node.ico) h+="<span class='xtree_ico' style='background-image:url("+node.ico+");'></span>";
+					h+=""
+						+"<a class='xtree_caption' href='javascript:void("+(o.onclick
+							?'xtrees["'+self.id.id+'"].onclick("'+route+'")'
+							:(node.nodes?expcon_link:(checkbox_link?checkbox_link:0))
+						)+");' onkeypress='if(event.keyCode == 32){"+checkbox_link+";return(false);}'>"
+							+(self.o.render?self.o.render(self, node):node.caption)
+						+"</a>"
+					;
+					h+=(node.extra?node.extra:"");
+					h+="<div style='clear: both;'></div>";
 					h+="</div>";
-				if (t[i].nodes)
-					rec(t[i],t[i].nodes,n+1,route);
+				h+="</div>";
+				if (node.nodes) rec(node, node.nodes, n+1, route);
 				h+="</li>";
 			}
 			h+="</ul>";
 			h+="</div>";
 		}
-		rec(a.tree,a.tree.nodes,0,"");
+		rec(self.tree, self.tree.nodes, 0, "");
 		h+="</div>";
-		//h+="<pre>"+adump(a.tree)+"</pre>";
-		gidset(a.id,h);
+		gidset(self.id,h);
 	};
-	a.values=function(newvalues){
+
+	// get/set values
+	self.values=function(newvalues){
 		if (newvalues) {
 			var setvalues=function(t){
 				for (var i in t) {
@@ -221,8 +231,8 @@ function xtree(o) {
 					if (t[i].nodes) setvalues(t[i].nodes);
 				}
 			}
-			setvalues(a.tree.nodes);
-			a.update();
+			setvalues(self.tree.nodes);
+			self.update();
 			return true;
 		} else {
 			var v=[];
@@ -232,51 +242,67 @@ function xtree(o) {
 					if (t[i].nodes) getvalues(t[i].nodes);
 				}
 			};
-			getvalues(a.tree.nodes);
+			getvalues(self.tree.nodes);
 			return v;
 		}
 	};
-	a.deferedupdate=function(){
-		var a2=this;
-		if (a2.timeout)
-			clearTimeout(a2.timeout);
-		a2.timeout=setTimeout(function(){
-			a.update();
-			delete a2.timeout;
-		},1);
-	}
-	a.add=function(route,node){
-		var base=(route?a._extra[route].node:a.tree);
+
+	// defered update
+	self.deferedupdate=function(){
+		var s=this;
+		if (s.timeout) clearTimeout(s.timeout);
+		s.timeout=setTimeout(function(){
+			self.update();
+			delete s.timeout;
+		}, 1);
+	};
+
+	// add node to route
+	self.add=function(route, node){
+		var base=(route?self.data[route].node:self.tree);
 		if (!base.nodes) base.nodes=[];
 		var i=base.nodes.push(node)-1;
-		a.recalc();
-		a.deferedupdate();
+		self.calc();
+		self.deferedupdate();
 		return base.nodes[i].route;
 	};
-	a.del=function(route){
-		if (!a._extra[route]) return false;
-		a._extra[route].base.splice(a._extra[route].i,1);
-		delete a._extra[route];
-		a.deferedupdate();
+
+	// delete node from route
+	self.del=function(route){
+		if (!self.data[route]) return false;
+		self.data[route].base.splice(self.data[route].i,1);
+		delete self.data[route];
+		self.deferedupdate();
 		return true;
 	};
-	a.expandedlevel=function(level,expand){
-		var recexpand=function(t,l){
+
+	// expand selected level
+	self.expandedlevel=function(level, expand){
+		var recexpand=function(t, l){
 			for (var i in t.nodes) {
 				t.nodes[i].expanded=true;
-				if (l<level && t.nodes[i].nodes)
-					recexpand(t.nodes[i],l+1);
+				if (l < level && t.nodes[i].nodes)
+					recexpand(t.nodes[i], l+1);
 			}
 		};
-		recexpand(a.tree,1)
-		a.deferedupdate();
+		recexpand(self.tree, 1)
+		self.deferedupdate();
 	};
-	a.autoexpand=function(){
-		a.expcon();
+
+	// autoexpand
+	self.autoexpand=function(){
+		self.expcon();
 	};
-	if (a.o.values) a.values(a.o.values);
-	if (a.o.expanded) a.expandedlevel(a.o.expanded,true);
-	a.update();
-	if (a.o.autoexpand) a.autoexpand();
-	xtrees[a.id.id]=this;
+
+	// initialize
+	self.init=function(){
+		if (self.o.values) self.values(self.o.values);
+		if (self.o.expanded) self.expandedlevel(self.o.expanded, true);
+		self.update();
+		if (self.o.autoexpand) self.autoexpand();
+	};
+
+	xtrees[self.id.id]=this;
+	self.init();
+
 }
