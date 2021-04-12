@@ -1,14 +1,14 @@
 <?php if (!class_exists("dbbase")) die();
 
 /*
-	Clase PHP de Acceso a MySQL v0.4, desarrollado por Pablo Rodríguez Rey
+	Clase PHP de Acceso a MySQL v0.4, desarrollado por Pablo RodrÃ­guez Rey
 	http://mr.xkr.inertinc.org ~ mr.xkr-at-inertinc.org
 	Bajo licencia de uso libre GPL (http://www.gnu.org/copyleft/gpl.html)
 */
 
 class dbMySQL extends dbbase {
 
-	// información del driver y versión de la clase
+	// informaciÃ³n del driver y versiÃ³n de la clase
 	function driver() { return "MySQL"; }
 	function version() { return 0.4; }
 	function protocol() { return "mysql"; }
@@ -19,10 +19,10 @@ class dbMySQL extends dbbase {
 		if ($this->setup["resource"]) $this->connect();
 	}
 
-	// inicia la conexión con el servidor o reutiliza una conexión existente
+	// inicia la conexiÃ³n con el servidor o reutiliza una conexiÃ³n existente
 	function connect() {
 		$this->clear();
-		if (!function_exists("mysql_connect")) die("ERROR: La librería MySQL no iniciada: Función mysql_pconnect inexistente.");
+		if (!function_exists("mysql_connect")) die("ERROR: La librerÃ­a MySQL no iniciada: FunciÃ³n mysql_connect inexistente.");
 		if (is_resource($this->setup["resource"])) {
 			$this->idcon=$this->setup["resource"];
 			//$this->setup["db"]=$this->database();
@@ -41,7 +41,7 @@ class dbMySQL extends dbbase {
 		return $this->connected;
 	}
 
-	// cierra la conexión con el servidor
+	// cierra la conexiÃ³n con el servidor
 	function close() {
 		$this->clear();
 		if (!$this->idcon>0) return false;
@@ -55,7 +55,7 @@ class dbMySQL extends dbbase {
 		return $this->connect();
 	}
 
-	// información de conexión
+	// informaciÃ³n de conexiÃ³n
 	function ready() {
 		if (!$this->idcon>0) return false;
 		return ($this->ping() && $this->dbselected?true:false);
@@ -80,7 +80,7 @@ class dbMySQL extends dbbase {
 		return false;
 	}
 
-	// selecciona la base de datos con la que trabajará la clase
+	// selecciona la base de datos con la que trabajarÃ¡ la clase
 	function select($database=null) {
 		$this->clear();
 		if (!$this->idcon>0) return false;
@@ -95,7 +95,7 @@ class dbMySQL extends dbbase {
 		return @mysql_ping($this->idcon);
 	}
 
-	// obtiene información sobre la consulta más reciente 
+	// obtiene informaciÃ³n sobre la consulta mÃ¡s reciente 
 	function info() {
 		return @mysql_info($this->idcon);
 	}
@@ -105,23 +105,23 @@ class dbMySQL extends dbbase {
 		return @mysql_stat($this->idcon);
 	}
 
-	// establecer el modo de depuración
+	// establecer el modo de depuraciÃ³n
 	function debug($enabled=null) {
 		parent::debug($enabled);
 		if ($this->idcon) mysql_query("SET SESSION query_cache_type = OFF;", $this->idcon);
 	}
 
-	// iniciar transacción
+	// iniciar transacciÃ³n
 	function begin() {
 		return (mysql_query("BEGIN", $this->idcon)?true:false);
 	}
 
-	// finalizar transacción
+	// finalizar transacciÃ³n
 	function commit() {
 		return (mysql_query("COMMIT", $this->idcon)?true:false);
 	}
 
-	// cancelar transacción
+	// cancelar transacciÃ³n
 	function rollback() {
 		return (mysql_query("ROLLBACK", $this->idcon)?true:false);
 	}
@@ -148,7 +148,7 @@ class dbMySQL extends dbbase {
 			if (!$this->select()) return false;
 			$this->idquery[$querynum]=mysql_query($sqlquery, $this->idcon);
 			$numretries++;
-			// reintentarlo 2 veces más en caso de desconexión
+			// reintentarlo 2 veces mÃ¡s en caso de desconexiÃ³n
 			if ((mysql_errno($this->idcon)==2006 || mysql_errno($this->idcon)==2013) && $numretries<3) {
 				$this->reconnect();
 				$tryagain=true;
@@ -193,7 +193,7 @@ class dbMySQL extends dbbase {
 		return true;
 	}
 
-	// devuelve el número de filas afectadas
+	// devuelve el nÃºmero de filas afectadas
 	function numrows($querynum=null) {
 		$this->clear();
 		if (!$this->idcon>0) return false;
@@ -240,7 +240,7 @@ class dbMySQL extends dbbase {
 		return "`".str_replace("`", "", $t)."`";
 	}
 
-	// devuelve la cadena de versión del servidor
+	// devuelve la cadena de versiÃ³n del servidor
 	function dbversion() {
 		$this->clear();
 		if (!$this->idcon>0) return false;
@@ -249,12 +249,12 @@ class dbMySQL extends dbbase {
 		return $irow[0];
 	}
 
-	// devuelve el último código de error producido en el servidor
+	// devuelve el Ãºltimo cÃ³digo de error producido en el servidor
 	function errnum() {
 		return ($this->real_errnum?$this->real_errnum:mysql_errno($this->idcon));
 	}
 
-	// devuelve el último mensaje de error producido en el servidor
+	// devuelve el Ãºltimo mensaje de error producido en el servidor
 	function error() {
 		return ($this->real_error?$this->real_error:mysql_error($this->idcon));
 	}
