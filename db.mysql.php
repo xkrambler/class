@@ -244,8 +244,8 @@ class dbMySQL extends dbbase {
 	function dbversion() {
 		$this->clear();
 		if (!$this->idcon>0) return false;
-		$this->iidquery=mysql_query("SELECT VERSION()",$this->idcon);
-		$irow=mysql_fetch_array($this->iidquery);
+		if (!($q=mysql_query("SELECT VERSION()",$this->idcon))) return false;
+		$irow=mysql_fetch_array($q);
 		return $irow[0];
 	}
 

@@ -1,107 +1,128 @@
 <?php
 
-// constantes predefinidas
+/*
+
+	PHP fast&tiny class for access Databases, by Pablo Rodríguez Rey (http://mr.xkr.es/)
+	Distributed under the GPL version 2 license (http://www.gnu.org/copyleft/gpl.html)
+
+	@author Pablo Rodríguez Rey
+	@link https://mr.xkr.es/
+	@copyright GPL version 2 (http://www.gnu.org/copyleft/gpl.html)
+	@version 0.2b
+	@updated 2021-04-12
+	@since 2009-05-08
+
+	Global Constants:
+
+		DB_SETUP   If not defined or true, autosetup is enabled for $db_setup.
+		DB_ERRORS  Force show/hide database errores. Otherwise, it will follow "display_errors" PHP configuration.
+
+	Example usage:
+
+		// create instance
+		$db=dbbase::create([
+			"type"=>"mysqli",
+			"host"=>"127.0.0.1",
+			"user"=>"root",
+			"pass"=>"",
+			"db"=>"mysql",
+		]);
+
+		// connect and check if it is ready to query
+		if ($db->connect() && $db->ready()) {
+
+			// query SQL
+			if (!($result=$db->query("SELECT COUNT(*) FROM user"))) $db->err();
+
+			// var_dump rows
+			while ($row=$db->row()) var_dump($row);
+
+			// free memory from last query
+			$db->freequery();
+
+			// disconnect
+			$db->close();
+
+		} else {
+
+			// otherwise, fail
+			$db->err();
+
+		}
+
+*/
+
+// constants
 define("DB_ERR_NONE",     0);
 define("DB_ERR_CONNECT",  1);
 define("DB_ERR_DATABASE", 2);
 define("DB_ERR_CLASS",    3);
 define("DB_ERR_TYPE",     4);
 
-/*
-
-	dbbase. PHP fast&tiny class for access Databases, by Pablo Rodríguez Rey (http://mr.xkr.es/)
-	Distributed under the GPL version 2 license (http://www.gnu.org/copyleft/gpl.html)
-
-	Constantes:
-		DB_SETUP   Si no definida o true, se autoconfiguran las bases de datos
-		DB_ERRORS  Si no definida o true, se detiene con errores
-
-	Ejemplo de uso:
-
-		// crear una instancia de la clase
-		$db=new dbMySQL(array("host"=>"127.0.0.1","user"=>"root","pass"=>"","db"=>"database"));
-
-		// iniciar la conexión con el servidor
-		if (!$db->connect()) $db->err();
-		else {
-
-			// seleccionar la BBDD y realizar una consulta SELECT
-			if (!$db->ready()) $db->err();
-			else if (!$db->query("SELECT * FROM tabla")) $db->err();
-			else {
-
-				// no hay errores, buscar en todas las
-				// filas afectadas por la consulta
-				echo "<html><body><pre>";
-				for ($i=0;$i<$db->numrows();$i++) {
-
-					// mostrar la fila completa
-					echo "<b>Registro número ".$i.":</b><br>";
-					var_dump($db->row());
-
-				}
-
-				// fin de consulta, liberar memoria
-				$db->freequery();
-				echo "</pre></body></html>";
-
-			}
-
-			// cerrar la conexión con el servidor MySQL
-			$db->close();
-
-		}
-
-	@author Pablo Rodríguez Rey
-	@link http://mr.xkr.es/
-	@since 2009-05-08
-	@copyright GPL version 2
-	@version 0.2
-
-*/
+// DBBase: base abstract class to define new database access implementations
 abstract class dbbase {
 
+	protected $setup=array();
 	protected $connected=false;
-	protected $idcon;
-	protected $idquery;
-	protected $lastqueryint;
-	protected $lastqid;
-	protected $lastrow;
-	protected $afrows;
-	protected $iidquery;
-	protected $real_errnum;
-	protected $real_error;
+	protected $idcon=null;
+	protected $idquery=array();
+	protected $lastqueryint=array();
+	protected $lastqid=array();
+	protected $lastrow=null;
+	protected $afrows=array();
+	protected $real_errnum=0;
+	protected $real_error="";
 	protected $field_delimiter="`";
 	protected $lastquerynum=0;
 	protected $dbselected=false;
 	protected $debug=false;
 	protected $sqltimelast=false;
 	protected $sqltimes=array();
-	protected $events;
-	protected $setup=array();
+	protected $events=array();
 
-	// funciones obligatorias
+	// required functions
 	abstract function connect();
 	abstract function close();
 	abstract function ready();
 	abstract function info();
 
-	// devolver texto descriptivo de error para una error de configuración
-	static function dbconfigerror($db, $config) {
-		switch ($config["err"]) {
+	// get/set/isset
+	function __get($n) { return $this->setup[$n]; }
+	function __set($n, $v) { $this->setup[$n]=$v; }
+	function __isset($n) { return isset($this->setup[$n]); }
+
+	// return database class by type
+	static function class($db_type) {
+		return "db".$db_type;
+	}
+
+	// check if library is available by type and return filename if it exists
+	static function lib($db_type) {
+		$lib=__DIR__."/db.".$db_type.".php";
+		return (file_exists($lib)?$lib:false);
+	}
+
+	// create database instance from database setup
+	static function create($db) {
+		if (!($lib=self::lib($db["type"]))) return false;
+		require_once($lib);
+		$dbc=self::class($db["type"]);
+		if (!class_exists($dbc)) return false;
+		return new $dbc($db);
+	}
+
+	// return descriptive error for a database configuration
+	static function dbconfigerror($db, $configerrnum) {
+		switch ($configerrnum) {
 		case DB_ERR_NONE: break;
-		case DB_ERR_CONNECT: return "Error en conexión: ".$db->error();
-		case DB_ERR_DATABASE: return "Base de datos no seleccionada: ".$db->error();
-		case DB_ERR_CLASS: return "Clase ".$config["type"]." no disponible.";
-		case DB_ERR_TYPE: return "Parámetro tipo de base de datos requerido (type).";
-		default: return ($db?"Error: ".$db->error():"No se ha creado objeto.");
+		case DB_ERR_CONNECT: return "Connection error".($db?": ".$db->error():"");
+		case DB_ERR_DATABASE: return "Database not selected".($db?": ".$db->error():"");
+		case DB_ERR_CLASS: return "Class ".$config["type"]." not available.";
+		case DB_ERR_TYPE: return "Type of database required.";
+		default: return ($db?"Error".($db?": ".$db->error():""):"Database object not instanced.");
 		}
 		return "";
 	}
-
-	// setup getter/setter
-	function __get($n) { return $this->setup[$n]; }
-	function __set($n, $v) { $this->setup[$n]=$v; }
 
 	// get/set setup
 	function setup($setup=null) {
@@ -109,47 +130,47 @@ abstract class dbbase {
 		return $this->setup;
 	}
 
-	// is connected?
+	// is database connected?
 	function connected() {
 		return $this->connected;
 	}
 
-	// obtiene/establece una conexión previamente creada
+	// get/set a previously database connection
 	function connection($idcon=null) {
 		if ($idcon !== null) $this->idcon=$idcon;
 		return $this->idcon;
 	}
 
-	// DEPRECATED: obtiene una conexión previamente creada
+	// DEPRECATED: get a previously database connection
 	function getConnection() {
 		return $this->idcon;
 	}
 
-	// DEPRECATED: especifica una conexión previamente creada
+	// DEPRECATED: set a previously database connection
 	function setConnection($idcon) {
 		$this->idcon=$idcon;
 	}
 
-	// información del driver, versión de la clase y protocolo
+	// driver, version and protocol information
 	function driver() { return "Unknown"; }
 	function version() { return 0; }
 	function protocol() { return "none"; }
 
-	// habilitar/deshabilitar depuración
+	// get/set debugging
 	function debug($enabled=null) {
-		if ($enabled!==null) $this->debug=$enabled;
+		if ($enabled !== null) $this->debug=$enabled;
 		return $this->debug;
 	}
 
-	// devolver información de tiempo (en segundos) de la última consulta
+	// return last query timming (in seconds)
 	function timelast() {
 		return $this->sqltimelast;
 	}
 
-	// volcado de tiempos de consulta
+	// dump query times in HTML
 	function timesdump() {
 		?><style>
-			
+
 			.sqltimesdump_head {
 				padding: 4px 9px;
 				background-color: #EEE;
@@ -181,7 +202,7 @@ abstract class dbbase {
 				color: #444;
 				font-weight: normal;
 			}
-			
+
 		</style><?php
 		foreach ($this->sqltimes as $i=>$t) {
 			$ms=round($t["time"]*1000);
@@ -211,7 +232,7 @@ abstract class dbbase {
 		}
 	}
 
-	// devolver la URL de conexión
+	// return database URL
 	function url($hide_password=true) {
 		return strtolower($this->protocol())."://"
 			.$this->setup["user"]
@@ -222,24 +243,24 @@ abstract class dbbase {
 		;
 	}
 
-	// limpiar datos de control
+	// clear error control
 	function clear() {
 		$this->real_errnum=false;
 		$this->real_error=false;
 	}
 
-	// dummy para bases de datos no transaccionales
+	// default behaviour for non-transactional databases
 	function begin() { return true; }
 	function commit() { return true; }
 	function rollback() { return true; }
 
-	// ejecutar consultas SQL transaccionalmente
-	function atomic($array_sql, $querynum=null) {
+	// execute all SQL as a transaction
+	function atomic($sqls, $querynum=null) {
 		if (!$querynum) $querynum="%".$this->lastquerynum;
-		if (is_string($array_sql)) $array_sql=array($array_sql);
+		if (is_string($sqls)) $sqls=array($sqls);
 		if (!$this->begin()) return false;
-		foreach ($array_sql as $sql) {
-			if (!$this->query($sql,$querynum)) {
+		foreach ($sqls as $sql) {
+			if (!$this->query($sql, $querynum)) {
 				$lastqueryint=$this->lastqueryint[$querynum];
 					$real_errnum=$this->errnum();
 					$real_error=$this->error();
@@ -254,101 +275,97 @@ abstract class dbbase {
 		return true;
 	}
 
-	// devuelve un array de filas AJAX
+	// return query as an array
 	function aquery($querynum=null) {
-		if (!$this->idcon>0) return(false);
+		if (!$this->idcon > 0) return false;
 		if (!$querynum) $querynum="%".$this->lastquerynum;
-		$a=Array();
-		for ($i=0;$row=$this->row($querynum);$i++) {
+		$a=array();
+		for ($i=0; $row=$this->row($querynum); $i++)
 			$a[$i]=$row;
-		}
 		$this->freequery();
 		return($a);
 	}
 
-	// devuelve un array asociativo de filas dado un campo clave
+	// return query as an associative array based on a key field
 	function asocquery($fieldkey="id", $querynum=null) {
-		if (!$this->idcon>0) return(false);
+		if (!$this->idcon > 0) return false;
 		if (!$querynum) $querynum="%".$this->lastquerynum;
-		$a=Array();
-		for ($i=0;$row=$this->row($querynum);$i++)
+		$a=array();
+		for ($i=0; $row=$this->row($querynum); $i++)
 			$a[$row[$fieldkey]]=$row;
 		$this->freequery();
 		return($a);
 	}
 
-	// devuelve un array asociativo de filas múltiples dado un campo clave
+	// return query as an associative array of multiple rows based on a key field
 	function asocaquery($fieldkey="id", $querynum=null) {
-		if (!$this->idcon>0) return(false);
+		if (!$this->idcon > 0) return false;
 		if (!$querynum) $querynum="%".$this->lastquerynum;
-		$a=Array();
-		for ($i=0;$row=$this->row($querynum);$i++) {
-			if (!$a[$row[$fieldkey]]) $a[$row[$fieldkey]]=Array();
-			array_push($a[$row[$fieldkey]],$row);
+		$a=array();
+		for ($i=0; $row=$this->row($querynum); $i++) {
+			if (!$a[$row[$fieldkey]]) $a[$row[$fieldkey]]=array();
+			array_push($a[$row[$fieldkey]], $row);
 		}
 		$this->freequery();
 		return($a);
 	}
 
-	// devuelve un hash de filas clave->valor AJAX
+	// return a query as an key->value array
 	function hashquery($k, $v, $querynum=null) {
-		if (!$this->idcon>0) return(false);
+		if (!$this->idcon > 0) return false;
 		if (!$querynum) $querynum="%".$this->lastquerynum;
-		$a=Array();
-		for ($i=0;$row=$this->row($querynum);$i++)
+		$a=array();
+		for ($i=0; $row=$this->row($querynum); $i++)
 			$a[$row[$k]]=$row[$v];
 		$this->freequery();
 		return $a;
 	}
 
-	// provista la fecha y hora, se transforma a notación dd/mm/yyyy hh:mm:ss
-	// provista la fecha, se convierte a notación dd/mm/yyyy
-	// provista la hora, se devuelve de la misma forma, hh:mm:ss
+	// return complete or partial ISO date/date-time as an Spanish notation dd/mm/yyyy [hh:mm:ss]
 	static function spdate($sqldate) {
-		if (strlen($sqldate)==19) return(substr($sqldate,8,2)."/".substr($sqldate,5,2)."/".substr($sqldate,0,4)." ".substr($sqldate,11));
-		if (strlen($sqldate)==16) return(substr($sqldate,8,2)."/".substr($sqldate,5,2)."/".substr($sqldate,0,4)." ".substr($sqldate,11).":00");
-		if (strlen($sqldate)==13) return(substr($sqldate,8,2)."/".substr($sqldate,5,2)."/".substr($sqldate,0,4)." ".substr($sqldate,11).":00:00");
-		if (strlen($sqldate)==10) return(substr($sqldate,8,2)."/".substr($sqldate,5,2)."/".substr($sqldate,0,4));
-		if (strlen($sqldate)==8) return($sqldate);
+		if (strlen($sqldate) == 19) return substr($sqldate, 8, 2)."/".substr($sqldate, 5, 2)."/".substr($sqldate, 0, 4)." ".substr($sqldate, 11);
+		if (strlen($sqldate) == 16) return substr($sqldate, 8, 2)."/".substr($sqldate, 5, 2)."/".substr($sqldate, 0, 4)." ".substr($sqldate, 11).":00";
+		if (strlen($sqldate) == 13) return substr($sqldate, 8, 2)."/".substr($sqldate, 5, 2)."/".substr($sqldate, 0, 4)." ".substr($sqldate, 11).":00:00";
+		if (strlen($sqldate) == 10) return substr($sqldate, 8, 2)."/".substr($sqldate, 5, 2)."/".substr($sqldate, 0, 4);
+		if (strlen($sqldate) == 8) return $sqldate;
 	}
 
-	// provisto la fecha en formato dd/mm/yyyy RESTO se pasa a yyyy-mm-dd RESTO
+	// parses Spanish date-time notation to ISO date[time]
 	static function sqldate($spdate) {
-		if (strlen($spdate)<10) return($spdate);
-		$t=substr($spdate,11);
-		if (strlen($t)==2) $t.=":00:00";
-		if (strlen($t)==5) $t.=":00";
-		return(substr($spdate,6,4)."-".substr($spdate,3,2)."-".substr($spdate,0,2).($t?" ".$t:""));
+		if (strlen($spdate) < 10) return($spdate);
+		$t=substr($spdate, 11);
+		if (strlen($t) == 2) $t.=":00:00";
+		if (strlen($t) == 5) $t.=":00";
+		return substr($spdate, 6, 4)."-".substr($spdate, 3, 2)."-".substr($spdate, 0, 2).($t?" ".$t:"");
 	}
 
-	// devuelve la edad en años transcurrida de una fecha dada
+	// returns age between one date (timestamp/ISO) and other or current date (timestamp)
 	static function sqlage($sqldate, $dateref=null) {
-		if ($dateref===null) $dateref=time();
-		list($Y, $m, $d) = explode("-", substr($sqldate,0,10));
-		return ((date('m',$dateref) - $m) >0 || (date('m',$dateref) - $m) == 0 && (date('d',$dateref) - $d) >= 0) ? (date('Y',$dateref) - $Y) : ((date('Y',$dateref) - $Y) - 1);
+		if ($dateref === null) $dateref=time();
+		list($Y, $m, $d)=(is_numeric($sqldate)?array(date("Y", $sqldate), date("m", $sqldate), date("d", $sqldate)):explode("-", substr($sqldate, 0, 10)));
+		return ((date('m', $dateref)-$m) >0 || (date('m', $dateref)-$m) == 0 && (date('d', $dateref)-$d) >= 0) ? (date('Y', $dateref)-$Y) : ((date('Y', $dateref)-$Y) - 1);
 	}
 
-	// convertir formato de fecha SQL a timestamp
+	// convert ISO date[+time] to UNIX timestamp
 	static function timestamp($sqldate) {
-		if (strlen($sqldate)==10) {
-			$f=explode("-",$sqldate);
-			return(mktime(0,0,0,$f[1],$f[2],$f[0]));
+		if (strlen($sqldate) == 10) {
+			$f=explode("-", $sqldate);
+			return mktime(0, 0, 0, $f[1], $f[2], $f[0]);
+		} else if (strlen($sqldate) == 19) {
+			$f=explode(" ", $sqldate);
+			$h=explode(":", $f[1]);
+			$d=explode("-", $f[0]);
+			return mktime($h[0], $h[1], $h[2], $d[1], $d[2], $d[0]);
 		}
-		if (strlen($sqldate)==19) {
-			$f=explode(" ",$sqldate);
-			$h=explode(":",$f[1]);
-			$f=explode("-",$f[0]);
-			return(mktime($h[0],$h[1],$h[2],$f[1],$f[2],$f[0]));
-		}
-		return(false);
+		return false;
 	}
 
-	// muestra una tabla de resultados de una consulta realizada
+	// dump last/selected query
 	function dump($querynum=null) {
 		return $this->adump($this->aquery($querynum));
 	}
 
-	// muestra una tabla de resultados de una consulta en un array
+	// dump a resultset array as an HTML table
 	function adump($aquery) {
 		?><style>
 			.db_query_results {
@@ -371,7 +388,7 @@ abstract class dbbase {
 		</style>
 		<table class='db_query_results'>
 		<thead><?php
-		foreach ($aquery as $i=>$row) {
+		if ($aquery) foreach ($aquery as $i=>$row) {
 			if (!$i) {
 				echo "<tr>";
 				foreach ($row as $field=>$value)
@@ -389,7 +406,7 @@ abstract class dbbase {
 				case "array":   $s="color:#080;text-align:center;"; break;
 				case "object":  $s="color:#06D;text-align:center;"; break;
 				case "null":
-				case "NULL":  $s="color:#F0F;text-align:center;"; $value="NULL"; break;
+				case "NULL":    $s="color:#F0F;text-align:center;"; $value="NULL"; break;
 				default:        $s="color:#444;text-align:left;"; break;
 				}
 				echo "<td style='".$s."' title='".gettype($value)."'>".$value."</td>\n";
@@ -400,59 +417,62 @@ abstract class dbbase {
 		</table><?php
 	}
 
-	// es keyword? por defecto: false
+	// is a name a keyword? default: false
 	function iskeyword($n) {
 		return false;
 	}
 
-	// devolver valor filtrado de nombre de tabla
+	// escape value, default: return "as is"
+	function escape($v) {
+		return $v;
+	}
+
+	// return escaped table name
 	function sqltable($t) {
 		return $this->escape($t);
 	}
 
-	// devolver valor filtrado de campo
+	// return escaped field name
 	function sqlfield($f) {
 		return $this->escape($f);
 	}
 
-	// devolver campos filtrados
+	// return escaped fields (keys)
 	function sqlfields($fields) {
-		$i=0;
 		$sql="";
-		if ($fields) foreach ($fields as $n=>$v) {
-			$sql.=($i?",":"").$this->sqlfield($n);
-			$i++;
-		}
+		if ($fields)
+			foreach ($fields as $f=>$v)
+				$sql.=($sql?",":"").$this->sqlfield($f);
 		return $sql;
 	}
 
-	// devolver valor filtrado
+	// return escaped value
 	function sqlvalue($value) {
-		return (is_null($value)?"NULL":(is_a($value,'dbrawvalue')?$value->value():"'".$this->escape($value)."'"));
+		return (is_null($value)?"NULL":(is_a($value, 'dbrawvalue')?$value->value():"'".$this->escape($value)."'"));
 	}
 
-	// devolver valores filtrados
-	function sqlvalues($fields) {
+	// return escaped values
+	function sqlvalues($values) {
 		$sql="";
-		if ($fields)
-			foreach ($fields as $n=>$v)
+		if ($values)
+			foreach ($values as $f=>$v)
 				$sql.=($sql?",":"").$this->sqlvalue($v);
 		return $sql;
 	}
 
-	// devolver where
+	// return WHERE as SQL, can provide array of AND fields
 	function sqlwhere($keys) {
 		$sql="";
 		if (is_array($keys)) {
-			foreach ($keys as $n=>$v)
-				$sql.=($sql?" AND ":"").$this->sqlfield($n).(is_null($v)?" IS NULL":"=".$this->sqlvalue($v));
-		} else if (strlen($keys)) {
+			foreach ($keys as $f=>$v)
+				$sql.=($sql?" AND ":"").$this->sqlfield($f).(is_null($v)?" IS NULL":"=".$this->sqlvalue($v));
+		} else if (is_string($keys)) {
 			$sql.=$keys;
 		}
 		return $sql;
 	}
 
-	// crea una sentencia SQL de inserción
+	// return SQL INSERT INTO table sentence
 	function sqlinsert($table, $fields) {
 		if (!is_string($fields) && !is_array($fields)) return false;
 		return "INSERT INTO ".$this->sqltable($table)
@@ -463,7 +483,7 @@ abstract class dbbase {
 		;
 	}
 
-	// crea una sentencia SQL de reemplazo
+	// return SQL REPLACE INTO table sentence
 	function sqlreplace($table, $fields) {
 		if (!is_string($fields) && !is_array($fields)) return false;
 		return "REPLACE INTO ".$this->sqltable($table)
@@ -474,12 +494,12 @@ abstract class dbbase {
 		;
 	}
 
-	// crea una sentencia SQL de actualización
+	// return SQL UPDATE table sentence
 	function sqlupdate($table, $fields, $keys=null) {
 		$sql="";
 		if (is_array($fields)) {
-			foreach ($fields as $n=>$v)
-				$sql.=($sql?",":"").$this->sqlfield($n)."=".$this->sqlvalue($v);
+			foreach ($fields as $f=>$v)
+				$sql.=($sql?",":"").$this->sqlfield($f)."=".$this->sqlvalue($v);
 		} else {
 			$sql=$fields;
 		}
@@ -487,14 +507,14 @@ abstract class dbbase {
 		return "UPDATE ".$this->sqltable($table)." SET ".$sql;
 	}
 
-	// crea una sentencia SQL de eliminación
+	// return SQL DELETE table sentence
 	function sqldelete($table, $keys=null) {
 		$sql="DELETE FROM ".$this->sqltable($table);
 		if ($where=$this->sqlwhere($keys)) $sql.=" WHERE ".$where;
 		return $sql;
 	}
 
-	// búsqueda por palabras en campos (busqueda total o parcial)
+	// search by words in such fields (partial/total)
 	function sqlwordsearch($search, $fields, $total=false) {
 		$sql="";
 		if ($fields && strlen($search)) {
@@ -509,7 +529,7 @@ abstract class dbbase {
 		return $sql;
 	}
 
-	// devuelve una lista de valores filtrados y separados por comas para ser usado en cláusula IN
+	// return a list of values escaped or by field key to be used for "IN" clause
 	function sqlin($values, $field=null) {
 		$in="";
 		if ($values) {
@@ -524,18 +544,18 @@ abstract class dbbase {
 		return (strlen($in)?$in:"NULL");
 	}
 
-	// establecer/devolver evento de error
+	// get/set error action events
 	function event($event, $action=null) {
-		if ($action===null) return $this->events[$event];
+		if ($action === null) return $this->events[$event];
 		$this->events[$event]=$action;
 	}
 
-	// muestra un mensaje de error dependiendo del medio (librería VeryTinyAJAX)
+	// dump error message depending of current output media
 	function err($querynum=null, $doexit=1) {
 		global $ajax;
-		// si hay manejador de errores, llamar
+		// if error handler, call it
 		if ($this->events["error"]) {
-			$this->events["error"](Array(
+			$this->events["error"](array(
 				"db"=>$this,
 				"ajax"=>$ajax,
 				"doexit"=>$doexit,
@@ -546,15 +566,16 @@ abstract class dbbase {
 				"lastquerynum"=>$this->lastquerynum,
 				"lastquery"=>$this->lastquery($querynum),
 			));
-			if ($doexit) exit($doexit);
 		} else {
-			// acciones para mostrar error por defecto
+			// default error output handlers
 			if ($ajax) $this->aerr($querynum, $doexit);
 			else $this->herr($querynum, $doexit);
 		}
+		// ensure exit with code, if defined
+		if ($doexit) exit($doexit);
 	}
 
-	// devolver error en formato HTML
+	// HTML error output handler
 	function herr($querynum=null, $doexit=1) {
 		if (!$querynum) $querynum="%".$this->lastquerynum;
 		$num=$this->errnum();
@@ -572,75 +593,65 @@ abstract class dbbase {
 		if ($doexit) exit($doexit);
 	}
 
-	// muestra un mensaje de error en texto plano
+	// plain text error output handler
 	function perr($querynum=null,$doexit=1) {
 		if (!$querynum) $querynum="%".$this->lastquerynum;
 		echo $this->driver()." error ".$this->errnum().": ".$this->error().($this->lastquery($querynum)?"\n * last query: ".$this->lastquery($querynum):"")."\n";
 		if ($doexit) exit($doexit);
 	}
 
-	// devolver error en formato AJAX (librería VeryTinyAJAX2)
+	// AJAX/JSON error output handler (using library VeryTinyAJAX2 if defined)
 	function aerr($querynum=null,$doexit=1) {
 		if (!$querynum) $querynum="%".$this->lastquerynum;
-		ajax(Array("err"=>"Error al realizar petición a la base de datos:"
+		$out=array("err"=>"Error al realizar petición a la base de datos:"
 			."\n\n"."db(".$this->driver().") Error ".$this->errnum().":\n".$this->error()
-			."\n\n"."Consulta(".$querynum."): ".$this->lastquery($querynum)));
+			."\n\n"."Consulta(".$querynum."): ".$this->lastquery($querynum));
+		if (function_exists("ajax")) ajax($out);
+		echo json_encode($out);
 		if ($doexit) exit($doexit); // nunca se ejecuta con ajax()
 	}
 
-	// devuelve la última consulta ejecutada en el servidor
+	// return SQL of the last query
 	function lastquery($querynum=null) {
 		if (!$querynum) $querynum="%".$this->lastquerynum;
-		return($this->lastqueryint[$querynum]);
+		return $this->lastqueryint[$querynum];
 	}
 
-	// devuelve el número de id insertado
+	// return identifier of the last query
 	function lastid($querynum=null) {
 		if (!$querynum) $querynum="%".$this->lastquerynum;
-		return($this->lastqid[$querynum]);
+		return $this->lastqid[$querynum];
 	}
 
-	// delimitador de campos
-	function fielddelimiter($n=null) {
-		if ($n===null) return $this->field_delimiter;
-		else $this->field_delimiter=$n;
+	// get/set field delimiter
+	function fielddelimiter($d=null) {
+		if ($d !== null) $this->field_delimiter=$d;
+		return $this->field_delimiter;
 	}
 
-	// devolver una cadena con información sobre la base de datos
+	// return class information as string
 	function __toString() {
 		return "(".get_class($this).") ".$this->url()." - ".($this->connected()?($this->ready()?"Ready for Query":"Ready for Database Selection"):"Connect pending");
 	}
 
 }
 
-/*
-
-	DB query result set.
-	Distributed under the GPL version 2 license (http://www.gnu.org/copyleft/gpl.html)
-
-	@author Pablo Rodríguez Rey
-	@link http://mr.xkr.es/
-	@since 2009-05-08
-	@copyright GPL version 2
-	@version 0.2
-
-*/
+// DBResult: class definition for a returned result
 class dbresult {
 
-	protected $db;
 	public $result;
+	protected $db;
 
 	function __construct($db, $result) {
 		$this->db=$db;
 		$this->result=$result;
 	}
-	function __destruct() {}
 	function dump() { return $this->db->dump($this->result); }
 	function freequery() { return $this->db->freequery($this->result); }
 	function row() { return $this->db->row($this->result); }
 	function numrows() { return $this->db->numrows($this->result); }
 	function field($field="") { return $this->db->field($field, $this->result); }
-	function atomic($array_sql) { return $this->db->atomic($array_sql, $this->result); }
+	function atomic($sqls) { return $this->db->atomic($sqls, $this->result); }
 	function aquery() { return $this->db->aquery($this->result); }
 	function asocquery($fieldkey="id") { return $this->db->asocquery($fieldkey, $this->result); }
 	function asocaquery($fieldkey="id") { return $this->db->asocaquery($fieldkey, $this->result); }
@@ -656,50 +667,41 @@ class dbresult {
 
 }
 
-/*
-
-	DB RAW value
-	Distributed under the GPL version 2 license (http://www.gnu.org/copyleft/gpl.html)
-
-	@author Pablo Rodríguez Rey
-	@link http://mr.xkr.es/
-	@since 2009-05-08
-	@copyright GPL version 2
-	@version 0.2
-
-*/
+// DBRAWValue: class to define unescaped values like functions
 class dbrawvalue {
+
 	protected $value;
+
 	function __construct($value) {
 		$this->value=$value;
 	}
+
 	function value($value=null) {
-		if ($value===null) return $this->value;
+		if ($value === null) return $this->value;
 		$this->value=$value;
 	}
+
 	function __toString(){
 		return $this->value;
 	}
+
 }
 
-// asignar ficheros de clase
+// DEPRECATED: if db_setup defined, fill values
 if (@$db_setup) foreach ($db_setup as $db_name=>&$db_config) {
-	$db_config["class"]="db".$db_config["type"];
-	$db_config["lib"]=__DIR__."/"."db.".$db_config["type"].".php";
+	$db_config["class"]=dbbase::class($db_config["type"]);
+	$db_config["lib"]=dbbase::lib($db_config["type"]);
 } unset($db_config);
 
-// si hay alguna configuración predefinida, cargarla
-if (@$db_setup && (!defined("DB_SETUP") || DB_SETUP)) {
+// if any database setup defined...
+if ((!defined("DB_SETUP") || DB_SETUP) && @$db_setup) {
 
-	// crear todas las instancias configuradas
+	// ...create all defined databases
 	foreach ($db_setup as $db_name=>&$db_config) if ($db_config) {
 		if ($db_config["type"]) {
-			if (file_exists($db_config["lib"])) {
-				require_once($db_config["lib"]);
-				$_db_class=$db_config["class"];
-				$$db_name=new $_db_class($db_config);
-				unset($_db_class);
-				if (isset($$db_name) && (!isset($db_config["connect"]) || $db_config["connect"])) {
+			if (dbbase::lib($db_config["type"])) {
+				$$db_name=dbbase::create($db_config);
+				if ($$db_name && (!isset($db_config["connect"]) || $db_config["connect"])) {
 					$$db_name->connect();
 					$db_config["err"]=(isset($$db_name)?($$db_name->ready()?DB_ERR_NONE:DB_ERR_CONNECT):DB_ERR_CLASS);
 				}
@@ -712,18 +714,18 @@ if (@$db_setup && (!defined("DB_SETUP") || DB_SETUP)) {
 		if ($db_config["err"]) $db_errors=true;
 	} unset($db_config);
 
-	// si ha ocurrido algún error, mostrar información de errores y detener proceso
-	if ($db_errors && (!defined("DB_ERRORS") || DB_ERRORS)) {
+	// if any error occurred, display errors and stop process (if display_errors or DB_ERRORS enabled)
+	if ((!defined("DB_ERRORS") || DB_ERRORS || (!defined("DB_ERRORS") && ini_get("display_errors"))) && $db_errors) {
 		$_ishtml=true;
 		foreach (headers_list() as $_h)
-			if (strtolower(substr($_h, 0, 24))=="content-type: text/plain") {
+			if (strtolower(substr($_h, 0, 24)) == "content-type: text/plain") {
 				$_ishtml=false;
 				break;
 			}
 		unset($_h);
 		foreach ($db_setup as $db_name=>$db_config) if ($db_config["err"]) {
-			$db_url=($db_name && $$db_name?$$db_name->url():"");
-			$_err='$'.$db_name."[".$db_config["type"]."](".$db_url."): ".dbbase::dbconfigerror($$db_name, $db_config);
+			$db_url=($db_name && $$db_name?$$db_name->url():$db_config["type"]);
+			$_err='$'.$db_name."(".$db_url."): ".dbbase::dbconfigerror($$db_name, $db_config["err"]);
 			if (function_exists("perror")) perror($_err);
 			else echo $_err.($_ishtml?"<br />":"\n");
 			exit;

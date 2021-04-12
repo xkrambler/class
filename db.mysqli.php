@@ -75,8 +75,8 @@ class dbMySQLi extends dbbase {
 	function database() {
 		$this->clear();
 		if (!$this->idcon) return false;
-		if ($r=$this->idcon->query("SELECT DATABASE()"))
-			if ($r=$r->fetch_array())
+		if ($q=$this->idcon->query("SELECT DATABASE()"))
+			if ($r=$q->fetch_array())
 				return $r[0];
 		return false;
 	}
@@ -160,7 +160,7 @@ class dbMySQLi extends dbbase {
 			} else {
 				// sync query
 				if (!$this->selectedcheck()) return false;
-				$result=@$this->idcon->query($sqlquery);
+				$result=$this->idcon->query($sqlquery);
 			}
 			if ($result || ($this->idcon->errno!=2006 && $this->idcon->errno!=2013)) break;
 			if (!$this->reconnect()) return false;
@@ -416,8 +416,8 @@ class dbMySQLi extends dbbase {
 	function dbversion() {
 		$this->clear();
 		if (!$this->idcon) return false;
-		if (!$this->iidquery=$this->idcon->query("SELECT VERSION()")) return false;
-		$irow=$this->iidquery->fetch_array();
+		if (!$q=$this->idcon->query("SELECT VERSION()")) return false;
+		$irow=$q->fetch_array();
 		return $irow[0];
 	}
 

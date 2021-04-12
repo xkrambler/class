@@ -144,8 +144,8 @@ class dbPgSQL extends dbbase {
 	// devuelve la cadena de versión del servidor
 	function dbversion() {
 		if (!($this->idcon > 0)) return "";
-		$this->iidquery=db_query("SELECT VERSION()",$this->idcon);
-		$irow=db_fetch_array($this->iidquery);
+		if (!($q=db_query("SELECT VERSION()", $this->idcon))) return false;
+		$irow=db_fetch_array($q);
 		return $irow[0];
 	}
 
