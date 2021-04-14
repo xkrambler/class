@@ -162,7 +162,7 @@ class dbORACLE extends dbbase {
 	}
 
 	// devuelve una cadena transformada para su uso en querys
-	static function escape($s) {
+	function escape($s) {
 		$s=str_replace("\n","'||chr(10)||'",str_replace("'","''",$s));
 		return $s;
 	}
