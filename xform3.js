@@ -131,11 +131,16 @@ function xForm3(o) {
 		}
 	};
 
+	// return null if empty value
+	a.nullifempty=function(value){
+		return (value === ""?null:value);
+	};
+
 	// filtrar valor
 	a.filter=function(field, value){
 		var f=a.o.fields[field];
 		if (f) {
-			if (f.nullifempty && value==="") return null;
+			if (f.nullifempty) value=a.nullifempty(value);
 			if (f.integer)  value=(value?parseInt(value):0);
 			if (f.number)   value=(value?parseInt(value):0);
 			if (f.positive) value=(value?Math.abs(parseFloat(value)):0);
@@ -154,14 +159,6 @@ function xForm3(o) {
 			case "files":
 			case "images":
 				return a.filter(field, a.files.value(field));
-			case "date":
-				if (!gid(id)) return null;
-				if (!a.isInputDateSupported()) {
-					if (isset(value)) gidval(id, a.filter(field, sqlDateSP(value)));
-					else return spDateSQL(gidval(id));
-				}
-				if (isset(value)) gidval(id, a.filter(field, value));
-				break;
 			case "html":
 			case "div":
 				if (!gid(id)) return null;
@@ -184,6 +181,25 @@ function xForm3(o) {
 					if (e.checked)
 						return e.value;
 				return null;
+			case "date":
+				if (!gid(id)) return null;
+				if (!a.isInputDateSupported()) {
+					if (isset(value)) gidval(id, a.filter(field, sqlDateSP(value)));
+					else return spDateSQL(gidval(id));
+				}
+				if (isset(value)) gidval(id, a.filter(field, value));
+				return a.nullifempty(value);
+			case "datetime":
+				if (!gid(id+":d") || !gid(id+":t")) return null;
+				if (isset(value)) {
+					if (typeof(value) != "string") value="";
+					gidval(id+":d", value.substring(0, 10));
+					gidval(id+":t", value.substring(11, 16));
+				}
+				var d=gidval(id+":d"); if (d.length != 10) d="";
+				var t=gidval(id+":t"); if (t.length != 5) t="";
+				return a.nullifempty(a.filter(field, trim(d && t?d+" "+t+":00":"")));
+			case "time":
 			default:
 				if (!gid(id)) return null;
 				if (isset(value)) gidval(id, a.filter(field, value));
@@ -198,6 +214,7 @@ function xForm3(o) {
 		var f=a.o.fields[field];
 		if (!f) return null;
 		var id=a.id(field);
+		alert(adump(f));
 		if (!gid(id)) alert("xform3: id "+a.id(field)+" not found!");
 		gid(id).setAttribute("placeholder", placeholder);
 		return null;
@@ -927,6 +944,10 @@ function xForm3(o) {
 				for (var n in o.set[f])
 					a.set(f, n, o.set[f][n]);
 			switch (field.type) {
+			case "datetime":
+// *****************
+				break;
+
 			case "number":
 			case "text":
 				if (gid(id)) {

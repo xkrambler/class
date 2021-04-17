@@ -149,7 +149,7 @@ class xForm3 {
 	}
 
 	// obtener estilos
-	function styles($field) {
+	function styles($field, $prefix="") {
 		$f=$this->fields[$field];
 		$s=($f["style"]?$f["style"].";":"");
 		foreach ($ops=array(
@@ -157,7 +157,8 @@ class xForm3 {
 			"height","min-height","max-height",
 			"color","background","background-color","background-url",
 		) as $op)
-			if ($f[$op]) $s.=$op.":".$f[$op].";";
+			if ($v=$f[$prefix.$op])
+				$s.=$op.":".$v.";";
 		return $s;
 	}
 
@@ -309,7 +310,8 @@ class xForm3 {
 		case "number": return doubleval($value);
 		case "positive": return abs(doubleval($value));
 		case "decimal": return doubleval($value);
-		case "datetime": return $this->spdate($value);
+		//case "datetime": return $this->spdate($value);
+		case "datetime": return $value;
 		default: return $value;
 		}
 	}
@@ -319,7 +321,7 @@ class xForm3 {
 		$field=$this->fields[$f];
 		if ($field["nullifempty"] && !strlen($value)) return null;
 		switch ($field["type"]) {
-		case "datetime": return $this->sqldate($value);
+		//case "datetime": return $this->sqldate($value);
 		default: return $value;
 		}
 	}
@@ -597,23 +599,43 @@ class xForm3 {
 			;
 
 		case "datetime":
-			$length=($f["precise"]?19:16);
+			//$length=($f["precise"]?19:16);
+			$styles_date=$this->styles($field, "date:");
+			$styles_time=$this->styles($field, "time:");
 			return "<input"
-				." id='".$id."'"
-				." name='".$name."'"
+				." id='".$id.":d'"
+				." name='".$name.":d'"
 				." class='".$class."'"
-				." type='".$f["type"]."'"
-				." value='".$this->entities(substr($f["value"],0,$length))."'"
-				." maxlength='".$length."'"
-				." size='".$length."'"
-				." data-mask='00/00/0000 00:00".($f["precise"]?":00":"")."'"
+				." type='date'"
+				." value='".$this->entities(substr($f["value"], 0, 10))."'"
+				." maxlength='10'"
+				.($f["date:min"]?" min='".$f["date:min"]."'":"")
+				.($f["date:max"]?" max='".$f["date:max"]."'":"")
+				.($f["date:step"]?" step='".$f["date:step"]."'":"")
 				.($f["disabled"]?" disabled":"")
 				.($f["readonly"]?" readonly":"")
 				.($f["title"]?" title='".$this->entities($f["title"])."'":"")
-				.($f["placeholder"]?" placeholder='".$this->entities($f["placeholder"])."'":" placeholder='dd/mm/yyyy hh:mm".($f["precise"]?":ss":"")."'")
+				.($f["placeholder"]?" placeholder='".$this->entities($f["placeholder"])."'":" placeholder='dd/mm/yyyy'")
 				.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
 				.(isset($f["autocomplete"])?" autocomplete='".($f["autocomplete"]?"on":"off")."'":"")
-				.($styles?" style='".$styles."'":"")
+				.($styles || $styles_date?" style='".$styles.$styles_date."'":"")
+				.$f["extra"]
+				." /> <input"
+				." id='".$id.":t'"
+				." name='".$name.":t'"
+				." class='".$class."'"
+				." type='time'"
+				." value='".$this->entities(substr($f["value"], 11, 5))."'"
+				.($f["time:min"]?" min='".$f["time:min"]."'":"")
+				.($f["time:max"]?" max='".$f["time:max"]."'":"")
+				.($f["time:step"]?" step='".$f["time:step"]."'":"")
+				.($f["disabled"]?" disabled":"")
+				.($f["readonly"]?" readonly":"")
+				.($f["title"]?" title='".$this->entities($f["title"])."'":"")
+				.($f["placeholder"]?" placeholder='".$this->entities($f["placeholder"])."'":" placeholder='hh:mm".($f["precise"]?":ss":"")."'")
+				.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
+				.(isset($f["autocomplete"])?" autocomplete='".($f["autocomplete"]?"on":"off")."'":"")
+				.($styles || $styles_time?" style='".$styles.$styles_time."'":"")
 				.$f["extra"]
 				." />"
 			;
@@ -627,8 +649,9 @@ class xForm3 {
 				." type='".$f["type"]."'"
 				." value='".$this->entities(substr($f["value"],0,$length))."'"
 				." maxlength='".$length."'"
-				." size='".$length."'"
-				." data-mask='00/00/0000'"
+				.($f["min"]?" min='".$f["min"]."'":"")
+				.($f["max"]?" max='".$f["max"]."'":"")
+				.($f["step"]?" step='".$f["step"]."'":"")
 				.($f["disabled"]?" disabled":"")
 				.($f["readonly"]?" readonly":"")
 				.($f["title"]?" title='".$this->entities($f["title"])."'":"")
@@ -640,6 +663,31 @@ class xForm3 {
 				." />"
 			;
 
+		case "time":
+			$length=5;
+			return "<input"
+				." id='".$id."'"
+				." name='".$name."'"
+				." class='".$class."'"
+				." type='".$f["type"]."'"
+				." value='".$this->entities(substr($f["value"], 0, $length))."'"
+				." maxlength='".$length."'"
+				.($f["min"]?" min='".$f["min"]."'":"")
+				.($f["max"]?" max='".$f["max"]."'":"")
+				.($f["step"]?" step='".$f["step"]."'":"")
+				.($f["disabled"]?" disabled":"")
+				.($f["readonly"]?" readonly":"")
+				.($f["title"]?" title='".$this->entities($f["title"])."'":"")
+				.($f["placeholder"]?" placeholder='".$this->entities($f["placeholder"])."'":" placeholder='hh:mm'")
+				.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
+				.(isset($f["autocomplete"])?" autocomplete='".($f["autocomplete"]?"on":"off")."'":"")
+				.($styles?" style='".$styles."'":"")
+				.$f["extra"]
+				." />"
+			;
+
+		case "url":
+		case "email":
 		case "number":
 		case "text":
 			if ($f["datalist"]) {
