@@ -49,7 +49,7 @@
 		function fields($fields=null) {
 			if ($fields!==null) {
 				$i=0;
-				foreach ($fields as $j=>$v) {
+				foreach ($fields as $j=>$v) if ($v) {
 					if (!$i) $is_hash=$j;
 					$searchfields[$i++]=($is_hash?$j:$v);
 				}
