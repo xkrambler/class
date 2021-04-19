@@ -27,7 +27,7 @@ if ($_b=x::inc()) foreach ($_b as $_c) {
 	if (file_exists($_f.$_c.".js")) $_js[$_c.".js"]=false;
 }
 
-// general autoloads
+// kernel autoloads
 if (file_exists("kernel.css") && !isset($css["kernel.css"])) $_css["kernel.css"]=false;
 if (file_exists("kernel.js") && !isset($js["kernel.js"])) $_js["kernel.js"]=false;
 
@@ -55,8 +55,10 @@ foreach ($_e=array("css", "js") as $_i) {
 				$_b.=($_b?"|":"").substr($_n, 0, -strlen($_i)-1);
 	if ($_b) {
 		if ($page["crypt"]) $_b=$_pc->encrypt($_b);
-		if ($page["relative"]) $page[$_i]=array(x::alink(array($_i=>$_b))=>false);
-		else $page[$_i]=array("?".$_i."=".$_b=>false);
+		$page[$_i]=($page["relative"]
+			?array(x::alink(array($_i=>$_b))=>false)
+			:array(x::link([$_i=>$_b], "")=>false)
+		);
 	}
 	foreach ($$_t as $_n=>$_v) if ($_v) $page[$_i][$_n]=$_v;
 	unset($$_t);
