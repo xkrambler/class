@@ -188,7 +188,7 @@ function xForm3(o) {
 					else return spDateSQL(gidval(id));
 				}
 				if (isset(value)) gidval(id, a.filter(field, value));
-				return a.nullifempty(value);
+				return a.nullifempty(gidval(id));
 			case "datetime":
 				if (!gid(id+":d") || !gid(id+":t")) return null;
 				if (isset(value)) {
