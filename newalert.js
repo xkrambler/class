@@ -1,6 +1,6 @@
 /*
 
-	newalert
+	newalert 0.1
 	Creates modal dialogs using JS/HTML.
 	* requires: common.js
 	
@@ -13,9 +13,9 @@
 			"title":"Modal Dialog",
 			"msg":"This is an example dialog",
 			"buttons":[
-				{"caption":"Simple Wait Test","ico":"images/ico16/clock.png","action":function(){
+				{"caption":"Simple Wait Test","ico":"images/ico16/clock.png","action":function(newalert_id){
 					newsimplewait();
-					setTimeout(function(){ newwait_close(); },1000);
+					setTimeout(function(){ newwait_close(newalert_id); },1000);
 				}},
 				{"caption":"OK","ico":"images/ico16/ok.png","action":function(id, o){ newok("Test OK Dialog"); }},
 				{"caption":"ERROR","ico":"images/ico16/error.png","action":function(id, o){ newerror("Test Error Dialog"); }},
@@ -26,23 +26,22 @@
 
 */
 
-var _newalert=_newalert || {};
-_newalert.id="newalert_"; // reference id
-_newalert.openWindows=0; // windows counter
-_newalert.mobile=1000; // less than this pixels, is considered mobile
+var _newalert=_newalert || {}; // setup
+if (typeof _newalert.id == "undefined") _newalert.id="newalert_"; // base id
+if (typeof _newalert.mobile == "undefined") _newalert.mobile=1000; // less than these pixels is considered mobile
 var newalerts={};
 var newalert_texts={
 	"en":{
 		"accept":"Accept",
 		"cancel":"Cancel",
 		"close":"Close",
-		"wait":"Processing, please, wait a moment..."
+		"wait":"Processing, please wait a moment..."
 	},
 	"es":{
 		"accept":"Aceptar",
 		"cancel":"Cancelar",
 		"close":"Cerrar",
-		"wait":"Proceso en curso, por favor, espere..."
+		"wait":"Proceso en curso, por favor espere..."
 	}
 };
 
@@ -85,6 +84,14 @@ function newalert_body_click(id, e) {
 	if (newalerts[id].onclick) newalerts[id].onclick(id, e);
 }
 
+function newalert_change(o) {
+	switch (o.action) {
+	case "buttons_hide": hide(_newalert.id+o.id+"_cmds"); break;
+	case "buttons_hide": hide(_newalert.id+o.id+"_cmds"); break;
+	case "buttons_show": show(_newalert.id+o.id+"_cmds"); break;
+	}
+}
+
 function newalert_resize(o) {
 	var o=o||{};
 	if (o.forced || _newalert.last_ismobile!=newalert_ismobile()) {
@@ -96,21 +103,19 @@ function newalert_resize(o) {
 			if (!newalert.nomobile) body_noscroll_windows++;
 			if (newalert.full) body_full_windows++;
 		}
-		//var body_noscroll=(body_full_windows || body_noscroll_windows && _newalert.last_ismobile);
 		var body_noscroll=(body_noscroll_windows && _newalert.last_ismobile);
 		classEnable(document.body, "newalert_window_body_mobile", body_noscroll);
 		classEnable(document.body, "newalert_window_body_desktop", !body_noscroll);
 		for (var id in newalerts) {
 			var newalert=newalerts[id];
-			if (gid(_newalert.id+id+"_back"))
-				gid(_newalert.id+id+"_back").className=newalerts[id].backClass();
+			if (gid(_newalert.id+id+"_back")) gid(_newalert.id+id+"_back").className=newalerts[id].backClass();
 		}
 	}
 }
 
 function newalert(o) {
 	var index_default=0;
-	if (typeof(o)=="string") {
+	if (typeof(o) == "string") {
 		var id="";
 		var msg=o;
 		var buttons=null;
@@ -136,12 +141,12 @@ function newalert(o) {
 	}
 	newalerts[id].active=true;
 	var b=document.createElement("div");
-	b.setAttribute("class","newalert_background");
-	b.setAttribute("id",_newalert.id+id+"_bg");
+	b.setAttribute("class", "newalert_background");
+	b.setAttribute("id", _newalert.id+id+"_bg");
 	b.style.display="block";
 	var d=document.createElement("div");
-	d.setAttribute("class","newalert_container");
-	d.setAttribute("id",_newalert.id+id);
+	d.setAttribute("class", "newalert_container");
+	d.setAttribute("id", _newalert.id+id);
 	var hasicon=(o.ico || o.icoclass);
 	var cols=(hasicon?"colspan='2'":"");
 	s="<table id='"+_newalert.id+id+"_back' class='"+newalerts[id].backClass()+"' cellpadding='0' cellspacing='0' width='100%' height='100%'><tr><td align='center' valign='middle' onClick='javascript:newalert_back_close(\""+id+"\", event);'>";
@@ -206,9 +211,9 @@ function newalert(o) {
 	document.body.appendChild(b);
 	document.body.appendChild(d);
 	newalerts[id].transition_timer=setTimeout(function(){
-		classAdd(_newalert.id+id+"_bg","newalert_background_transition_in");
-		classAdd(_newalert.id+id,"newalert_container_transition_in");
-	},20);
+		classAdd(_newalert.id+id+"_bg", "newalert_background_transition_in");
+		classAdd(_newalert.id+id, "newalert_container_transition_in");
+	}, 20);
 	_newalert.openWindows++;
 	// resize event
 	if (!isset(_newalert.last_ismobile)) {
@@ -226,17 +231,9 @@ function newalert(o) {
 	};
 }
 
-function newalert_change(o) {
-	switch (o.action) {
-	case "buttons_hide": hide(_newalert.id+o.id+"_cmds"); break;
-	case "buttons_hide": hide(_newalert.id+o.id+"_cmds"); break;
-	case "buttons_show": show(_newalert.id+o.id+"_cmds"); break;
-	}
-}
-
 function newwait(o) {
-	var o=(typeof(o)=="string"?{"msg":o}:o||{});
-	o.id=(o.id!=null?o.id:"wait");
+	var o=(typeof o == "string"?{"msg":o}:o||{});
+	o.id=(o.id != null?o.id:"wait");
 	o.nomobile=true;
 	o.noclose=true;
 	o.msg=(o.msg?o.msg:newalert_T("wait"));
@@ -256,9 +253,20 @@ function newsimplewait() {
 	});
 }
 
-var newok_num=0; function newok(msg,action) { var myid="ok"+(++newok_num); newalert({"id":myid,"icoclass":"newalert_ico newalert_ico_ok","msg":msg,"buttons":[{"caption":newalert_T("accept")}],"onclose":function(){ if (action) action(); }}); }
-var newwarn_num=0; function newwarn(msg,action) { var myid="warn"+(++newok_num); newalert({"id":myid,"icoclass":"newalert_ico newalert_ico_warn","msg":msg,"buttons":[{"caption":newalert_T("accept")}],"onclose":function(){ if (action) action(); }}); }
-var newerror_num=0; function newerror(msg,action) { var myid="error"+(++newok_num); newalert({"id":myid,"icoclass":"newalert_ico newalert_ico_error","msg":msg,"buttons":[{"caption":newalert_T("accept")}],"onclose":function(){ if (action) action(); }}); }
+function newalert_gen(kind, o, action) {
+	if (typeof o == "string") o={"msg":o};
+	_newalert.genc=(_newalert.genc?_newalert.genc:0)+1;
+	newalert(array_merge({
+		"id":"newalert_gen_"+kind+_newalert.genc,
+		"icoclass":"newalert_ico newalert_ico_"+kind,
+		"buttons":[{"caption":newalert_T("accept")}],
+		"onclose":function(){ if (action) action(); }
+	}, o));
+}
+
+function newok(o, action) { newalert_gen("ok", o, action); }
+function newwarn(o, action) { newalert_gen("warn", o, action); }
+function newerror(o, action) { newalert_gen("error", o, action); }
 
 function newalert_remove(id, notransition) {
 	if (!id) var id="";
@@ -270,34 +278,32 @@ function newalert_remove(id, notransition) {
 			newalerts[id].transition_timer=setTimeout(function(){
 				if (newalerts[id]) newalerts[id].transition_timer=null;
 				if (gid(_newalert.id+id+"_bg")) {
-					classDel(_newalert.id+id+"_bg","newalert_background_transition_in");
-					classAdd(_newalert.id+id+"_bg","newalert_background_transition_out");
-					gid(_newalert.id+id+"_bg").addEventListener("transitionend",function(){
+					classDel(_newalert.id+id+"_bg", "newalert_background_transition_in");
+					classAdd(_newalert.id+id+"_bg", "newalert_background_transition_out");
+					gid(_newalert.id+id+"_bg").addEventListener("transitionend", function(){
 						if (gid(_newalert.id+id+"_bg")) {
 							gid(_newalert.id+id+"_bg").parentNode.removeChild(gid(_newalert.id+id+"_bg"));
 							newalert_resize({"force":true});
 						}
-					},true);
+					}, true);
 				}
 				if (gid(_newalert.id+id)) {
-					classDel(_newalert.id+id,"newalert_container_transition_in");
-					classAdd(_newalert.id+id,"newalert_container_transition_out");
-					gid(_newalert.id+id).addEventListener("transitionend",function(){
+					classDel(_newalert.id+id, "newalert_container_transition_in");
+					classAdd(_newalert.id+id, "newalert_container_transition_out");
+					gid(_newalert.id+id).addEventListener("transitionend", function(){
 						if (gid(_newalert.id+id)) {
-							_newalert.openWindows--;
 							delete newalerts[id];
 							if (gid(_newalert.id+id)) gid(_newalert.id+id).parentNode.removeChild(gid(_newalert.id+id));
 							newalert_resize({"forced":true});
 						}
-					},true);
+					}, true);
 				}
-			},20);
+			}, 20);
 		} else {
 			if (newalerts[id].transition_timer) {
 				clearTimeout(newalerts[id].transition_timer);
 				delete newalerts[id].transition_timer;
 			}
-			_newalert.openWindows--;
 			delete newalerts[id];
 			if (gid(_newalert.id+id)) gid(_newalert.id+id).parentNode.removeChild(gid(_newalert.id+id));
 			if (gid(_newalert.id+id+"_bg")) gid(_newalert.id+id+"_bg").parentNode.removeChild(gid(_newalert.id+id+"_bg"));
