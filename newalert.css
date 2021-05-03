@@ -46,9 +46,9 @@
 /* newalert */
 .newalert {
 	text-align: left;
-	border: 3px solid #CCC;
 	background-color: #FFF;
-	padding: 14px 16px;
+	color: #000;
+	padding: 20px;
 	box-shadow: 3px 5px 9px rgba(0,0,0,0.2);
 	border-collapse: separate;
 }
