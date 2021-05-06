@@ -17,7 +17,6 @@
 	text-decoration: none;
 	vertical-align: baseline;
 	transition: box-shadow 0.5s ease-in-out;
-	-webkit-appearance: none;
 }
 .cmd:focus,  a.cmd:focus  { border-color: #FFF; }
 .cmd:hover,  a.cmd:hover  { opacity: 0.9; }
@@ -137,12 +136,6 @@
 }
 
 /* combobox */
-.cmb,
-.cmb:focus,
-.cmb[readonly],
-.cmb[disabled] {
-	padding: 2px;
-}
 .cmb,
 .cmb[readonly],
 .cmb[disabled],
