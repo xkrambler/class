@@ -1,31 +1,47 @@
-/* command buttons */
-.cmd,        a.cmd,
-.cmd:active, a.cmd:active,
-.cmd:hover,  a.cmd:hover,
-.cmd:focus,  a.cmd:focus,
-.cmd:link,   a.cmd:link {
+/* all */
+.cmd, a.cmd,
+.area,
+.cmb,
+.txt,
+.widget {
+	position: relative;
 	display: inline-block;
-	cursor: pointer;
-	background: #444;
-	padding: 3px 8px;
 	margin: 0;
-	color: #FFF;
-	border: 1px dotted transparent;
+	font-family: inherit;
+	font-size: inherit;
+	font-weight: inherit;
+	outline: none;
+	filter: none;
 	border-radius: 0;
+	vertical-align: top;
+	appearance: none;
+	-moz-appearance: none;
+	-webkit-appearance: none;
+}
+/* command buttons */
+.cmd, a.cmd {
+	cursor: pointer;
+	padding: 3px 8px;
+	border: 1px dotted transparent;
 	line-height: inherit;
 	white-space: nowrap;
 	text-decoration: none;
 	vertical-align: baseline;
-	transition: box-shadow 0.5s ease-in-out;
+}
+.cmd,        a.cmd,
+.cmd:active, a.cmd:active,
+.cmd:focus,  a.cmd:focus,
+.cmd:hover,  a.cmd:hover,
+.cmd:link,   a.cmd:link {
+	background-color: #444;
+	color: #FFF;
 }
 .cmd:focus,  a.cmd:focus  { border-color: #FFF; }
 .cmd:hover,  a.cmd:hover  { opacity: 0.9; }
-.cmd:active, a.cmd:active { opacity: 0.8; }
-.cmd[disabled],        a.cmd[disabled],
-.cmd[disabled]:active, a.cmd[disabled]:active,
-.cmd[disabled]:hover   a.cmd[disabled]:hover {
+.cmd:active, a.cmd:active { opacity: 1; }
+.cmd[disabled], a.cmd[disabled] {
 	cursor: default;
-	background: #AAA;
+	background-color: #AAA;
 	color: #DDD;
 	opacity: 1;
 }
@@ -37,7 +53,7 @@
 .cmdb:hover,  a.cmdb:hover,
 .cmdb[disabled]:active, a.cmdb[disabled]:active,
 .cmdb[disabled]:hover   a.cmdb[disabled]:hover {
-	padding: 12px 24px;
+	padding: 12px 22px;
 }
 
 /* textarea/combo/text/widget */
@@ -45,22 +61,10 @@
 .cmb,
 .txt,
 .widget {
-	position: relative;
-	display: inline-block;
-	vertical-align: top;
-	background-color: #FFF;
-	border: 1px solid #DDD;
-	border-radius: 0;
-	margin: 0;
 	padding: 3px;
 	color: #000;
-	font-family: inherit;
-	font-size: inherit;
-	outline: none;
-	vertical-align: baseline;
-	line-height: inherit;
-	filter: none;
-	-webkit-appearance: none;
+	background-color: #FFF;
+	border: 1px solid #DDD;
 }
 .txt[type=date] {
 	min-height: 1.5rem; /* fix https://github.com/twbs/bootstrap/issues/23307 */
@@ -81,9 +85,15 @@
 .txt[disabled],
 .widget[disabled],
 .widget_disabled {
-	border-color: #BBB;
 	color: #555;
 	background: #E4E4E4;
+	border-color: #BBB;
+}
+.area[readonly],
+.cmb[readonly],
+.txt[readonly],
+.area[readonly] {
+	background: #F4F4F4;
 }
 .area:focus,
 .cmb:focus,
@@ -136,21 +146,22 @@
 }
 
 /* combobox */
-.cmb,
-.cmb[readonly],
-.cmb[disabled],
-.cmb:focus {
-	-moz-appearance: none;
-	-webkit-appearance: none;
+.cmb {
+	padding: 2px; /* 1px less than other widgets */
+	padding-right: 1.4em;
 	background-position: right center;
 	background-repeat: no-repeat;
 	background-size: 1.4em;
 	background-image: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNTYiIGhlaWdodD0iMjU2IiB2aWV3Qm94PSIwIDAgMjU1IDI1NSI+CjxnPgoJPHBvbHlnb24gcG9pbnRzPSI2NCw5NiAxMjgsMTYwIDE5Miw5NiIgZmlsbD0iIzg4ODg4OCIvPgo8L2c+Cjwvc3ZnPg==);
-	padding-right: 1.4em;
+}
+.cmb[readonly],
+.cmb[disabled],
+.cmb:focus {
 }
 .cmb[size] {
+	min-height: 2.5em;
+	padding-right: 2px; /* 1px less than other widgets */
 	background-image: url();
-	padding-right: 2px;
 }
 .cmb_container {
 	position: relative;
@@ -246,8 +257,8 @@
 }
 
 /* left/right horizontal alignment */
-.cmb_align_left  .cmb_options { left: 0px; }
-.cmb_align_right .cmb_options { right: 0px; }
+.cmb_align_left  .cmb_options { left: 0; }
+.cmb_align_right .cmb_options { right: 0; }
 
 /* top/bottom dropdown vertical alignment */
 .cmb_valign_top .cmb_group {
@@ -260,12 +271,12 @@
 .cmb_valign_bottom .cmb_options {
 	top: 0;
 	margin-top: -2px;
-	box-shadow: 0px 3px 9px rgba(0,0,0,0.3);
+	box-shadow: 0 3px 9px rgba(0,0,0,0.3);
 }
 .cmb_valign_top .cmb_options {
 	margin-bottom: -2px;
 	bottom: 0;
-	box-shadow: 0px -3px 9px rgba(0,0,0,0.3);
+	box-shadow: 0 -3px 9px rgba(0,0,0,0.3);
 }
 
 /* group of inputs */
