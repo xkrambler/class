@@ -35,6 +35,7 @@
 		files([files])        Get/Set files.
 		file([file])          Get/Set first file.
 		filesAdd(files)       Add files.
+		fileDel(index)        Delete file by index.
 		reset()               Reset file list.
 		post(post)            Get/Set POST data.
 		chunked([chunked])    Get/Set is chunked or chunked size.
@@ -372,12 +373,23 @@ function xUploader(o) {
 	self.filesAdd=function(files){
 		var names={};
 		if (!self.o.repeat)
-			for (var i=0; i<self.o.files.length; i++)
+			for (var i=0; i < self.o.files.length; i++)
 				names[self.o.files[i].name]=true;
-		for (var i=0; i<files.length; i++)
+		for (var i=0; i < files.length; i++)
 			if (!names[files[i].name])
 				self.o.files.push(files[i]);
 		if (self.o.onfiles) self.o.onfiles(self, {"added":files, "files":self.o.files});
+	};
+
+	// delete file by index
+	self.fileDel=function(index){
+		var files=[];
+		for (var i=0; i < self.o.files; i++) {
+			if (i == index) file=self.o.files[i];
+			else files[i]=self.o.files[i];
+		}
+		self.o.files=files;
+		if (self.o.onfiles) self.o.onfiles(self, {"del":file, "index":index, "files":self.o.files});
 	};
 
 	// get/set files

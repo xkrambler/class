@@ -484,7 +484,6 @@ class Kernel {
 		$f=trim($f);
 		$f=str_replace('"', "", $f);
 		$f=str_replace("'", "", $f);
-		$f=str_replace(" ", "_", $f);
 		return $f;
 	}
 
