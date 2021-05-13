@@ -216,7 +216,8 @@ class dbMySQLi extends dbbase {
 		$st=microtime(true);
 		$this->lastqueryint[$querynum]=$sqlquery;
 		$this->idquery[$querynum]=$this->pquery($sqlquery);
-		if ($this->idcon->errno) return false;
+		if (!$this->idcon || @$this->idcon->errno) return false;
+		//echo "*******".$this->idcon."/".$this->idcon->errno;
 		if (!$this->idquery[$querynum]) return false;
 		$this->lastqid[$querynum]=$this->idcon->insert_id;
 		$this->afrows[$querynum]=$this->idcon->affected_rows;

@@ -176,14 +176,17 @@ class dbORACLE extends dbbase {
 	// devuelve el último código de error producido en el servidor
 	function errnum($querynum=null) {
 		if (!$querynum) $querynum="%".$this->lastquerynum;
-		$err=oci_error($this->stmt[$querynum]);
+		$err=(isset($this->stmt[$querynum])
+			?oci_error($this->stmt[$querynum])
+			:oci_error()
+		);
 		return ($err["code"]?intval($err["code"]):false);
 	}
 
 	// devuelve el último mensaje de error producido en el servidor
 	function error($querynum=null) {
 		if (!$querynum) $querynum="%".$this->lastquerynum;
-		$err=($this->stmt[$querynum]
+		$err=(isset($this->stmt[$querynum])
 			?oci_error($this->stmt[$querynum])
 			:oci_error()
 		);

@@ -104,10 +104,20 @@ abstract class dbbase {
 
 	// create database instance from database setup
 	static function create($db) {
-		if (!($lib=self::lib($db["type"]))) return false;
+		if (!($lib=self::lib($db["type"]))) {
+			return new dbVoid([
+				"errnum"=>-1,
+				"error"=>"Library ".$db["type"]." not available."
+			]);
+		}
 		require_once($lib);
 		$dbc=self::class($db["type"]);
-		if (!class_exists($dbc)) return false;
+		if (!class_exists($dbc)) {
+			return new dbVoid([
+				"errnum"=>-2,
+				"error"=>"Class ".$db["type"]." not available."
+			]);
+		}
 		return new $dbc($db);
 	}
 
@@ -685,6 +695,24 @@ class dbrawvalue {
 		return $this->value;
 	}
 
+}
+
+// void database class to throw errors on creation
+class dbVoid extends dbbase {
+	function __construct($o) {
+		$this->real_errnum=$o["errnum"];
+		$this->real_error=$o["error"];
+	}
+	function driver() { return "void"; }
+	function version() { return 0.1; }
+	function protocol() { return "void"; }
+	function connect() { return false; }
+	function close() { return false; }
+	function info() { return false; }
+	function ready() { return false; }
+	function select() { return false; }
+	function errnum() { return $this->real_errnum; }
+	function error() { return $this->real_error; }
 }
 
 // DEPRECATED: if db_setup defined, fill values
