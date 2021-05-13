@@ -1,4 +1,4 @@
-﻿/*
+/*
 
 	xInput: selector de elementos con búsqueda local y ajax (compatible con xitemssearch)
 	2016 Pablo Rodríguez Rey. Bajo licencia GPL v2.
