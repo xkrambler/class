@@ -227,43 +227,47 @@ class x {
 
 // dump error
 if (!function_exists("perror")) {
-	function perror($msg="Unexpected error", $doexit=1) {
-		$msg=strip_tags($msg);
-		if ($GLOBALS["ajax"]) ajax(array("err"=>"ERROR: ".$msg));
-		else if (!$_SERVER["HTTP_HOST"]) echo "ERROR: ".$msg."\n";
-		else {
-			?><!doctype html>
-			<html>
-			<head>
-				<meta http-equiv="Content-Type" content="text/html; charset=<?=x::charset()?>" />
-				<style>
-					._xerror { margin: 9px 0px; border: 2px solid #FD4; font-family: Open Sans, Segoe UI, Arial !important; font-size: 15px !important; box-shadow: 0px 3px 5px rgba(0,0,0,0.3); }
-					._xerror_t { padding: 4px 12px; color: #822; background: #FD4; margin: 0px; font-size: inherit; }
-					._xerror_m { padding: 9px 12px; color: #000; background-color: #FFFDF4; }
-					._xerror_hr { background: #CCC; border: 0px; height: 1px; margin: 0px; }
-					._xerror_foot { padding: 4px 12px; background: #F0F0F0; font-size: 12px !important; }
-					._xerror_a { float: left; }
-					._xerror_a a { color: #0AB; }
-					._xerror_a a:hover { color: #089; }
-					._xerror_ss { float: right; margin-left: 16px; color: #666; font-size: 13px; }
-					._xerror_clr { clear: both; }
-				</style>
-			</head>
-			<body>
-				<div class='_xerror'>
-					<h2 class='_xerror_t'>ERROR</h2>
-					<div class='_xerror_m'><?=$msg?></div>
-					<hr class='_xerror_hr' />
-					<div class='_xerror_foot'>
-						<div class='_xerror_a'><a href='<?=x::url()?>'><?=x::url()?></a></div>
-						<div class='_xerror_ss'><?=$_SERVER["SERVER_SOFTWARE"]?></div>
-						<div class='_xerror_clr'></div>
+	function perror($err="Unexpected error", $exit=1) {
+		if (class_exists("xError") && ($error=xError::default())) {
+			$error->err($err, $exit);
+		} else {
+			$err=strip_tags($err);
+			if ($GLOBALS["ajax"]) ajax(array("err"=>"ERROR: ".$err));
+			else if (!$_SERVER["HTTP_HOST"]) echo "ERROR: ".$err."\n";
+			else {
+				?><!doctype html>
+				<html>
+				<head>
+					<meta http-equiv="Content-Type" content="text/html; charset=<?=x::charset()?>" />
+					<style>
+						._xerror { margin: 9px 0px; border: 2px solid #FD4; font-family: Open Sans, Segoe UI, Arial !important; font-size: 15px !important; box-shadow: 0px 3px 5px rgba(0,0,0,0.3); }
+						._xerror_t { padding: 4px 12px; color: #822; background: #FD4; margin: 0px; font-size: inherit; }
+						._xerror_m { padding: 9px 12px; color: #000; background-color: #FFFDF4; }
+						._xerror_hr { background: #CCC; border: 0px; height: 1px; margin: 0px; }
+						._xerror_foot { padding: 4px 12px; background: #F0F0F0; font-size: 12px !important; }
+						._xerror_a { float: left; }
+						._xerror_a a { color: #0AB; }
+						._xerror_a a:hover { color: #089; }
+						._xerror_ss { float: right; margin-left: 16px; color: #666; font-size: 13px; }
+						._xerror_clr { clear: both; }
+					</style>
+				</head>
+				<body>
+					<div class='_xerror'>
+						<h2 class='_xerror_t'>ERROR</h2>
+						<div class='_xerror_m'><?=$err?></div>
+						<hr class='_xerror_hr' />
+						<div class='_xerror_foot'>
+							<div class='_xerror_a'><a href='<?=x::url()?>'><?=x::url()?></a></div>
+							<div class='_xerror_ss'><?=$_SERVER["SERVER_SOFTWARE"]?></div>
+							<div class='_xerror_clr'></div>
+						</div>
 					</div>
-				</div>
-			</body>
-			</html><?php
+				</body>
+				</html><?php
+			}
 		}
-		if ($doexit) exit($doexit);
+		if ($exit) exit($exit);
 	}
 }
 

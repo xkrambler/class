@@ -31,6 +31,7 @@ class xError {
 	const ERR_APP=-1;
 	const ERR_DB=-2;
 
+	static protected $default=false;
 	protected $setup=array();
 	protected $error=false;
 	protected $T=array(
@@ -62,6 +63,9 @@ class xError {
 			& ~E_USER_ERROR
 		);
 
+		// set default perror instance
+		if (!self::$default) self::$default=$this;
+
 	}
 
 	// getter/setter/isset
@@ -69,6 +73,12 @@ class xError {
 	function __set($n, $v) { $this->setup[$n]=$v; }
 	function __call($n, $a) { $f=$this->setup[$n]; if (is_callable($f)) call_user_func_array($f, $a); }
 	function __isset($n) { return isset($this->setup[$n]); }
+
+	// get/set default instance
+	static function default($default=null) {
+		if ($default !== null) self::$default=$default;
+		return self::$default;
+	}
 
 	// setup
 	function setup($setup=null) {
@@ -206,7 +216,7 @@ class xError {
 		if ($err === null) return $this->error;
 		if (is_string($err)) $err=array("type"=>-1, "message"=>$err);
 		$error_types=array(
-			self::ERR_APP=>"App",
+			self::ERR_APP=>"APP",
 			self::ERR_DB=>"DB",
 			E_ERROR=>"Fatal",
 			E_PARSE=>"Parse",
@@ -330,7 +340,7 @@ class xError {
 			</head>
 			<body>
 				<div class='_xerror'>
-					<div class='_xerror_t'><b><?=strtoupper($err["title"])?>:</b></div>
+					<div class='_xerror_t'><b><?=$err["title"]?></b></div>
 					<?php if ($err["file"]) { ?>
 						<div class='_xerror_f'>
 							<b><?=$err["file"]?></b> line <b><?=$err["line"]?></b>
@@ -382,6 +392,11 @@ class xError {
 		// return with exit code
 		if ($exit) exit($exit);
 
+	}
+
+	// convert to string
+	function __toString() {
+		return "(".get_class($this).")";
 	}
 
 }
