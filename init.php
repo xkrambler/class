@@ -265,7 +265,6 @@ if (!function_exists("perror")) {
 		}
 		if ($doexit) exit($doexit);
 	}
-
 }
 
 // check basic setup
@@ -321,7 +320,7 @@ if (isset($_SESSION["err"])) { $err=$_SESSION["err"]; unset($_SESSION["err"]); }
 // automatic instances
 if (class_exists("Kernel")) {
 	$kernel=($db?new Kernel($db):new Kernel());
-	if (class_exists("View")) $view=new View($kernel, $base, $skin); // obsolete
+	if (class_exists("View")) $view=new View($kernel, $base, $skin); // deprecated
 }
 if (class_exists("Conf") && $db) $conf=new Conf(array("db"=>$db));
 
@@ -372,7 +371,7 @@ if (!function_exists("xob")) {
 	}
 }
 
-// additional module loading (replaced by x::module)
+// module loading (replaced by x::module) (deprecated)
 if (!function_exists("module")) {
 	function module($m) {
 		x::module($m);
