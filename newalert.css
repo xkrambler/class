@@ -7,8 +7,12 @@
 	right: 0px;
 	bottom: 0px;
 }
+.newalert_background_transition_none,
 .newalert_background_transition_in {
 	background: rgba(0,0,0,0.25);
+	transition: none;
+}
+.newalert_background_transition_in {
 	transition: all 0.9s;
 }
 .newalert_background_transition_out {
@@ -28,9 +32,13 @@
 	right: 0px;
 	bottom: 0px;
 }
+.newalert_container_transition_none,
 .newalert_container_transition_in {
 	opacity: 1;
 	transform: none;
+	transition: none;
+}
+.newalert_container_transition_in {
 	transition: all ease-in-out 0.2s;
 }
 .newalert_container_transition_out {

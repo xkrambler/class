@@ -81,7 +81,7 @@ function newalert_back_close(id, e) {
 function newalert_body_click(id, e) {
 	if (!e.stopPropagation) return;
 	e.stopPropagation();
-	if (newalerts[id].onclick) newalerts[id].onclick(id, e);
+	if (newalerts[id] && newalerts[id].onclick) newalerts[id].onclick(id, e);
 }
 
 function newalert_change(o) {
@@ -210,10 +210,15 @@ function newalert(o) {
 	d.innerHTML=s;
 	document.body.appendChild(b);
 	document.body.appendChild(d);
-	newalerts[id].transition_timer=setTimeout(function(){
-		classAdd(_newalert.id+id+"_bg", "newalert_background_transition_in");
-		classAdd(_newalert.id+id, "newalert_container_transition_in");
-	}, 20);
+	if (o.notransition) {
+		classAdd(_newalert.id+id+"_bg", "newalert_background_transition_none");
+		classAdd(_newalert.id+id, "newalert_container_transition_none");
+	} else {
+		newalerts[id].transition_timer=setTimeout(function(){
+			classAdd(_newalert.id+id+"_bg", "newalert_background_transition_in");
+			classAdd(_newalert.id+id, "newalert_container_transition_in");
+		}, 20);
+	}
 	_newalert.openWindows++;
 	// resize event
 	if (!isset(_newalert.last_ismobile)) {
@@ -272,6 +277,7 @@ function newalert_remove(id, notransition) {
 	if (!id) var id="";
 	if (!newalerts[id]) return;
 	newalerts[id].active=false;
+	if (newalerts[id].notransition) notransition=true;
 	if (gid(_newalert.id+id)) {
 		var s=document.createElement('p').style, supportsTransitions='transition' in s;
 		if (supportsTransitions && !notransition) {
