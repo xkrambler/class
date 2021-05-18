@@ -432,8 +432,8 @@ class Kernel {
 			}
 		}
 		$d->close();
-		usort($fd, array(self, "name_sort"));
-		usort($fa, array(self, "name_sort"));
+		usort($fd, array(__CLASS__, "name_sort"));
+		usort($fa, array(__CLASS__, "name_sort"));
 		$a=array();
 		if ($fd) foreach ($fd as $e) $a[]=$e;
 		if ($fa) foreach ($fa as $e) $a[]=$e;
@@ -441,7 +441,7 @@ class Kernel {
 	}
 
 	// localización de ficheros/directorios recursivamente
-	function dir_recursive($root,$paths=false) {
+	function dir_recursive($root, $paths=false) {
 		if (substr($root,-1,1)!="/") $root.="/";
 		$a=array();
 		$d=dir($root);
