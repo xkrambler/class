@@ -390,14 +390,13 @@ class Kernel {
 				$to.=($to?",":"").$rcpt;
 			}
 		} else {
-			if ($o["bcc"]) $to="undisclosed-recipients:";
+			if ($o["bcc"]) $to="undisclosed-recipients:;";
 		}
 		// prepare subject: if not 7-bit, base64_encode(UTF-8)
 		$subject=$o["subject"];
 		if (!preg_match("/^[\\040-\\176]+$/", $subject))
 			$subject="=?UTF-8?B?".base64_encode($o["subject"])."?=";
 		// send it!
-		//header("Content-type: text/plain");echo $subject."\r\n".$headers."\r\n-------------------------\r\n".$body;exit;
 		return (@mail($to, $subject, $body, $headers));
 	}
 
