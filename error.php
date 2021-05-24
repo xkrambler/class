@@ -274,6 +274,7 @@ class xError {
 			.$err["title"].": ".strip_tags($err["message"])."\n"
 			.($err["file"]?"File: ".$err["file"].($err["line"]?" at line ".$err["line"]:"")."\n":"")
 			.($_SERVER["HTTP_HOST"]?"URL: ".x::base().x::alink()."\n":"")
+			.(($v=$_SERVER["REMOTE_ADDR"])?"Remote_Addr: ".$v."\n":"")
 			."Time: ".date("d/m/Y H:i:s")."\n"
 			.(isset($this->burst_loop)?"Burst: ".$this->burst_loop."\n":"")
 			.($err["sql"]?"SQL:\n".$err["sql"]."\n":"")
