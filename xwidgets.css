@@ -147,7 +147,6 @@
 
 /* combobox */
 .cmb {
-	padding: 2px; /* 1px less than other widgets */
 	padding-right: 1.4em;
 	background-position: right center;
 	background-repeat: no-repeat;
@@ -160,7 +159,7 @@
 }
 .cmb[size] {
 	min-height: 2.5em;
-	padding-right: 2px; /* 1px less than other widgets */
+	padding-right: 3px;
 	background-image: url();
 }
 .cmb_container {
