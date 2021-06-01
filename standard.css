@@ -104,6 +104,7 @@ h6 { font-size: 12px; margin: 12px 0; font-weight: normal; }
 .vtop { vertical-align: top; }
 .vmiddle { vertical-align: middle; }
 .vbottom { vertical-align: bottom; }
+.vbaseline { vertical-align: baseline; }
 .icon { padding-left: 20px; background: no-repeat left center; }
 .block { display: block; }
 .inline { display: inline; }

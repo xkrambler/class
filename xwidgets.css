@@ -61,11 +61,19 @@
 .cmb,
 .txt,
 .widget {
-	padding: 3px;
 	color: #000;
 	background-color: #FFF;
 	border: 1px solid #DDD;
 }
+.area,
+.cmb,
+.txt,
+.widget,
+.group label,
+.group .label {
+	padding: 3px;
+}
+
 .txt[type=date] {
 	min-height: 1.5rem; /* fix https://github.com/twbs/bootstrap/issues/23307 */
 }
@@ -291,7 +299,9 @@
 .group .cmd:active, .group a.cmd:active,
 .group .cmd:hover,  .group a.cmd:hover,
 .group .cmd:focus,  .group a.cmd:focus,
-.group .cmd:link,   .group a.cmd:link {
+.group .cmd:link,   .group a.cmd:link,
+.group label,
+.group .label {
 	background: #DDD;
 	color: #444;
 }
