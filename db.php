@@ -272,12 +272,14 @@ abstract class dbbase {
 		foreach ($sqls as $sql) {
 			if (!$this->query($sql, $querynum)) {
 				$lastqueryint=$this->lastqueryint[$querynum];
-					$real_errnum=$this->errnum();
-					$real_error=$this->error();
+				echo "*1*".$this->error()."\n";
+				$real_errnum=$this->errnum();
+				$real_error=$this->error();
 				$this->rollback();
+				echo "*2*".$this->error()."\n";
 				$this->lastqueryint[$querynum]=$lastqueryint;
-					$this->real_errnum=$real_errnum;
-					$this->real_error=$real_error;
+				$this->real_errnum=$real_errnum;
+				$this->real_error=$real_error;
 				return false;
 			}
 		}

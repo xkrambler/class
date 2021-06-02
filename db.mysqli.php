@@ -156,9 +156,9 @@ class dbMySQLi extends dbbase {
 		return $this->queryflags;
 	}
 
-	// do a query with reconnection/timeout
+	// query with reconnection/timeout
 	private function pquery($sqlquery) {
-		if ($this->setup["delayed"] && !$this->idcon>0 && !$this->rconnect()) return false;
+		if ($this->setup["delayed"] && !($this->idcon > 0) && !$this->rconnect()) return false;
 		if (!$this->idcon) return false;
 		// realizar la consulta
 		$numretries=0;
@@ -194,22 +194,22 @@ class dbMySQLi extends dbbase {
 	// set debug mode
 	function debug($enabled=null) {
 		parent::debug($enabled);
-		if ($this->idcon) $this->pquery("SET SESSION query_cache_type=OFF");
+		$this->pquery("SET SESSION query_cache_type=OFF");
 	}
 
 	// begin transaction
 	function begin() {
-		return ($this->pquery("BEGIN")?true:false);
+		return ($this->query("BEGIN")?true:false);
 	}
 
 	// commit transaction
 	function commit() {
-		return ($this->pquery("COMMIT")?true:false);
+		return ($this->query("COMMIT")?true:false);
 	}
 
 	// rollback transaction
 	function rollback() {
-		return ($this->pquery("ROLLBACK")?true:false);
+		return ($this->query("ROLLBACK")?true:false);
 	}
 
 	// return current date/time field
@@ -374,7 +374,7 @@ class dbMySQLi extends dbbase {
 
 	// escape string to be used in query
 	function escape($s) {
-		if ($this->setup["delayed"] && !$this->idcon>0 && !$this->rconnect()) return false;
+		if ($this->setup["delayed"] && !($this->idcon > 0) && !$this->rconnect()) return false;
 		return $this->idcon->real_escape_string($s);
 	}
 
