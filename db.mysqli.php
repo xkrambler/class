@@ -2,14 +2,16 @@
 
 /*
 
-	Clase PHP de Acceso a MySQL Improved v0.2, desarrollado por Pablo Rodríguez Rey
+	PHP Access Class to MySQL Improved v0.2, by Pablo Rodríguez Rey
 	http://mr.xkr.es ~ mr-at-xkr-d0t-es
-	Bajo licencia de uso libre GPL (http://www.gnu.org/copyleft/gpl.html)
+	Under GPL license (http://www.gnu.org/copyleft/gpl.html)
 
 */
 class dbMySQLi extends dbbase {
 
-	// información del driver y versión de la clase
+	protected $queryflags=0;
+
+	// definition
 	function driver() { return "MySQLi"; }
 	function version() { return 0.2; }
 	function protocol() { return "mysql"; }
@@ -20,14 +22,18 @@ class dbMySQLi extends dbbase {
 		if ($this->setup["resource"]) $this->rconnect();
 	}
 
-	// inicia la conexión con el servidor o reutiliza una conexión existente (puede estar retardada)
+	// virtual connect (can be a dummy connect if connection is marked as delayed)
 	function connect() {
 		return ($this->setup["delayed"]?true:$this->rconnect());
 	}
 
-	// inicia la conexión con el servidor
+	// real connect
 	function rconnect() {
-		if (!class_exists("mysqli")) die("ERROR: La librería MySQLi no iniciada: Clase mysqli() inexistente.");
+		if (!class_exists("mysqli")) {
+			$this->real_errnum=-1;
+			$this->real_error="ERROR: MySQL improved library not installed, mysqli() class does not exist.";
+			return false;
+		}
 		if (is_object($this->setup["resource"])) {
 			$this->idcon=$this->setup["resource"];
 			$this->setup["db"]=$this->database();
@@ -51,7 +57,7 @@ class dbMySQLi extends dbbase {
 		return $this->connected;
 	}
 
-	// cierra la conexión con el servidor
+	// close server connection
 	function close() {
 		$this->clear();
 		if (!$this->idcon) return false;
@@ -60,18 +66,18 @@ class dbMySQLi extends dbbase {
 		return true;
 	}
 
-	// reconectar
+	// reconnect
 	function reconnect() {
 		$this->close();
 		return $this->rconnect();
 	}
 
-	// información de conexión
+	// check if connection is ready
 	function ready() {
 		return ($this->setup["delayed"] || ($this->idcon && $this->ping())?true:false);
 	}
 
-	// obtener base de datos actual
+	// get current database selection
 	function database() {
 		$this->clear();
 		if (!$this->idcon) return false;
@@ -81,7 +87,7 @@ class dbMySQLi extends dbbase {
 		return false;
 	}
 
-	// listar bases de datos
+	// list databases
 	function databases() {
 		$this->clear();
 		if ($q=$this->idcon->query("SHOW DATABASES")) {
@@ -93,7 +99,7 @@ class dbMySQLi extends dbbase {
 		return false;
 	}
 
-	// selecciona la base de datos con la que trabajará la clase
+	// select current working database
 	function select($db=null) {
 		$this->clear();
 		if ($db) $this->setup["db"]=$db;
@@ -102,13 +108,13 @@ class dbMySQLi extends dbbase {
 		return true;
 	}
 
-	// comprueba si previamente había sido seleccionada la base de datos, y si no, lo intenta varias veces
+	// check if there is a database selected, and try to select it
 	function selectedcheck() {
 		if (!$this->dbselected && $this->setup["db"]) {
 			$numretries=0;
 			do {
 				if ($this->dbselected=(@$this->idcon->select_db($this->setup["db"])?true:false)) break;
-				if ($this->idcon->errno!=2006 && $this->idcon->errno!=2013) break;
+				if ($this->idcon->errno != 2006 && $this->idcon->errno != 2013) break;
 				if (!$this->reconnect()) return false;
 			} while (++$numretries < 3);
 			if (!$this->dbselected) return false;
@@ -116,25 +122,41 @@ class dbMySQLi extends dbbase {
 		return true;
 	}
 
-	// efectua un checkeo (ping) del servidor
+	// do a ping check
 	function ping() {
 		if (!$this->idcon) return false;
 		return @$this->idcon->ping();
 	}
 
-	// obtiene información sobre la consulta más reciente 
+	// get information about last query
 	function info() {
 		if (!$this->idcon || $this->idcon->connect_errno) return false;
 		return $this->idcon->info;
 	}
 
-	// obtener el status actual del sistema
+	// get current driver status
 	function stat() {
 		if (!$this->idcon || $this->idcon->connect_errno) return false;
 		return $this->idcon->stat();
 	}
 
-	// realiza una consulta con reconexión
+	// get/set buffered flag
+	function buffered($enabled=null) {
+		$flag=MYSQLI_USE_RESULT;
+		if ($enabled !== null) {
+			$this->queryflags|=$flag;
+			if ($enabled) $this->queryflags^=$flag;
+		}
+		return ($this->queryflags & $flag);
+	}
+
+	// get/set query flags
+	function queryflags($queryflags=null) {
+		if ($queryflags !== null) $this->queryflags=$queryflags;
+		return $this->queryflags;
+	}
+
+	// do a query with reconnection/timeout
 	private function pquery($sqlquery) {
 		if ($this->setup["delayed"] && !$this->idcon>0 && !$this->rconnect()) return false;
 		if (!$this->idcon) return false;
@@ -146,7 +168,7 @@ class dbMySQLi extends dbbase {
 			if ($this->atimeout) {
 				// async with timeout query
 				if (!$this->selectedcheck()) return false;
-				$result=@$this->idcon->query($sqlquery, MYSQLI_ASYNC);
+				$result=@$this->idcon->query($sqlquery, MYSQLI_ASYNC | $this->queryflags);
 				$errors=$reject=array();
 				$links=array($this->idcon);
 				$sec =(int)$this->atimeout;
@@ -160,7 +182,7 @@ class dbMySQLi extends dbbase {
 			} else {
 				// sync query
 				if (!$this->selectedcheck()) return false;
-				$result=$this->idcon->query($sqlquery);
+				$result=$this->idcon->query($sqlquery, $this->queryflags);
 			}
 			if ($result || ($this->idcon->errno!=2006 && $this->idcon->errno!=2013)) break;
 			if (!$this->reconnect()) return false;
@@ -169,43 +191,43 @@ class dbMySQLi extends dbbase {
 		return ($result?$result:false);
 	}
 
-	// establecer el modo de depuración
+	// set debug mode
 	function debug($enabled=null) {
 		parent::debug($enabled);
-		if ($this->idcon) $this->pquery("SET SESSION query_cache_type = OFF;");
+		if ($this->idcon) $this->pquery("SET SESSION query_cache_type=OFF");
 	}
 
-	// iniciar transacción
+	// begin transaction
 	function begin() {
 		return ($this->pquery("BEGIN")?true:false);
 	}
 
-	// finalizar transacción
+	// commit transaction
 	function commit() {
 		return ($this->pquery("COMMIT")?true:false);
 	}
 
-	// cancelar transacción
+	// rollback transaction
 	function rollback() {
 		return ($this->pquery("ROLLBACK")?true:false);
 	}
 
-	// devolver campo con la hora actual
+	// return current date/time field
 	function now() {
 		return new dbrawvalue("NOW()");
 	}
 
-	// obtener fecha en formato ISO
+	// get date in ISO format
 	function date($date) {
 		return date("Y-m-d", $date);
 	}
 
-	// obtener fecha y hora en formato ISO
+	// get date and time in ISO format
 	function datetime($datetime) {
 		return date("Y-m-d H:i:s", $datetime);
 	}
 
-	// realiza una consulta
+	// do a query
 	function query($sqlquery, $querynum=null) {
 		if (!$querynum) {
 			$this->lastquerynum++;
@@ -236,7 +258,7 @@ class dbMySQLi extends dbbase {
 		return new dbresult($this, $querynum);
 	}
 
-	// realiza una consulta múltiple
+	// do multiple query
 	function multi($sqlquery, $querynum=null) {
 		if (!$querynum) {
 			$this->lastquerynum++;
@@ -253,8 +275,7 @@ class dbMySQLi extends dbbase {
 			if (!$this->selectedcheck()) return false;
 			$this->idquery[$querynum]=$this->idcon->multi_query($sqlquery);
 			$numretries++;
-			// reintentarlo 2 veces más en caso de desconexión
-			if (($this->idcon->errno==2006 || $this->idcon->errno==2013) && $numretries<3) {
+			if (($this->idcon->errno == 2006 || $this->idcon->errno == 2013) && $numretries < 3) {
 				$this->reconnect();
 				$tryagain=true;
 			}
@@ -279,7 +300,7 @@ class dbMySQLi extends dbbase {
 		return new dbresult($this, $querynum);
 	}
 
-	// siguiente resultado
+	// next result
 	function next($store=true, $querynum=null) {
 		if (!$querynum) $querynum="%".$this->lastquerynum;
 		$this->clear();
@@ -292,7 +313,7 @@ class dbMySQLi extends dbbase {
 		}
 	}
 
-	// guardar resultado
+	// store result
 	function store($querynum=null) {
 		if (!$querynum) $querynum="%".$this->lastquerynum;
 		$this->clear();
@@ -306,7 +327,7 @@ class dbMySQLi extends dbbase {
 		}
 	}
 
-	// limpia la consulta
+	// free query result
 	function freequery($querynum=null) {
 		if (!$querynum) $querynum="%".$this->lastquerynum;
 		$this->clear();
@@ -319,7 +340,7 @@ class dbMySQLi extends dbbase {
 		return true;
 	}
 
-	// devuelve el número de filas afectadas
+	// return affected rows
 	function numrows($querynum=null) {
 		$this->clear();
 		if (!$this->idcon) return false;
@@ -327,7 +348,7 @@ class dbMySQLi extends dbbase {
 		return $this->afrows[$querynum];
 	}
 
-	// devuelve array fila
+	// return row as an array
 	function row($querynum=null) {
 		$this->clear();
 		if (!$this->idcon) return false;
@@ -335,7 +356,7 @@ class dbMySQLi extends dbbase {
 		return $this->idquery[$querynum]->fetch_assoc();
 	}
 
-	// devuelve de la primera fila el valor del campo deseado o el primero si se omite
+	// returns from first row first field or requested field
 	function field($field="", $querynum=null) {
 		$this->clear();
 		if (!$this->idcon) return false;
@@ -351,13 +372,13 @@ class dbMySQLi extends dbbase {
 		}
 	}
 
-	// devuelve una cadena transformada para su uso en querys
+	// escape string to be used in query
 	function escape($s) {
 		if ($this->setup["delayed"] && !$this->idcon>0 && !$this->rconnect()) return false;
 		return $this->idcon->real_escape_string($s);
 	}
 
-	// indica si un nombre es palabra clave o no
+	// check if a word is a keyword
 	function iskeyword($k) {
 		return (in_array(strtoupper($k), array(
 			"ACCESSIBLE","ADD","ALL","ALTER","ANALYZE","AND","AS","ASC",
@@ -398,7 +419,7 @@ class dbMySQLi extends dbbase {
 		)));
 	}
 
-	// devolver valor filtrado de campo
+	// return filtered field name
 	function sqlfield($t) {
 		$q="`";
 		$s="";
@@ -407,12 +428,12 @@ class dbMySQLi extends dbbase {
 		return $s;
 	}
 
-	// escapar nombres de tabla
+	// return filtered table name
 	function sqltable($t) {
 		return $this->sqlfield($t);
 	}
 
-	// devuelve la cadena de versión del servidor
+	// return server database version
 	function dbversion() {
 		$this->clear();
 		if (!$this->idcon) return false;
@@ -421,12 +442,12 @@ class dbMySQLi extends dbbase {
 		return $irow[0];
 	}
 
-	// devuelve el último código de error producido en el servidor
+	// return last error code
 	function errnum() {
 		return ($this->real_errnum?$this->real_errnum:$this->idcon->errno);
 	}
 
-	// devuelve el último mensaje de error producido en el servidor
+	// return last error message
 	function error() {
 		return ($this->real_error?$this->real_error:$this->idcon->error);
 	}
