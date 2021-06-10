@@ -73,9 +73,12 @@
 .group .label {
 	padding: 3px;
 }
-
 .txt[type=date] {
+	min-width: 6rem;
 	min-height: 1.5rem; /* fix https://github.com/twbs/bootstrap/issues/23307 */
+}
+.txt[type="time"] {
+	min-width: 4rem;
 }
 .txt:required {
 	box-shadow: none;

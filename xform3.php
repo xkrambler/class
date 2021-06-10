@@ -2,7 +2,8 @@
 
 /*
 
-	xForm3: clase de manejo de formularios, versión 3
+	xForm3
+	Form management class, version 3 rev.2
 
 	// form declaration
 	$xf=new xForm3([
@@ -15,8 +16,8 @@
 			"images" =>["caption"=>"Images","type"=>"images"],
 			"file" =>["caption"=>"One File","type"=>"file"],
 			"files" =>["caption"=>"Files","type"=>"files"],
-			//"file" =>["caption"=>"One File","type"=>"file","file"=>["file"=>"data/file.txt"]], // another way
-			//"files" =>["caption"=>"Files","type"=>"files","files"=>[["file"=>"data/file.txt"]]],
+			//"file" =>["caption"=>"One File","type"=>"file","file"=>["file"=>"data/file.txt"]], // load file
+			//"files" =>["caption"=>"Files","type"=>"files","files"=>[["file"=>"data/file.txt"]]], // load files
 		],
 		"values"=>[
 			"date"=>"2019-11-19",
@@ -33,15 +34,15 @@
 	// AJAX actions
 	$xf->ajax();
 
-	// validation
+	// validate form
 	if (!$xf->validate($adata["values"]))
 		foreach ($xf->errors() as $error)
 			ajax(["field"=>$error["id"], "warn"=>$error["err"]]);
 
-	// values
+	// get sent values
 	$values=$xf->values();
 
-	// files
+	// get uploaded files
 	$files=$xf->files();
 
 */
@@ -51,6 +52,7 @@ class xForm3 {
 	protected $o;
 	protected $fields;
 	protected $ssid="";
+	protected $errors=array();
 	protected $magicMimes=array(
 		"image/jpeg"=>array("\xFF\xD8\xFF"),
 		"image/gif"=>array("GIF"),
@@ -67,7 +69,7 @@ class xForm3 {
 		"images"=>false,
 	);
 
-	// constructor y asignación de valores por defecto
+	// constructor and default values
 	function __construct($o) {
 		self::$sid++;
 		$default_class=array(
@@ -104,16 +106,16 @@ class xForm3 {
 		}
 	}
 
-	// comprueba si una variable es un hash
+	// check if a variable is a hashmap
 	private function _is_hash($var) {
 		if (!is_array($var)) return false;
 		return array_keys($var) !== range(0,sizeof($var)-1);
 	}
 
-	// devolver petición AJAX
+	// return AJAX action
 	function isajax() { return $GLOBALS["ajax"]; }
 
-	// obtener mime por magic bytes
+	// get mime by checking first magic bytes
 	function mimeByMagic($bytes) {
 		foreach ($this->magicMimes as $mime=>$magics)
 			foreach ($magics as $magic)
@@ -122,19 +124,19 @@ class xForm3 {
 		return false;
 	}
 
-	// obtener/establecer campos
+	// get/set fields
 	function fields($fields=null) {
-		if ($fields!==null) $this->fields=$fields;
+		if ($fields !== null) $this->fields=$fields;
 		return $this->fields;
 	}
 
-	// obtener/establecer un campo
+	// get/set one field
 	function field($id, $v=null) {
 		if ($v !== null) $this->fields[$id]=$v;
 		return $this->fields[$id];
 	}
 
-	// eliminar uno o más campos
+	// delete one (string) or more fields (array)
 	function del($fields) {
 		if (!$fields) return false;
 		if (!is_array($fields)) $fields=array($fields);
@@ -143,12 +145,12 @@ class xForm3 {
 		return true;
 	}
 
-	// filtrar entidades HTML
+	// filter HTML entities
 	function entities($value) {
-		return htmlentities($value, null, "UTF-8");
+		return (method_exists("x", "entities")?x::entities($value):htmlentities($value, null, "UTF-8"));
 	}
 
-	// obtener estilos
+	// convert typical CSS styles to one line style attribute
 	function styles($field, $prefix="") {
 		$f=$this->fields[$field];
 		$s=($f["style"]?$f["style"].";":"");
@@ -162,27 +164,27 @@ class xForm3 {
 		return $s;
 	}
 
-	// obtener/establecer texto de un campo
+	// get/set field caption
 	function caption($field, $caption=null) {
 		if ($caption!==null) $this->fields[$field]["caption"]=$caption;
 		return $this->fields[$field]["caption"];
 	}
 
-	// obtener/establecer etiqueta de un campo
+	// get/set field label
 	function label($field, $label=null) {
 		if ($label!==null) $this->fields[$field]["label"]=$label;
 		return $this->fields[$field]["label"];
 	}
 
-	// obtener/establecer placeholder
+	// get/set field placeholder
 	function placeholder($field, $placeholder=null) {
 		if ($placeholder!==null) $this->fields[$field]["placeholder"]=$placeholder;
 		return $this->fields[$field]["placeholder"];
 	}
 
-	// obtener/establecer valor de un campo
+	// get/set field value
 	function value($field, $value=null) {
-		if ($value!==null)
+		if ($value !== null)
 			if (!$this->fields[$field]["readonly"])
 				$this->fields[$field]["value"]=$value;
 		switch ($this->fields[$field]["type"]) {
@@ -207,9 +209,9 @@ class xForm3 {
 		}
 	}
 
-	// obtener/establecer valores de los campos
+	// get/set fields values
 	function values($values=null, $parse=true) {
-		// establecer valores (si especificado)
+		// set values
 		if ($values !== null)
 			foreach ($values as $f=>$value)
 				if ($this->fields[$f]) {
@@ -218,7 +220,7 @@ class xForm3 {
 						:$this->purgeFieldValue($f, $value)
 					);
 				}
-		// consultar y devolver valores (si no ignorado)
+		// get values
 		$values=array();
 		foreach ($this->fields as $f=>$field) if ($field["type"] && !$field["ignore"]) {
 			$value=$this->value($f);
@@ -227,13 +229,13 @@ class xForm3 {
 		return $values;
 	}
 
-	// obtiene el nombre de fichero de un campo que lo soporte, o cadena vacía
+	// get filename from a supported field, or empty filename
 	function fileName($field) {
 		$file=$this->file($field);
 		return ($file && !$file["deleted"]?$file["name"]:"");
 	}
 
-	// obtiene/establece un fichero de un campo que lo soporte
+	// get/set file from field that supports it
 	function file($field, $file=null) {
 		$files=($file !== null
 			?$this->files($field, array($file))
@@ -242,7 +244,7 @@ class xForm3 {
 		return ($files?$files[0]:false);
 	}
 
-	// obtener/establecer ficheros de un campo que lo soporte, o de todos los campos
+	// get/set files from fields that supports it
 	function files($field=null, $files=null) {
 		if ($field === null) {
 			$a=array();
@@ -254,8 +256,8 @@ class xForm3 {
 		$limit=$this->filesLimit[$f["type"]];
 		if (isset($limit)) {
 			$svalue=$this->svalue($field);
-			$svalue_store=!$svalue; // si estaba en sesión, marcar para guardar
-			// si se especifican ficheros, asignar
+			$svalue_store=!$svalue; // if in session, mark to save it
+			// if files specified, assign
 			if ($files) {
 				$index=0;
 				$svalue["files"]=array();
@@ -279,30 +281,30 @@ class xForm3 {
 						$index++;
 					}
 				}
-				// guardar en sesión, si requerido
+				// save in session, if required
 				if ($svalue_store) $this->svalue($field, $svalue);
 			}
-			// si hay ficheros en sesión, y no se especifican ficheros, devolver datos de sesión
+			// if there is files in session, and no specified files, return sessioned files
 			if ($svalue["files"] && $files === null) {
 				foreach ($svalue["files"] as $index=>$file)
 					$svalue["files"][$index]["last"]=$this->fields[$field]["files"][$index];
 				return $svalue["files"];
 			}
-			// en otro caso, devolver ficheros del campo
+			// otherwise, return field files
 			return $this->fields[$field]["files"];
 		}
-		// campo no soporta ficheros
+		// field does not support files
 		return false;
 	}
 
 	// set, purge & validate
 	function validate($values=null) {
-		if ($values!==null) $this->values($values, false);
+		if ($values !== null) $this->values($values, false);
 		$this->purge();
 		return ($this->verify()?$this->values():false);
 	}
 
-	// funciones de entrada de valores
+	// parse in values for a field
 	function parseInValue($f, $value) {
 		$field=$this->fields[$f];
 		switch ($field["type"]) {
@@ -316,7 +318,7 @@ class xForm3 {
 		}
 	}
 
-	// funciones de salida de valores
+	// parse out values for a field
 	function parseOutValue($f, $value) {
 		$field=$this->fields[$f];
 		if ($field["nullifempty"] && !strlen($value)) return null;
@@ -326,9 +328,7 @@ class xForm3 {
 		}
 	}
 
-	// provista la fecha y hora, se transforma a notación dd/mm/yyyy hh:mm:ss
-	// provista la fecha, se convierte a notación dd/mm/yyyy
-	// provista la hora, se devuelve de la misma forma, hh:mm:ss
+	// DEPRECATED: convert ISO date to Spanish date
 	function spdate($sqldate) {
 		if (strlen($sqldate)==19) return substr($sqldate,8,2)."/".substr($sqldate,5,2)."/".substr($sqldate,0,4)." ".substr($sqldate,11);
 		if (strlen($sqldate)==16) return substr($sqldate,8,2)."/".substr($sqldate,5,2)."/".substr($sqldate,0,4)." ".substr($sqldate,11).":00";
@@ -337,7 +337,7 @@ class xForm3 {
 		if (strlen($sqldate)==8) return $sqldate;
 	}
 
-	// provisto la fecha en formato dd/mm/yyyy RESTO se pasa a yyyy-mm-dd RESTO
+	// convert localized date format (only Spanish supported) to ISO
 	function sqldate($spdate) {
 		if (strlen($spdate)<10) return($spdate);
 		$t=substr($spdate,11);
@@ -346,31 +346,31 @@ class xForm3 {
 		return(substr($spdate,6,4)."-".substr($spdate,3,2)."-".substr($spdate,0,2).($t?" ".$t:""));
 	}
 
-	// purgar todos los campos que tengan habilitada la purga (por defecto todos)
+	// purge all fields values
 	function purge() {
 		foreach ($this->fields as $f=>$field)
 			$this->fields[$f]["value"]=$this->purgeFieldValue($f, $field["value"]);
 	}
 
-	// ver si la purga de un campo está habilitada
+	// check if value purge is enabled in a field
 	function purgeFieldEnabled($f, $value) {
 		$field=$this->fields[$f];
 		return (
-			$value!==null
+			$value !== null
 			&& !$field["nopurge"]
-			&& $field["type"]!="html"
-			&& $field["type"]!="files"
-			&& $field["type"]!="images"
+			&& $field["type"] != "html"
+			&& $field["type"] != "files"
+			&& $field["type"] != "images"
 		);
 	}
 
-	// purgar: realiza las conversiones al valor que se hayan especificado y se sanea para evitar inyecciones
+	// purge: apply specified conversions to value and sanitize value
 	function purgeFieldValue($f, $value) {
 		if (!$this->purgeFieldEnabled($f, $value)) return $value;
 		$field=$this->fields[$f];
-		// readonly inicial, sólo si el valor no estaba establecido previamente
+		// readonly resets value
 		if ($field["readonly"] && isset($field["value"])) $value=$field["value"];
-		// resto de filtros
+		// filters
 		if ($field["trim"]) $value=trim($value);
 		if ($field["lowercase"]) $value=strtolower_utf8($value);
 		if ($field["uppercase"]) $value=strtoupper($value);
@@ -380,19 +380,20 @@ class xForm3 {
 		if ($field["positive"]) $value=abs(doubleval($value));
 		if ($field["decimal"]) $value=doubleval($value);
 		if ($field["nozero"] && !$value) $value="";
+		// sanitize
 		$value=strip_tags(str_replace(array("<", ">"), array("&lt;", "&gt;"), $value));
-		if ($field["date"] && strlen($value)) $value=null;
-		if ($field["nullifempty"] && !strlen($value)) $value=null;
+		// nullables
+		if (($field["nullifempty"] || $field["date"] || $field["datetime"]) && !strlen($value)) $value=null;
 		return $value;
 	}
 
-	// verificar campos
+	// verify fields
 	function verify() {
 		$this->errors=array();
 		foreach ($this->fields as $field=>$f) {
 			$prefix=($f["caption"]?$f["caption"].": ":($f["label"]?$f["label"].": ":""));
-			// si requerido, verificar
 			$v=$this->value($field);
+			// required field
 			if ($f["required"] && !trim($v))
 				$this->errors[$field]=array(
 					"id"=>$this->id($field),
@@ -400,7 +401,7 @@ class xForm3 {
 					"type"=>"required",
 					"err"=>(is_string($f["required"])?$f["required"]:$prefix."Campo requerido."),
 				);
-			// si tengo un intervalo, comprobar cualquiera de ellos
+			// check length interval
 			if ($f["minlength"] && $f["maxlength"] && (
 				($f["minlength"] > strlen($v)) || ($f["maxlength"] < strlen($v))
 			)) {
@@ -415,7 +416,7 @@ class xForm3 {
 					,
 				);
 			} else {
-				// comprobar solo mínima longitud
+				// check minimum length
 				if ($f["minlength"] && $f["minlength"] > strlen($v))
 					$this->errors[$field]=array(
 						"id"=>$this->id($field),
@@ -423,7 +424,7 @@ class xForm3 {
 						"type"=>"minlength",
 						"err"=>$prefix."Debe tener un mínimo de ".$f["minlength"]." caracteres.",
 					);
-				// comprobar solo máxima longitud
+				// check maximum length
 				if ($f["maxlength"] && $f["maxlength"] < strlen($v))
 					$this->errors[$field]=array(
 						"id"=>$this->id($field),
@@ -432,9 +433,7 @@ class xForm3 {
 						"err"=>$prefix."Debe tener un máximo de ".$f["maxlength"]." caracteres.",
 					);
 			}
-
-			// si tengo un intervalo, comprobar cualquiera de ellos
-			// comprobar solo mínima numérico
+			// check minimum number
 			if ($f["min"] && $f["min"] > doubleval($v))
 				$this->errors[$field]=array(
 					"id"=>$this->id($field),
@@ -442,7 +441,7 @@ class xForm3 {
 					"type"=>"min",
 					"err"=>$prefix."Debe ser como mínimo ".$f["min"].".",
 				);
-			// comprobar solo máximo numérico
+			// check maximum number
 			if ($f["max"] && $f["max"] < doubleval($v))
 				$this->errors[$field]=array(
 					"id"=>$this->id($field),
@@ -454,15 +453,21 @@ class xForm3 {
 		return ($this->errors?false:true);
 	}
 
-	// nombre de la clase de un campo
-	function className($field) {
+	// return verify errors
+	function errors() {
+		return $this->errors;
+	}
+
+	// get/set class for a field
+	function className($field, $class=null) {
+		if ($class !== null) $this->fields[$field]["class"]=$class;
 		$f=$this->fields[$field];
 		if ($f["class"]) return $f["class"];
 		if ($this->o["class"][$f["type"]]) return $this->o["class"][$f["type"]];
 		return "";
 	}
 
-	// obtener datos de un campo JSON
+	// get JSON data for a field
 	function jsfield($field) {
 		$f=$this->fields[$field];
 		if ($this->value($field)) $f["value"]=true;
@@ -485,7 +490,7 @@ class xForm3 {
 		return $f;
 	}
 
-	// obtener datos de campos para pasar a JSON
+	// get JSON data
 	function jsdata() {
 		$info=array(
 			"ssid"=>$this->ssid(),
@@ -499,12 +504,12 @@ class xForm3 {
 		return $info;
 	}
 
-	// obtener identificador de un campo
+	// get field identifier
 	function id($field) {
 		return $this->o["name"]."_".$field;
 	}
 
-	// obtener todos los identificadores
+	// get all field identifiers
 	function ids() {
 		$ids=array();
 		foreach ($this->fields as $field=>$f)
@@ -512,13 +517,13 @@ class xForm3 {
 		return $ids;
 	}
 
-	// obtener nombre del formulario
+	// get/set form name
 	function name($v=null) {
-		if ($v!==null) $this->o["name"]=$v;
+		if ($v !== null) $this->o["name"]=$v;
 		return $this->o["name"];
 	}
 
-	// obtener nombre de un campo
+	// get field name
 	function fieldName($field) {
 		return (
 			$this->fields[$field]["name"]
@@ -527,7 +532,7 @@ class xForm3 {
 		);
 	}
 
-	// obtener nombres
+	// get field names
 	function fieldNames() {
 		$names=array();
 		foreach ($this->fields as $field=>$f)
@@ -535,24 +540,22 @@ class xForm3 {
 		return $names;
 	}
 
-	// devolver primer identificador
+	// get first field identifier
 	function firstid() {
 		foreach ($this->fields as $field=>$f)
 			return $this->id($field);
 		return false;
 	}
 
-	// generar HTML
+	// get HTML for a field
 	function html($field) {
 		$f=$this->fields[$field];
-		// identificadores
 		$id=$this->id($field);
 		$name=$this->fieldName($field);
-		// estilos
 		$class=$this->className($field);
 		$styles=$this->styles($field);
 		$datalist="";
-		// tipos con conversión
+		// types with conversions
 		switch ($f["type"]) {
 		case "area":
 		case "number":
@@ -562,7 +565,7 @@ class xForm3 {
 			else if ($f["capitalize"]) $styles.="text-transform: capitalize;";
 			break;
 		}
-		// render
+		// render by type
 		switch ($f["type"]) {
 		case "hidden":
 			return "<input"
@@ -599,10 +602,11 @@ class xForm3 {
 			;
 
 		case "datetime":
-			//$length=($f["precise"]?19:16);
 			$styles_date=$this->styles($field, "date:");
 			$styles_time=$this->styles($field, "time:");
-			return "<input"
+			return ""
+				."<span style='display:flex;'>" // fix for date/time inputs height inconsistence
+				."<input"
 				." id='".$id.":d'"
 				." name='".$name.":d'"
 				." class='".$class."'"
@@ -620,7 +624,9 @@ class xForm3 {
 				.(isset($f["autocomplete"])?" autocomplete='".($f["autocomplete"]?"on":"off")."'":"")
 				.($styles || $styles_date?" style='".$styles.$styles_date."'":"")
 				.$f["extra"]
-				." /> <input"
+				." />"
+				."<span style='overflow:hidden;width:2px;visibility:hidden;'><input class='".$this->o["class"]["text"]."' type='text' /></span>"
+				."<input"
 				." id='".$id.":t'"
 				." name='".$name.":t'"
 				." class='".$class."'"
@@ -638,6 +644,7 @@ class xForm3 {
 				.($styles || $styles_time?" style='".$styles.$styles_time."'":"")
 				.$f["extra"]
 				." />"
+				."</span>"
 			;
 
 		case "date":
@@ -850,18 +857,18 @@ class xForm3 {
 		}
 	}
 
-	// obtener/asignar nombre de sesión
+	// get/set session name
 	function ssid($ssid=null) {
 		if ($ssid !== null) $this->ssid="".$ssid;
 		return $this->ssid;
 	}
 
-	// limpiar sesión
+	// clear session
 	function sclean() {
 		unset($_SESSION["xform3"][$_SERVER["PHP_SELF"]][$this->o["name"]][$this->ssid]);
 	}
 
-	// iniciar sesión
+	// start session
 	function sstart($ssid=null) {
 		if ($ssid !== null) $this->ssid($ssid);
 		// primero limpiar
@@ -873,7 +880,7 @@ class xForm3 {
 		}
 	}
 
-	// obtener/establecer datos de sesión de un campo
+	// get/set session data for a field
 	function svalue($field, $value=null) {
 		if ($value === false) {
 			unset($_SESSION["xform3"][$_SERVER["PHP_SELF"]][$this->o["name"]][$this->ssid][$field]);
@@ -884,50 +891,49 @@ class xForm3 {
 		}
 	}
 
-	// escalar imagen
+	// scale image (requires: ximage)
 	function imageScale($o=array()) {
 		$w=intval($o["w"]); if ($w < 1 || $w > 10240) $w=0;
 		$h=intval($o["h"]); if ($h < 1 || $h > 10240) $h=0;
 		$f=($o["f"]?$o["f"]:"jpg");
 		$q=($o["q"]?$o["q"]:90);
-		if (!$w || !$h) return ""; // sin datos
-		// clases requeridas
+		if (!$w || !$h) return ""; // can't scale
+		// required classes
 		require_once(__DIR__."/ximage.php");
-		// crear imagen, o bien limpia, o bien a partir de fichero
+		// create image, clean or from file
 		$xi=($o["file"]?new xImage($o["file"]):new xImage());
-		// si tenemos datos, cargar de datos
+		// if content data specified, load from it
 		if ($o["data"]) $xi->fromString($o["data"]);
-		// arreglar orientación
+		// fix orientation
 		$xi->fixOrientation();
-		// solo si supera el tamaño, escalar
+		// scale only if dimensions exceeds threshold
 		if ($xi->width() > $w || $xi->height() > $h) $xi->scale($w, $h, false, true);
-		// devolver datos de la imagen final
+		// return content data image
 		return $xi->toString($f, $q);
 	}
 
-	// acciones AJAX
+	// AJAX actions
 	function ajax() {
 
-		// datos necesarios
+		// required globals
 		$ajax=$GLOBALS["ajax"];
 		$adata=$GLOBALS["adata"];
 
-		// campos obligatorios permiten ser utilizados via REQUEST
+		// required fields can be used via GET/POST
 		if (!$adata["name"]) $adata["name"]=$_REQUEST["name"];
 		if (!$adata["field"]) $adata["field"]=$_REQUEST["field"];
 
-		// verificar que el nombre del formulario esté establecido y sea el mismo
+		// ensure form name is set and matches
 		if (!$adata["name"] || ($adata["name"] != $this->o["name"])) return true;
 
-		// iterar campos
-		foreach ($this->fields as $field=>$f) {
-			if ($adata["field"] != $field) continue;
+		// iterate fields
+		foreach ($this->fields as $field=>$f) if ($adata["field"] == $field) {
 
-			// límite de subidas
+			// if field has upload limit...
 			$limit=$this->filesLimit[$f["type"]];
 			if (isset($limit)) {
 
-				// acciones de campos de tipo fichero
+				// actions for files
 				switch ($ajax) {
 
 				case "xform3.file.get":
@@ -935,16 +941,12 @@ class xForm3 {
 					$svalue=$this->svalue($field);
 					$index=($_REQUEST["index"]?intval($_REQUEST["index"]):0);
 					$file=$svalue["files"][$index];
-					// intentar obtener el tipo
+					// try to get mimetype
 					if (!$file["type"]) $file["type"]=$this->mimeByMagic(substr($file["data"], 0, 16));
-					//if ($file["deleted"]) die("Deleted.");
-					// si se solicita escalado...
-					//debug($file);
+					// scale, if requested
 					if (($w=intval($_REQUEST["w"])) && ($h=intval($_REQUEST["h"])) && $file["type"])
 						$file["data"]=$this->imageScale(array("data"=>$file["data"], "w"=>$w, "h"=>$h)+($f["scale"]?$f["scale"]:array()));
-					// si no tengo datos, ha ocurrido un error con el escalado, etc.
-					//if (!$file["data"]) die("ScaleError.");
-					// volcar fichero
+					// dump file to HTTP (required: kernel)
 					require_once(__DIR__."/kernel.php");
 					Kernel::httpOutput(array(
 						"type"=>$file["type"],
@@ -953,23 +955,25 @@ class xForm3 {
 						"name"=>$file["name"],
 						"disposition"=>(isset($_REQUEST["attachment"])?"attachment":"inline"),
 					));
-					// terminar
+					// finished
 					exit;
 
 				case "xform3.file.del":
 					$this->ssid($adata["ssid"]);
-					// marcar para borrar
+					// mark as deleted
 					$index=($adata["index"]?intval($adata["index"]):0);
 					$svalue=$this->svalue($field);
 					unset($svalue["files"][$index]["uploaded"]);
 					$svalue["files"][$index]["deleted"]=true;
 					$this->svalue($field, $svalue);
-					// todo ok
+					// everything ok
 					ajax(array("ok"=>true));
 
 				case "xform3.files.upload":
 					$this->ssid($_REQUEST["ssid"]);
-					// procesar ficheros subidos
+					// load required classes (required: xuploader)
+					require_once(__DIR__."/xuploader.php");
+					// process uploaded files
 					new xUploader(array(
 						"_field"=>$field,
 						"_f"=>$f,
@@ -978,14 +982,14 @@ class xForm3 {
 						"oncomplete"=>function($uploader, $upload, $o){ // at the end of a completed upload
 							$f=$o["_f"];
 							$limit=$o["_limit"];
-							// valor de sesión
+							// session value for field
 							$svalue=$o["_xf"]->svalue($o["_field"]);
-							// índice de entrada
+							// entry index
 							$index=0;
 							if (!$svalue["files"]) $svalue["files"]=array();
 							foreach ($svalue["files"] as $i=>$v) if ($i >= $index) $index=($i+1);
 							if ($limit && $index+1 >= $limit) $index=$limit-1;
-							// entrada
+							// entry
 							$j=strrpos($upload["name"], ".");
 							$file=array(
 								"uploaded"=>true,
@@ -995,38 +999,38 @@ class xForm3 {
 								"sizeo"=>$upload["size"],
 								"type"=>$upload["type"],
 							);
-							// asignamiento automático de nombre en base al fichero
+							// automatic name assignment based on filename
 							if ($f["filecaption"]) $file["caption"]=$upload["name"];
-							// preparar datos
+							// prepare content data, scale if required
 							if ($f["scale"] && ($w=$f["scale"]["w"]) && ($h=$f["scale"]["h"])) {
 								$file["scaled"]=true;
 								$file["data"]=$this->imageScale(array("file"=>$upload["tmp"])+$f["scale"]);
 							} else {
 								$file["data"]=file_get_contents($upload["tmp"]);
 							}
-							// actualizar tamaño con los datos recuperados
+							// update size
 							$file["size"]=strlen($file["data"]);
-							// guardar
+							// save
 							$svalue["files"][$index]=$file;
-							// guardar en sesión
+							// save in session
 							$o["_xf"]->svalue($o["_field"], $svalue);
 						},
 						"onupload"=>function($uploader, $uploads, $o){ // at the end of all uploads
-							// valor de sesión
+							// session value for field
 							$svalue=$o["_xf"]->svalue($o["_field"]);
-							// construir array sin datos
+							// construct empty array
 							$files=array_map(function($file){
 								unset($file["data"]);
 								return $file;
 							}, ($svalue["files"]?$svalue["files"]:array()));
-							// devolver información de la subida
+							// return upload information
 							ajax(array(
 								"files"=>$files,
 								"ok"=>true
 							));
 						},
 					));
-					// control de errores
+					// error control
 					ajax(array("err"=>"No se han especificado ficheros o se ha excedido el tamaño."));
 
 				}
@@ -1036,11 +1040,6 @@ class xForm3 {
 
 		} // limit
 
-	}
-
-	// devolver lista de errores
-	function errors() {
-		return $this->errors;
 	}
 
 }
