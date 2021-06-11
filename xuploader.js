@@ -36,6 +36,7 @@
 		file([file])          Get/Set first file.
 		filesAdd(files)       Add files.
 		fileDel(index)        Delete file by index.
+		fileDelByName(name)   Delete file by file name.
 		reset()               Reset file list.
 		post(post)            Get/Set POST data.
 		chunked([chunked])    Get/Set is chunked or chunked size.
