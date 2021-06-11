@@ -208,6 +208,23 @@ class Kernel {
 	}
 
 	/**
+	 * asoc.
+	 * Creates an associative array from a list of array with key name and, optionally, value-name elements.
+	 *
+	 * @param Array Array to process.
+	 * @param String Key name.
+	 * @param String Value name (optional).
+	 * @return Array Key-indexed array.
+	 */
+	static function asoc($data, $key, $value=null) {
+		$a=array();
+		if (is_array($data))
+			foreach ($data as $v)
+				$a[$v[$key]]=($v === null?$v:$v[$value]);
+		return $a;
+	}
+
+	/**
 	 * IP Ascendent Sort Function.
 	 * Función de ordenación por IP ascendente para usar con uasort.
 	 *
