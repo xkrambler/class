@@ -383,13 +383,23 @@ function xUploader(o) {
 
 	// delete file by index
 	self.fileDel=function(index){
+		var file=false;
 		var files=[];
-		for (var i=0; i < self.o.files; i++) {
+		for (var i=0; i < self.o.files.length; i++) {
 			if (i == index) file=self.o.files[i];
-			else files[i]=self.o.files[i];
+			else files.push(self.o.files[i]);
 		}
 		self.o.files=files;
 		if (self.o.onfiles) self.o.onfiles(self, {"del":file, "index":index, "files":self.o.files});
+		return file;
+	};
+
+	// delete file by file name
+	self.fileDelByName=function(name){
+		for (var i=0; i < self.o.files.length; i++)
+			if (self.o.files[i].name == name)
+				return self.fileDel(i);
+		return false;
 	};
 
 	// get/set files
