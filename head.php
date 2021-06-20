@@ -80,16 +80,6 @@ if ($page["content-type"]) {
 }
 if (!$page["charset"]) $page["charset"]="UTF-8";
 
-// remove temporal variables
-unset($_b);
-unset($_c);
-unset($_i);
-unset($_e);
-unset($_f);
-unset($_t);
-unset($_n);
-unset($_v);
-
 // save page settings, this will ensure that settings are global
 x::page($page);
 
@@ -97,30 +87,29 @@ x::page($page);
 echo "<!doctype html>\n";
 echo "<html".($page["lang"]?' lang="'.$page["lang"].'"':'').">\n";
 echo "<head>\n";
-if ($page["content-type"]) { echo "\t".'<meta http-equiv="Content-Type" content="'.x::entities($page["content-type"]).'" />'."\n"; }
-if ($page["description"]) { echo "\t".'<meta name="description" content="'.x::entities($page["description"]).'" />'."\n"; }
-if ($page["generator"]) { echo "\t".'<meta name="generator" content="'.x::entities($page["generator"]).'" />'."\n"; }
-if ($page["keywords"]) { echo "\t".'<meta name="keywords" content="'.x::entities($page["keywords"]).'" />'."\n"; }
-if ($page["title"] || $title) { echo "\t".'<title>'.x::entities(($title?$title." - ".$page["title"]:$page["title"])).'</title>'."\n"; }
-if ($page["base"]) { echo "\t".'<base href="'.$page["base"].'" />'."\n"; }
+if ($page["content-type"]) echo "\t".'<meta http-equiv="Content-Type" content="'.x::entities($page["content-type"]).'" />'."\n";
+foreach ($_b=array("description", "generator", "keywords", "viewport", "theme-color") as $_n) if ($_v=$page[$_n]) $page["metas"][$_n]=$_v;
+if (is_array($page["metas"])) foreach ($page["metas"] as $_n=>$_v) if (is_string($_v)) echo "\t".'<meta name="'.x::entities($_n).'" content="'.x::entities($_v).'" />'."\n";
+if ($page["title"] || $title) echo "\t".'<title>'.x::entities(($title?$title." - ".$page["title"]:$page["title"])).'</title>'."\n";
+if ($page["base"]) echo "\t".'<base href="'.$page["base"].'" />'."\n";
 if ($page["favicon"]) {
-	echo "\t".'<link rel="icon" href="'.x::entities($page["favicon"]).'" type="image/x-icon" />'."\n";
+	echo "\t".'<link rel="icon" type="image/x-icon" href="'.x::entities($page["favicon"]).'" />'."\n";
 	echo "\t".'<link rel="shortcut icon" href="'.x::entities($page["favicon"]).'" />'."\n";
 }
-if ($page["css"]) foreach ($page["css"] as $_n=>$_v) {
-	echo "\t".'<link rel="stylesheet" href="'.x::entities($_n).'" media="all"'.(is_string($_v)?' title="'.x::entities($_v).'"':'').' />'."\n";
-}
-if ($data) {
-	echo "\t".'<script type="text/javascript">'."\n";
-	echo "\t\t".'var data='.json_encode($data).';'."\n";
-	echo "\t".'</script>'."\n";
-}
-if ($page["js"]) foreach ($page["js"] as $_n=>$_v) {
-	echo "\t".'<script type="text/javascript" src="'.x::entities($_n).'"></script>'."\n";
-}
-if ($page["viewport"]) { echo "\t".'<meta name="viewport" content="'.x::entities($page["viewport"]).'" />'."\n"; }
-if ($page["theme-color"]) { echo "\t".'<meta name="theme-color" content="'.x::entities($page["theme-color"]).'" />'."\n"; }
+if ($data) echo "\t".'<script type="text/javascript">var data='.json_encode($data).';</script>'."\n";
+if ($page["js"]) foreach ($page["js"] as $_n=>$_v) echo "\t".'<script type="text/javascript" src="'.x::entities($_n).'"></script>'."\n";
+if ($page["css"]) foreach ($page["css"] as $_n=>$_v) echo "\t".'<link rel="stylesheet" media="all" href="'.x::entities($_n).'"'.(is_string($_v)?' title="'.x::entities($_v).'"':'').' />'."\n";
 if ($page["head"]) echo "\t".$page["head"]."\n";
 echo "\t".'<!-- <all your="base" are="belong/to.us" /> -->'."\n";
 echo "</head>\n";
 echo "<body".($page["body"]?" ".$page["body"]:"").">\n";
+
+// remove temporal variables
+unset($_b);
+unset($_c);
+unset($_i);
+unset($_e);
+unset($_f);
+unset($_n);
+unset($_t);
+unset($_v);
