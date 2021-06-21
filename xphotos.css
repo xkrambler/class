@@ -143,12 +143,17 @@
 }
 .xphotos_caption {
 	position: relative;
+	display: none;
 	bottom: 0px;
 	padding: 12px 16px;
 	background: rgba(0,0,0,0.8);
 	color: #FFF;
-	font-size: 24px;
+	font-size: 32px;
+	text-align: center;
 	animation: xphotos_fadeIn 0.3s ease-out;
+}
+.xphotos_caption_visible {
+	display: block;
 }
 .xphotos_body_hide .xphotos_caption {
 	animation: xphotos_fadeOut 0.3s ease-out;

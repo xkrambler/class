@@ -103,8 +103,11 @@ function xPhotos(o) {
 	// mostrar caption
 	self.showCaption=function(caption) {
 		if (!caption) var caption=(self.o.list[self.o.actual].caption?self.o.list[self.o.actual].caption:self.o.caption);
-		if (typeof(caption)=="function") var caption=caption(self, self.o.list[self.o.actual], self.o.actual);
-		if (self._caption) self._caption.innerHTML=(caption?caption:"");
+		if (typeof(caption) == "function") var caption=caption(self, self.o.list[self.o.actual], self.o.actual);
+		if (self._caption) {
+			self._caption.innerHTML=(caption?caption:"");
+			classEnable(self._caption, "xphotos_caption_visible", caption);
+		}
 	};
 
 	// mostrar
