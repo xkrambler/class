@@ -86,7 +86,6 @@
 .txt_invalid,
 .txt:invalid {
 	box-shadow: none;
-	border-color: #D22;
 }
 .area[readonly],
 .cmb[readonly],
