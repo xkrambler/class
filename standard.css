@@ -110,7 +110,12 @@ h6 { font-size: 12px; margin: 12px 0; font-weight: normal; }
 .inline { display: inline; }
 .opacity0 { opacity: 0; }
 .opacity1 { opacity: 1; }
+.uppercase { text-transform: uppercase; }
+.lowercase { text-transform: lowercase; }
 .flex { display: flex; }
+.flex-around { justify-content: space-around; }
+.flex-between { justify-content: space-between; }
+.flex-items-center { align-items: center; }
 .full { width: 100%; }
 .fill { flex: 1; }
 .mtable {
