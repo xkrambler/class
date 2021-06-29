@@ -183,7 +183,7 @@ class xError {
 						." #".$o["num"]." ".$o["db"].":<br />\n"
 						."<b>".$o["error"]."</b><br />\n",
 					"sql"=>$o["lastquery"],
-				));
+				), $o["doexit"]);
 			});
 
 			/*
