@@ -107,9 +107,10 @@ class Conf {
 	}
 
 	// guardar una configuración
-	function set($id, $value, $tipo="V") {
+	function set($id, $value, $tipo="V", $preload=null) {
 		if ($this->atomic) if (!$this->db->begin()) $this->db->err();
 		$row=$this->row($id);
+		if ($preload !== null) $row["preload"]=$preload;
 		if (!$this->db->query($this->db->sqlreplace($this->table, array("id"=>$id, "tipo"=>$tipo, "value"=>$value)+($row?$row:array())))) $this->db->err();
 		if ($this->atomic) if (!$this->db->commit()) $this->db->err();
 		return $this->get($id);
