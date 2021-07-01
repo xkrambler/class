@@ -4,6 +4,7 @@
 class Conf {
 
 	protected $o;
+	protected $cache=array();
 
 	// constructor
 	function __construct($o) {
@@ -48,36 +49,39 @@ class Conf {
 
 	// obtener una o varias configuraciones y cachearla
 	function cache($ids=null) {
-		static $cache=array();
 		if ($ids === null) {
-			$cache=array();
+			$this->cache=array();
 			return null;
 		}
 		if (is_array($ids)) {
 			foreach ($ids as $n)
-				if (isset($cache[$n]))
-					$a[$n]=$cache[$n];
+				if (isset($this->cache[$n]))
+					$a[$n]=$this->cache[$n];
 			if ($a)
 				foreach ($a as $n=>$v)
 					unset($ids[$n]);
 			if ($_ids=$this->get($ids))
 				foreach ($_ids as $n=>$v)
 					if ($v!==null)
-						$a[$n]=$cache[$n]=$v;
+						$a[$n]=$this->cache[$n]=$v;
 			return $a;
 		} else {
-			if (!isset($cache[$ids])) {
+			if (!isset($this->cache[$ids])) {
 				$v=$this->get($ids);
 				if ($v!==null)
-					$cache[$ids]=$v;
+					$this->cache[$ids]=$v;
 			}
-			return $cache[$ids];
+			return $this->cache[$ids];
 		}
 	}
 
 	// obtener una o varias configuraciones
-	function get($ids) {
-		if (is_array($ids)) {
+	function get($ids=null) {
+		if ($ids === null) {
+			$a=$this->where("preload='1'");
+			$this->cache+=$a; // cachear
+			return $a;
+		} if (is_array($ids)) {
 			foreach ($this->rows($ids) as $row)
 				$a[$row["id"]]=($row["tipo"] == "L"?$this->get($row["value"]):($row["tipo"]?$row["value"]:null));
 			return $a;
@@ -89,7 +93,12 @@ class Conf {
 
 	// obtener varias configuraciones via like (p.e. valor.%)
 	function like($like) {
-		if (!$r=$this->db->query("SELECT id, tipo, value FROM ".$this->table." WHERE id LIKE '".$this->db->escape($like)."'")) $this->db->err();
+		return $this->where("id LIKE '".$this->db->escape($like)."'");
+	}
+
+	// obtener varias configuraciones vía where sin filtrar, o obtener todas
+	function where($where=false) {
+		if (!$r=$this->db->query("SELECT * FROM ".$this->table.($where?" WHERE ".$where:""))) $this->db->err();
 		$a=array();
 		while ($row=$r->row())
 			$a[$row["id"]]=($row["tipo"] == "L"?$this->get($row["value"]):($row["tipo"]?$row["value"]:null));
