@@ -3,7 +3,7 @@
 	newalert 0.1
 	Creates modal dialogs using JS/HTML.
 	* requires: common.js
-	
+
 	Examples:
 		newalert("Hello world!");
 		newwait("Please, wait while processing...");
@@ -159,7 +159,7 @@ function newalert(o) {
 				+(o.height?" height='"+o.width+"'":"")
 				+(o.style?" style='"+o.style+"'":"")
 			+" onClick='javascript:newalert_body_click(\""+id+"\", event);'>"
-			+(o.title==null?"":"<tr height='1'><th "+cols+" class='newalert_title'>"+(o.title?o.title:"")+"</th></tr>")
+			+(o.title == null?"":"<tr height='1'><th "+cols+" class='newalert_title'>"+(o.title?o.title:"")+"</th></tr>")
 			+"<tr>"
 				+(hasicon
 					?"<td class='newalert_icon' id='"+_newalert.id+id+"_icon'>"
