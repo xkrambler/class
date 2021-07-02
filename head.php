@@ -88,8 +88,8 @@ echo "<!doctype html>\n";
 echo "<html".($page["lang"]?' lang="'.$page["lang"].'"':'').">\n";
 echo "<head>\n";
 if ($page["content-type"]) echo "\t".'<meta http-equiv="Content-Type" content="'.x::entities($page["content-type"]).'" />'."\n";
-foreach ($_b=array("description", "generator", "keywords", "viewport", "theme-color") as $_n) if ($_v=$page[$_n]) $page["metas"][$_n]=$_v;
-if (is_array($page["metas"])) foreach ($page["metas"] as $_n=>$_v) if (is_string($_v)) echo "\t".'<meta name="'.x::entities($_n).'" content="'.x::entities($_v).'" />'."\n";
+foreach ($_b=array("description", "generator", "keywords", "viewport", "theme-color") as $_n) if ($_v=$page[$_n]) $page["meta"][$_n]=$_v;
+if (is_array($page["meta"])) foreach ($page["meta"] as $_n=>$_v) if (is_string($_v)) echo "\t".'<meta name="'.x::entities($_n).'" content="'.x::entities($_v).'" />'."\n";
 if ($page["title"] || $title) echo "\t".'<title>'.x::entities(($title?$title." - ".$page["title"]:$page["title"])).'</title>'."\n";
 if ($page["base"]) echo "\t".'<base href="'.$page["base"].'" />'."\n";
 if ($page["favicon"]) {
