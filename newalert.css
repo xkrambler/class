@@ -149,6 +149,7 @@
 /* class icons */
 .newalert_ico {
 	background: center center no-repeat; 
+	background-size: contain;
 	width: 48px;
 	height: 48px;
 }
