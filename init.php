@@ -146,7 +146,7 @@ class x {
 			if ($i !== false) $url=substr($url, 0, $i);
 			$geturl=array();
 			parse_str($p['query'], $geturl);
-			if ($geturl) $get=array_merge($geturl, $get);
+			if ($geturl) $get=array_replace($geturl, $get);
 		}
 		// build query
 		$p=($get?http_build_query($get, "", "&", PHP_QUERY_RFC3986):"");
@@ -159,7 +159,7 @@ class x {
 
 	// alter link: modify parametrized link from current request parameters
 	static public function alink($get=array(), $url=null) {
-		$get=array_merge($_GET, $get);
+		$get=array_replace($_GET, $get);
 		return self::link($get, ($url === null?self::me():$url));
 	}
 
