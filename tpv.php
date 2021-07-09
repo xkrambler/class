@@ -3,7 +3,7 @@
 // base class for manage TPV
 abstract class TPV {
 
-	protected $defaults=Array(
+	protected $defaults=array(
 		"test"=>false,
 		"table"=>"tpv",
 	);
@@ -172,7 +172,7 @@ abstract class TPV {
 
 	// send AJAX values to run via JS
 	function ajaxValues() {
-		return Array(
+		return array(
 			"type"=>$this->type(),
 			"test"=>$this->test(),
 			"localizador"=>$this->localizador(),
@@ -205,7 +205,7 @@ abstract class TPV {
 		$tpv_id=$db->lastid();
 		// update locator
 		$this->localizador($tpv_id);
-		if (!$db->query($db->sqlupdate($this->table(), array("localizador"=>$this->localizador()),Array("id"=>$tpv_id)))) return $this->dbErr();
+		if (!$db->query($db->sqlupdate($this->table(), array("localizador"=>$this->localizador()), array("id"=>$tpv_id)))) return $this->dbErr();
 		// return TPV entry id
 		return $tpv_id;
 	}

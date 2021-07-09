@@ -159,7 +159,7 @@ class TPVSERMEPA extends TPV {
 
 	// URL NOTIFY
 	function urlnotify($url=null) {
-		$this->set("notify", $url);
+		if ($url !== null) $this->set("notify", $url);
 		return $this->fullurl($this->setup["notify"]?$this->setup["notify"]:"notify".(defined("ALINK_NOEXT")?"":".php"));
 	}
 
@@ -175,8 +175,9 @@ class TPVSERMEPA extends TPV {
 	}
 
 	// comprobar notificación online
-	function checkNotify() {
+	function checkNotify($tpv=null) {
 		if (!$this->isNotify()) return false;
+		if ($tpv && !$this->checkOperation($tpv)) return false;
 		if ($this->setup["secret_key256"]) {
 			if ($_POST["Ds_SignatureVersion"]!='HMAC_SHA256_V1')
 				return array("err"=>"Ds_SignatureVersion not valid");
@@ -206,6 +207,11 @@ class TPVSERMEPA extends TPV {
 		}
 		$this->lasterr='No secret keys defined.';
 		return null;
+	}
+
+	// comprobar estado de la operación de base de datos para evitar sobreescritura de eventos en notify
+	function checkOperation($tpv) {
+		return ($tpv["estado"] == "START");
 	}
 
 	// enviar notificación online OK
