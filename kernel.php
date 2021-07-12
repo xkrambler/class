@@ -391,7 +391,7 @@ class Kernel {
 				.($a["id"]?"Content-ID: <".$a["id"].">\r\n":"")
 				."Content-Transfer-Encoding: base64\r\n"
 				//."Content-Length: ".strlen($temp)."\r\n"
-				.($name?"Content-Disposition: attachment;\r\n filename=\"".$name."\"\r\n":"")
+				.($name?"Content-Disposition: attachment;\r\n filename=\"".str_replace('"', "''", $name)."\"\r\n":"")
 				."\r\n".$temp."\r\n\r\n"
 			;
 			unset($temp);
@@ -516,7 +516,7 @@ class Kernel {
 		if (!$f) $f="file";
 		// cabeceras
 		header("Content-Type: ".$o["type"].($o["charset"]?"; charset: ".$o["charset"]:""));
-		header("Content-Disposition: ".($o["attachment"]?"attachment;":"inline;")."; filename=\"".str_replace("\"", "''", $f)."\"");
+		header("Content-Disposition: ".($o["attachment"]?"attachment; ":"inline; ")."filename=\"".str_replace('"', "''", $f).'"');
 		switch ($method) {
 		case "headers":
 			return true;
@@ -560,16 +560,19 @@ class Kernel {
 
 	// exportar datos a CSV
 	static function csv($o) {
-		$f="export_".time().".csv";
-		if ($o["filename"]) $f=$o["filename"];
-		if (!isset($o["delimiter"])) $o["delimiter"]='"';
-		if (!isset($o["separator"])) $o["separator"]=';';
-		if (!isset($o["eol"])) $o["eol"]="\n";
-		if (!isset($o["headers"]) || $o["headers"]) {
-			header("Content-Type: ".self::getMimetype(".csv"));
-			header("Content-Disposition: attachment; filename=\"".str_replace("\"","''",$f)."\"");
-		}
-		if ($o["addBom"]) {
+		foreach ($defaults=array(
+			"attachment"=>true,
+			"delimiter"=>'"',
+			"separator"=>';',
+			"eol"=>"\n",
+			"mimetype"=>self::getMimetype(".csv"),
+			"filename"=>"export_".time().".csv",
+		) as $k=>$v)
+			if (!isset($o[$k]))
+				$o[$k]=$v;
+		if ($o["mimetype"]) header('Content-Type: '.$o["mimetype"]);
+		if ($o["filename"]) header('Content-Disposition: '.($o["attachment"]?"attachment":"inline").'; filename="'.str_replace('"', "''", $o["filename"]).'"');
+		if ($o["add_bom"] || $o["addBom"]) { // DEPRECATED: addBom
 			// Esta modificación hace que los csv generados se vean bien en Excel para Windows, pero no en el de MAC
 			// Para que funcione bien en el Excel for MAC, hay que generar el fichero en formato UTF-16.
 			// - Añadir BOM para que el texto en UTF-8 se vea bien en Excel -
@@ -797,9 +800,9 @@ class Kernel {
 			if (!isset($o["name"])) $o["name"]=basename($o["file"]);
 		}
 		if ($o["name"] || $o["disposition"]) {
-			header("Content-Disposition: "
-				.($o["disposition"]?$o["disposition"]:"")
-				.($o["name"]?($o["disposition"]?"; ":"")."filename=\"".str_replace("\"","''",$o["name"])."\"":"")
+			header('Content-Disposition: '
+				.($o["disposition"]?$o["disposition"]:'')
+				.($o["name"]?($o["disposition"]?'; ':'').'filename="'.str_replace('"', "''", $o["name"]).'"':'')
 			);
 		}
 		// obtener inicio y fin de un rango especificado (leer solo el primero)
