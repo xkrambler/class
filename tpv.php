@@ -75,8 +75,8 @@ abstract class TPV {
 
 	// get/set operation data
 	function operation($o=null) {
-		if ($o!==null) $this->operation=$o;
-		return $this->operation;
+		if ($o !== null) $this->operation=$o;
+		return ($this->operation?$this->operation:[]);
 	}
 
 	// get/set operation id
@@ -136,13 +136,19 @@ abstract class TPV {
 		return $this->setup[($this->test()?"TestURL":"URL")];
 	}
 
+	// get HTML entities
+	function entities($v) {
+		return (method_exists("x", "entities")?x::entities($v):htmlentities($v, null, 'UTF-8'));
+	}
+
 	// get HTML Form
 	function getForm() {
 		$fields=$this->getFormValues();
 		if ($fields) {
 			$html='<form id="tpv_form" action="'.$this->getFormURL().'" method="post">'."\n";
 			foreach ($fields as $n=>$v)
-				$html.='<input type="hidden" name="'.htmlentities($n, null, 'UTF-8').'" value="'.htmlentities($v, null, 'UTF-8').'" />'."\n";
+				$html.='<input type="hidden" name="'.$this->entities($n).'" value="'.$this->entities($v).'" />'."\n";
+			$html.='Se ha detectado JavaScript desactivado: <input id="tpv_form_button" type="submit" value="Continuar con el pago on-line" />'."\n";
 			$html.='</form>'."\n";
 			return $html;
 		}
@@ -152,20 +158,27 @@ abstract class TPV {
 	// send HTML Form via POST
 	function sendFormHTML() {
 		?><!doctype html>
-		<html lang="es">
-		<head>
-			<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-			<title>Por favor, espere...</title>
-			<meta name="viewport" content="width=device-width, minimum-scale=1.0, user-scalable=no" />
-			<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-			<!-- <all your="base" are="belong/to.us" /> -->
-		</head>
-		<body>
-			<?=$this->getForm()?>
-			<script>
-				document.getElementById("tpv_form").submit();
-			</script>
-		</body>
+			<html lang="es">
+			<head>
+				<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+				<title>Por favor, espere...</title>
+				<meta name="viewport" content="width=device-width, minimum-scale=1.0, user-scalable=no" />
+				<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+				<!-- <all your="base" are="belong/to.us" /> -->
+			</head>
+			<body>
+				<?=$this->getForm()?>
+				<script>
+					var ko=<?=json_encode($this->ko)?>;
+					if (location.hash == "") {
+						location.hash='#pay';
+						document.getElementById("tpv_form").style.display="none";
+						document.getElementById("tpv_form").submit();
+					} else {
+						if (ko) location.href=ko;
+					}
+				</script>
+			</body>
 		</html><?
 		exit;
 	}
@@ -189,23 +202,24 @@ abstract class TPV {
 
 	// create new database TPV operation entry
 	function dbStart($operation) {
-		$db=$this->setup["db"];
 		// update operation data
-		if (!$this->operation) $this->operation=array();
 		$operation=array_merge(array(
 			"sid"=>session_id(),
 			"descripcion"=>"",
 			"notificacion"=>"",
 			"resultado"=>"",
-		), array_merge($this->operation, $operation));
+		), array_merge($this->operation(), $operation));
 		// forced operation fields
 		$operation["fecha"]=date("Y-m-d H:i:s");
 		$operation["estado"]="START";
-		if (!$db->query($db->sqlinsert($this->table(), $operation))) $this->dbErr();
-		$tpv_id=$db->lastid();
+		// update operation
+		$this->operation($operation);
+		// create entry
+		if (!$this->db->query($this->db->sqlinsert($this->table(), $operation))) $this->dbErr();
+		$tpv_id=$this->db->lastid();
 		// update locator
 		$this->localizador($tpv_id);
-		if (!$db->query($db->sqlupdate($this->table(), array("localizador"=>$this->localizador()), array("id"=>$tpv_id)))) return $this->dbErr();
+		if (!$this->db->query($this->db->sqlupdate($this->table(), array("localizador"=>$this->localizador()), array("id"=>$tpv_id)))) return $this->dbErr();
 		// return TPV entry id
 		return $tpv_id;
 	}
