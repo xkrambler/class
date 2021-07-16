@@ -7,7 +7,7 @@ function xForm3(o) {
 	a.o=array_copy(o);
 	a.data={};
 
-	// nocache variable tokens
+	// nocache token
 	a.nocache=function(){ return (new Date().getTime()); };
 
 	// inmediatos
@@ -16,20 +16,20 @@ function xForm3(o) {
 		return (a.o.name?a.o.name:null);
 	};
 	a.class=function(f){ return (a.o.class?(f?a.o.class[f]:a.o.class):null); };
-	a.field=function(f) { return a.o.fields[f]; };
-	a.fields=function() { return a.o.fields; };
-	a.set=function(f,n,v) {
+	a.field=function(f){ return a.o.fields[f]; };
+	a.fields=function(){ return a.o.fields; };
+	a.set=function(f,n,v){
 		if (isset(v)) a.o.fields[f][n]=v;
 		return a.o.fields[f][n];
 	};
-	a.caption=function(f) { return (a.o.fields[f]?a.o.fields[f].caption:null); };
+	a.caption=function(f){ return (a.o.fields[f]?a.o.fields[f].caption:null); };
 	a.id=function(f){ return a.o.name+"_"+f; };
 	a.gid=function(f){ return (a.id(f)?gid(a.id(f)):null); };
-	a.gidval=function(f, value){ return (a.id(f)?gidval(a.id(f), value):null); };
-	a.gidfocus=function(f){ gidfocus(a.id(f)); };
+	a.gidval=function(f, value){ return (a.id(f)?gidval(a.id(f), value):null); }; // DEPRECATED
+	a.gidfocus=function(f){ gidfocus(a.id(f)); }; // DEPRECATED
 
 	// obtiene el campo por su identificador
-	a.fieldById=function(id) {
+	a.fieldById=function(id){
 		for (var field in a.o.fields)
 			if (a.id(field)==id)
 				return field;
@@ -38,7 +38,15 @@ function xForm3(o) {
 
 	// establece el foco a un campo
 	a.focus=function(f){
-		var e=gid(a.id(f));
+		var field=a.field(f);
+		var e=false;
+		switch (field?field.type:"") {
+		case "datetime":
+			e=gid(a.id(f)+":d");
+			break;
+		default:
+			e=a.gid(f);
+		}
 		if (e && e.focus) e.focus();
 	};
 
@@ -73,7 +81,7 @@ function xForm3(o) {
 	};
 
 	// devuelve un valor de un campo
-	a.formValue=function(id) {
+	a.formValue=function(id){
 		var object=gid(id);
 		if (!object) return null;
 		switch (object.type) {
@@ -102,7 +110,7 @@ function xForm3(o) {
 			var combo=gid(a.id(field));
 			combo.options.length=0;
 		},
-		add:function(field, caption, value) {
+		add:function(field, caption, value){
 			var combo=gid(a.id(field));
 			var option=new Option(caption, (typeof(value) == "undefined"?caption:value));
 			try {
@@ -112,7 +120,7 @@ function xForm3(o) {
 			}
 			return option;
 		},
-		fill:function(field, options) {
+		fill:function(field, options){
 			var f=a.o.fields[field];
 			if (isset(options)) {
 				a.options.clear(field);
@@ -235,7 +243,7 @@ function xForm3(o) {
 
 	// crea event listener en un campo o en todos los campos (si f=callback)
 	a.addEventListener=function(event, f, callback){
-		if (typeof(f)=="function") {
+		if (typeof(f) == "function") {
 			var callback=f;
 			for (var f in a.o.fields)
 				if (!a.addEventListenerField(event, f, callback))
@@ -293,7 +301,7 @@ function xForm3(o) {
 
 	// subir fichero
 	a.fileUpload=function(options, onok){
-		if (typeof(xUploader)=="undefined") {
+		if (typeof(xUploader) == "undefined") {
 			alert("xUploader no activo, subida cancelada.");
 			return false;
 		}
@@ -542,7 +550,7 @@ function xForm3(o) {
 		},
 
 		// añadir fichero
-		"add":function(o) {
+		"add":function(o){
 			var field=a.o.fields[o.field];
 
 			//location.href=url;
@@ -945,9 +953,7 @@ function xForm3(o) {
 					a.set(f, n, o.set[f][n]);
 			switch (field.type) {
 			case "datetime":
-// *****************
 				break;
-
 			case "number":
 			case "text":
 				if (gid(id)) {
@@ -967,8 +973,7 @@ function xForm3(o) {
 				a.files.init(f);
 				break;
 			}
-			if (field.oninit)
-				field.oninit(a, field, a.data[f]);
+			if (field.oninit) field.oninit(a, field, a.data[f]);
 		}
 	};
 
