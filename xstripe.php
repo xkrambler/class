@@ -12,22 +12,28 @@
 	Example usage:
 
 		// instance Stripe Payment
-		$stripe=new xStripe([
+		$xstripe=new xStripe([
 			"pk"=>'pk_test_YOUR_PUBLIC_KEY',
 			"sk"=>'sk_test_YOUR_SECRET_KEY',
 		]);
 
 		// set operation
-		$stripe->set([
+		$xstripe->set([
 			"amount"=>1.69, // decimal values allowed
 			"metadata"=>[
 				"item_id"=>1,
 			],
+			"onok"=>function($xstripe, $intent){
+				// payment OK
+			},
+			"onko"=>function($xstripe, $error){
+				// payment KO
+			}
 		]);
 
-		$stripe->ajax();
-		$data=($data??[])+$stripe->data();
-		$js=($js??[])+$stripe->js();
+		$xstripe->ajax();
+		$data=($data??[])+$xstripe->data();
+		$js=($js??[])+$xstripe->js();
 
 */
 class xStripe {
@@ -113,9 +119,8 @@ class xStripe {
 				];
 			// if confirmation succeeded
 			} else if ($intent->status == 'succeeded') {
-				return [
-					"ok"=>true,
-				];
+				if ($this->onok) $r=$this->onok($this, $intent);
+				return (is_array($r)?$r:[])+["ok"=>true];
 			}
 		}
 
@@ -151,6 +156,7 @@ class xStripe {
 	function error($error=null) {
 		if ($error === null) return $this->error;
 		$this->error=$error;
+		if ($this->onko) $r=$this->onko($this, $error);
 		return false;
 	}
 
