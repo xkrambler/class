@@ -119,7 +119,7 @@ class xStripe {
 				];
 			// if confirmation succeeded
 			} else if ($intent->status == 'succeeded') {
-				if ($this->onok) $r=$this->onok($this, $intent);
+				if ($onok=$this->onok) $r=$onok($this, $intent);
 				return (is_array($r)?$r:[])+["ok"=>true];
 			}
 		}
@@ -156,7 +156,7 @@ class xStripe {
 	function error($error=null) {
 		if ($error === null) return $this->error;
 		$this->error=$error;
-		if ($this->onko) $r=$this->onko($this, $error);
+		if ($onko=$this->onko) $r=$onko($this, $error);
 		return false;
 	}
 
