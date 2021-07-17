@@ -7,6 +7,10 @@
 		var xstripe=new xStripe({
 			"id":"stripe", // id/element to render card
 			"focus":true, // focus on load
+			"theme":"dark" // theme (white/dark)
+		});
+		
+		xstripe.pay({
 			"onok":function(xstripe, r){ // event on payment OK
 				alert("Payment successful.");
 			},
@@ -18,6 +22,56 @@
 */
 function xStripe(o){
 	var self=this;
+
+	// themes
+	self.themes={
+		"white":{
+			"base":{
+				"color":"#303238",
+				"fontSize":"16px",
+				"fontFamily":'"Open Sans", sans-serif',
+				"fontSmoothing":"antialiased",
+				"::placeholder":{
+					"color":"#CFD7DF"
+				}
+			},
+			"invalid":{
+				"color":"#e5424d",
+				":focus":{
+					"color":"#303238"
+				}
+			}
+		},
+		"dark":{
+			"base":{
+				"color":"#FFFFFF",
+				"fontSize":"16px",
+				"fontFamily":'"Open Sans", sans-serif',
+				"fontSmoothing":"antialiased",
+				"::placeholder":{
+					"color":"#CFD7DF"
+				}
+			},
+			"invalid":{
+				"color":"#FF828d",
+				":focus":{
+					"color":"#FF828d"
+				}
+			}
+		}
+	};
+
+	// get parameters
+	self.get=function(){
+		return self.o;
+	};
+
+	// set parameters
+	self.set=function(o){
+		if (o)
+			for (var k in o)
+				self.o[k]=o[k];
+	};
 
 	// OK event
 	self.ok=function(ok){
@@ -50,7 +104,8 @@ function xStripe(o){
 	};
 
 	// start payment process
-	self.pay=function(){
+	self.pay=function(o){
+		if (isset(o)) self.set(o);
 		if (!self.cardReady) return false;
 		if (!self.o.ajax) self.o.ajax="xstripe.pay";
 		self.wait(true);
@@ -99,18 +154,6 @@ function xStripe(o){
 		return false;
 	};
 
-	// get parameters
-	self.get=function(){
-		return self.o;
-	};
-
-	// set parameters
-	self.set=function(o){
-		if (o)
-			for (var k in o)
-				self.o[k]=o[k];
-	};
-
 	// destroy
 	self.destroy=function(){
 		if (self.elements) {
@@ -140,23 +183,7 @@ function xStripe(o){
 		self.elements=self.stripe.elements();
 		self.card=self.elements.create("card", {
 			//"classes":"",
-			"style":(self.o.style || {
-				base:{
-					"color":"#303238",
-					"fontSize":"16px",
-					"fontFamily":'"Open Sans", sans-serif',
-					"fontSmoothing":"antialiased",
-					"::placeholder":{
-						"color":"#CFD7DF"
-					}
-				},
-				"invalid":{
-					"color":"#e5424d",
-					":focus":{
-						"color":"#303238"
-					}
-				}
-			}),
+			"style":(self.o.style || (self.o.theme?self.themes[self.o.theme]:{})),
 			"hidePostalCode":true
 		});
 		self.card.on("ready", function(){ self.cardReady=true; });
