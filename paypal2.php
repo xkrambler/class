@@ -10,7 +10,7 @@ class PayPal {
 
 	protected $o;
 	protected $db=false;
-	protected $lasterr="";
+	protected $error="";
 
 	function __construct($o) {
 		$this->o=$o;
@@ -156,7 +156,6 @@ class PayPal {
 				//"shipping_preference"=>"",
 			],
 		];
-		//debug($payment);exit;
 
 		// enable profile experience for this site
 		$experience_profile_name=$_SERVER["SERVER_NAME"];
@@ -511,7 +510,7 @@ class PayPal {
 
 	// request, if needed, bearer authorization
 	function bearerRequest() {
-		if (!$this->ensureRequisites()) return false;
+		if (!$this->ensureRequisites()) return $this->error("bearerRequest: ensureRequisites failed");
 
 		// prepare CURL channel for bearer access token
 		if (!$this->bearer || time() >= $this->bearer["expire"]) {
@@ -543,6 +542,9 @@ class PayPal {
 			// decode bearer
 			if (!($json=json_decode($out, true))) return $this->error("PayPal bearerRequest JSON parse error");
 
+			// check for errors
+			if ($json["error"]) return $this->error("PayPal ".$json["error"].": ".$json["error_description"]);
+
 			// check bearer type and save
 			if ($json["token_type"] == "Bearer") {
 				$json["expire"]=time()+$json["expires_in"]-30; // bearer expiration
@@ -560,7 +562,7 @@ class PayPal {
 	function restRequest($action, $o=null) {
 
 		// ensure if we have a valid bearer
-		if (!$this->bearerRequest()) return ($this->lasterr?false:$this->error("PayPal restRequest bearer failed"));
+		if (!$this->bearerRequest()) return ($this->error?false:$this->error("PayPal restRequest bearer failed"));
 
 		// prepare CURL channel for action request
 		$ch=curl_init();
@@ -586,7 +588,6 @@ class PayPal {
 		if ($o !== null) curl_setopt($ch, CURLOPT_POSTFIELDS, (is_array($o)?json_encode($o):$o));
 		$out=curl_exec($ch);
 		$this->requestinfo=curl_getinfo($ch);
-		//debug($this->requestinfo);
 
 		// check output
 		if (!$out) return $this->error("PayPal restRequest failed: ".curl_error($ch).'('.curl_errno($ch).'): '.$out);
@@ -600,16 +601,15 @@ class PayPal {
 	}
 
 	// get/set error
-	function error($err=null) {
-		if ($err === null) return $this->lasterr;
-		$this->lasterr=$err;
-		// always returns false!
+	function error($error=null) {
+		if ($err === null) return $this->error;
+		$this->error=$error;
 		return false;
 	}
 
 	// throw error
 	function err($_exit=true) {
-		$message=$this." ".($this->lasterr?"ERROR: ".$this->lasterr:"Undefined error");
+		$message=$this." ".($this->error?"ERROR: ".$this->error:"Undefined error");
 		if ($GLOBALS["ajax"] && function_exists("ajax")) ajax(["err"=>$message]);
 		echo $text;
 		if ($_exit) exit;
