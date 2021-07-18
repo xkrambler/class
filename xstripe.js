@@ -154,15 +154,6 @@ function xStripe(o){
 		return false;
 	};
 
-	// destroy
-	self.destroy=function(){
-		if (self.elements) {
-			self.cardReady=false;
-			self.elements.clear();
-			delete self.elements;
-		}
-	};
-
 	// initialize
 	self.init=function(o){
 		if (typeof o !== 'object' || o === null) return false;
@@ -192,6 +183,7 @@ function xStripe(o){
 
 	};
 
+	// startup
 	if (isset(o)) self.init(o);
 
 }
