@@ -84,7 +84,6 @@ class PayPal {
 		if (!$this->item_id) return $this->error("Detenido: item_id no especificado");
 		if (!$this->items)   return $this->error("Detenido: items no especificados");
 		if (!$this->moneda)  return $this->error("Detenido: moneda no configurada");
-		if (!$this->moneda)  return $this->error("Detenido: moneda no configurada");
 
 		// get total
 		$total=$this->total();
