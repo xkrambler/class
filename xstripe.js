@@ -9,7 +9,7 @@
 			"focus":true, // focus on load
 			"theme":"dark" // theme (white/dark)
 		});
-		
+
 		xstripe.pay({
 			"onok":function(xstripe, r){ // event on payment OK
 				alert("Payment successful.");
@@ -49,13 +49,13 @@ function xStripe(o){
 				"fontFamily":'"Open Sans", sans-serif',
 				"fontSmoothing":"antialiased",
 				"::placeholder":{
-					"color":"#CFD7DF"
+					"color":"#AFB7BF"
 				}
 			},
 			"invalid":{
 				"color":"#FF828d",
 				":focus":{
-					"color":"#FF828d"
+					"color":"#DF828d"
 				}
 			}
 		}
@@ -173,13 +173,15 @@ function xStripe(o){
 		self.stripe=Stripe(data.stripe_pk);
 		self.elements=self.stripe.elements();
 		self.card=self.elements.create("card", {
-			//"classes":"",
+			//"classes":self.o.class,
 			"style":(self.o.style || (self.o.theme?self.themes[self.o.theme]:{})),
 			"hidePostalCode":true
 		});
-		self.card.on("ready", function(){ self.cardReady=true; });
+		self.card.on("ready", function(){
+			self.cardReady=true;
+			if (self.o.focus) self.focus();
+		});
 		self.card.mount(self.cardElement);
-		if (self.o.focus) init(function(){ self.focus() });
 
 	};
 
