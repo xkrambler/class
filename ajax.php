@@ -113,7 +113,7 @@ function ws($url, $fields=null, $options=array()) {
 		//CURLOPT_FRESH_CONNECT=>1,
 		//CURLOPT_FORBID_REUSE=>1,
 	);
-	if ($fields != null) {
+	if ($fields !== null) {
 		$o[CURLOPT_POST]=1;
 		$o[CURLOPT_POSTFIELDS]=(is_array($fields)?http_build_query($fields):$fields);
 	}
