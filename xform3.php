@@ -184,28 +184,35 @@ class xForm3 {
 
 	// get/set field value
 	function value($field, $value=null) {
+		$f=$this->fields[$field];
 		if ($value !== null)
-			if (!$this->fields[$field]["readonly"])
-				$this->fields[$field]["value"]=$value;
-		switch ($this->fields[$field]["type"]) {
+			if (!$f["readonly"])
+				$f["value"]=$value;
+		switch ($f["type"]) {
 		case "audio":
 		case "file":
 		case "image":
 			if ($info=$this->svalue($field))
 				foreach ($info["files"] as $i=>$v)
 					return ($v["deleted"]?"":$v["name"]);
-			return (isset($this->fields[$field]["value"])?$this->fields[$field]["value"]:"");
+			return (isset($f["value"])?$f["value"]:"");
 		case "files":
 		case "images":
 			if ($info=$this->svalue($field)) {
 				foreach ($info["files"] as $i=>$v)
-					if (is_array($this->fields[$field]["value"][$i]))
-						$info["files"][$i]=array_merge($this->fields[$field]["value"][$i], $v);
+					if (is_array($f["value"][$i]))
+						$info["files"][$i]=array_merge($f["value"][$i], $v);
+				if ($f["sortable"]) usort($info["files"], function($a, $b){
+					if (!isset($a["orden"]) || !isset($b["orden"])) return 0;
+					if ($a["orden"] < $b["orden"]) return -1;
+					else if ($a["orden"] > $b["orden"]) return 1;
+					else return 0;
+				});
 				return $info["files"];
 			}
-			return (isset($this->fields[$field]["value"])?$this->fields[$field]["value"]:[]);
+			return (isset($f["value"])?$f["value"]:[]);
 		case "": return null;
-		default: return $this->fields[$field]["value"];
+		default: return $f["value"];
 		}
 	}
 
