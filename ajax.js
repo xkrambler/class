@@ -1,6 +1,6 @@
 /*
 
-	Título..: VeryTinyAJAX2 0.2c, Wrapper JavaScript simple a funciones XMLHTTP para AJAX.
+	Título..: VeryTinyAJAX2 0.2d, Wrapper JavaScript simple a funciones XMLHTTP para AJAX.
 	Licencia: GPLv2 (http://www.gnu.org/licenses/gpl.txt)
 	Autores.: Pablo Rodríguez Rey (mr -en- xkr -punto- es)
 	          https://mr.xkr.es/
@@ -12,10 +12,12 @@
 
 	Ejemplo de usos comunes:
 
-		PETICIÓN COMPLETA (GET ajax=eco POST data=datos):
+		PETICIÓN COMPLETA (GET ajax=test POST data=hola+mundo):
 			ajax({
-				"get":{"ajax":"eco"},
-				"post":{"data":"datos de ejemplo"},
+				"get":{"ajax":"test"},
+				"post":{"data":"hola mundo"},
+				"always":function(){
+				},
 				"async":function(resultado){
 					alert(adump(resultado.data));
 				},
@@ -24,8 +26,8 @@
 				}
 			});
 
-		PETICIÓN ABREVIADA EQUIVALENTE (GET ajax=eco POST data=datos):
-			ajax("eco","datos de ejemplo",function(resultado){
+		PETICIÓN ABREVIADA EQUIVALENTE:
+			ajax("test", "hola mundo", function(resultado){
 				alert(adump(resultado.data));
 			});
 
@@ -35,13 +37,11 @@
 function ajaxVersion() { return("VeryTinyAJAX2/0.2c"); }
 
 // comprobar si las peticiones AJAX están soportadas por este navegador
-function ajaxEnabled() {
-	return (httpObject()?true:false);
-}
+function ajaxEnabled() { return (httpObject()?true:false); }
 
 // generar un nuevo objeto XMLHttpRequest
 function httpObject() {
-	var xmlhttp;
+	var xmlhttp=false;
 	try { xmlhttp=new ActiveXObject("Msxml2.XMLHTTP"); }
 	catch (e) { try { xmlhttp=new ActiveXObject("Microsoft.XMLHTTP"); }
 	catch (e) { try { xmlhttp=new XMLHttpRequest(); }
@@ -73,7 +73,7 @@ function gescape(torg) {
 	try { var d=d.replace(/=/gi,"%3D"); } catch(e) {}
 	try { var d=d.replace(/\+/gi,"%2B"); } catch(e) {}
 	try { var d=d.replace(/ /gi,"%20"); } catch(e) {}
-	return(d);
+	return d;
 }
 
 // hard escape: codifica aparte de los especiales,
@@ -98,7 +98,7 @@ function jescape(torg) {
 	try { var d=d.replace(/\t/gi,"\\t"); } catch(e) {}
 	try { var d=d.replace(/\f/gi,"\\f"); } catch(e) {}
 	try { var d=d.replace(/\r/gi,"\\r"); } catch(e) {}
-	return(d);
+	return d;
 }
 
 // convertir variable JavaScript a JSON
@@ -125,38 +125,34 @@ function ajax(data, realdata, func1, func2) {
 	if (!ajaxEnabled()) return false;
 
 	// convertir llamada abreviada en significado real: llamada en plano
-	if (typeof(data)=="object" && typeof(realdata)=="function") {
-		// configuración por defecto:
-		ajax({
+	if (typeof(data) == "object" && typeof(realdata) == "function") {
+		return ajax({
 			"post":data, // datos que se enviarán por post
 			"async":realdata, // función de retorno asíncrona
-			"showerrors":false, // se mostrarán errores típicos
-			"plain":true // la petición es AJAX o es de texto plano/XML
+			"plain":true, // la petición es AJAX o es de texto plano/XML
+			"showerrors":false // se mostrarán errores típicos
 		});
-		return;
 	}
 
 	// convertir llamada abreviada en significado real: llamada abreviada
-	if (typeof(data)=="string" && typeof(func1)=="function") {
-		// configuraciones por defecto
-		if (typeof(func2)=="function") {
-			ajax({
+	if (typeof(data) == "string" && typeof(func1) == "function") {
+		if (typeof(func2) == "function") {
+			return ajax({
 				"ajax":data, // comando ajax
 				"data":realdata, // datos que se enviarán
-				"showerrors":true, // se mostrarán errores típicos
 				"always":func1, // ejecutar esta función siempre (al terminar o al ocurrir un error)
-				"async":func2 // función de retorno asíncrona
+				"async":func2, // función de retorno asíncrona
+				"showerrors":false // se mostrarán errores típicos
 			});
 		} else {
-			ajax({
+			return ajax({
 				"ajax":data, // comando ajax
 				"data":realdata, // datos que se enviarán
 				"async":func1, // función de retorno asíncrona
-				"showerrors":true, // se mostrarán errores típicos
-				"plain":(func2?true:false) // la petición es AJAX o es de texto plano/XML
+				"plain":(func2?true:false), // la petición es AJAX o es de texto plano/XML
+				"showerrors":false // se mostrarán errores típicos
 			});
 		}
-		return;
 	}
 
 	// preparar datos
@@ -166,9 +162,9 @@ function ajax(data, realdata, func1, func2) {
 	var always=data.always;
 	var post="";
 	var url=(typeof(data.url) == "undefined"?location.href:data.url);
-	var urlalmp=url.indexOf("#");
 	var urlalm="";
-	if (urlalmp!=-1) {
+	var urlalmp=url.indexOf("#");
+	if (urlalmp != -1) {
 		urlalm=url.substring(urlalmp);
 		url=url.substring(0, urlalmp);
 	}
@@ -177,7 +173,7 @@ function ajax(data, realdata, func1, func2) {
 	function events(http) {
 
 		// objeto resultado
-		function result() {
+		function result(is_error) {
 
 			// estado de la petición y cadena de estado
 			try { this.state=http.readyState; } catch(e) { this.state=5; }
@@ -189,47 +185,43 @@ function ajax(data, realdata, func1, func2) {
 			// código de protocolo del servidor
 			try { this.status=http.status; } catch(e) { this.status=null; }
 
-			// si el estado es OK, devolver datos
-			if (this.status==200) {
-				this.http=http;
-				this.text=http.responseText; // datos recibidos en texto plano
-				this.xml=http.responseXML; // datos recibidos en XML
-				this.data=null; // ausencia de datos por defecto
-				try { eval("this.data="+http.responseText); }
-				catch(e) { this.error=true; } // datos recibidos en JSON son preparados
+			// si el resultado es de tipo error, agregar objetos
+			if (is_error) {
+				this.error=(r.status
+					?"Se ha encontrado el error "+r.status+" en el servidor."
+					:"El servidor no responde a la petición!\nPruebe dentro de unos instantes."
+				);
+				this.show=function(){
+					if (typeof(newerror) == "function") newerror(this.error);
+					else alert(this.error);
+				};
 			}
+
+			// preparar datos
+			this.text=http.responseText; // datos recibidos en texto plano
+			this.xml =http.responseXML; // datos recibidos en XML
+			this.data=null; // ausencia de datos por defecto
+			try { eval("this.data="+http.responseText); }
+			catch(e) { this.error=true; } // datos recibidos en JSON son preparados
+			this.http=http; // http, último objeto
 
 		}
 
 		// comprobar que la respuesta del servidor es la 200 (HTTP OK)
 		var error=false;
-		if (http.readyState==4) {
-			try { error=(http.status!=200); }
-			catch(e) { error=true; }
-		}
+		if (http.readyState == 4) error=(http.status != 200);
 
 		// crear objeto resultado
-		var r=new result();
+		var r=new result(false);
 
 		// devolver evento
 		if (error) {
 			if (data.error || data.showerrors) {
-				function result_error() {
-					this.status=r.status;
-					this.error=(r.status
-						?"Se ha encontrado el error "+r.status+" en el servidor."
-						:"El servidor no responde a la petición!\nPruebe dentro de unos instantes."
-					);
-					this.show=function(){
-						if (typeof(newerror)=="function") newerror(this.error);
-						else alert(this.error);
-					}
-				}
-				var re=new result_error();
+				var re=new result(true);
 				switch (typeof(data.error)) {
 				case "boolean": re.show(); break;
 				case "string":
-					if (typeof(newerror)=="function") newerror(data.error);
+					if (typeof(newerror) == "function") newerror(data.error);
 					else alert(data.error);
 					break;
 				case "function": data.error(re); break;
@@ -241,14 +233,13 @@ function ajax(data, realdata, func1, func2) {
 			if (r.complete) {
 				if (data.showerrors && r.error && !data.plain) {
 					var alertmsg="Error en buffer de salida: No se puede procesar la petición AJAX";
-					if (typeof(newerror)=="function") newerror("<b>"+alertmsg+"</b><hr/>"+r.text);
+					if (typeof(newerror) == "function") newerror("<b>"+alertmsg+"</b><hr/>"+r.text);
 					else alert(alertmsg+"\n\n"+r.text);
 				}
 				if (always) always(r);
 				func(r);
 			} else {
-				if (data.events)
-					data.events(r);
+				if (data.events) data.events(r);
 			}
 		}
 	
