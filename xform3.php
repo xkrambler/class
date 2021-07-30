@@ -910,7 +910,12 @@ class xForm3 {
 		// create image, clean or from file
 		$xi=($o["file"]?new xImage($o["file"]):new xImage());
 		// if content data specified, load from it
-		if ($o["data"]) $xi->fromString($o["data"]);
+		if ($o["data"]) {
+			$xi->fromString($o["data"]);
+			$f=$xi->getFormatByMagic($o["data"]);
+		} else {
+			$f=$xi->getFileFormat($o["file"]);
+		}
 		// fix orientation
 		$xi->fixOrientation();
 		// scale only if dimensions exceeds threshold
