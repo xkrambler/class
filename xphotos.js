@@ -187,6 +187,7 @@ function xPhotos(o) {
 					if (e.changedTouches.length == 1) {
 						var touchobj=e.changedTouches[0];
 						var dist=Math.floor((touchobj.pageX - self._startX)/5);
+						if (Math.abs(dist) > 5) e.preventDefault();
 						self._frame.style.transform="translate("+dist+"px,0)";
 						//e.preventDefault();
 					}

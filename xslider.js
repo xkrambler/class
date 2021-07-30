@@ -272,8 +272,8 @@ function xslider(o) {
 				if (e.changedTouches.length == 1) {
 					var touchobj=e.changedTouches[0];
 					var dist=Math.floor((touchobj.pageX - a._startX)/4);
+					if (Math.abs(dist) > 5) e.preventDefault();
 					if (a.d[a.o.start]) a.d[a.o.start].style.transform="translate("+dist+"px,0)";
-					//e.preventDefault();
 				}
 			});
 			a.o.id.addEventListener("touchend",function(e){
