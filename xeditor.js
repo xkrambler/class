@@ -41,6 +41,7 @@ function xEditor(o) {
 			{"cmd":"italic","caption":"Cursiva"},
 			{"cmd":"underline","caption":"Subrayado"},
 			{"cmd":"strike","caption":"Tachado"},
+			{"cmd":"highlighter","caption":"Resaltar"},
 			{"cmd":"justifyleft","caption":"Justificar Izquierda"},
 			{"cmd":"justifycenter","caption":"Justificar Centro"},
 			{"cmd":"justifyright","caption":"Justificar Derecha"},
@@ -403,6 +404,9 @@ function xEditor(o) {
 		case "strike":
 			a.insert("<s>"+selectionHTML+"</s>");
 			break;
+		case "highlighter":
+			if (selectionHTML) a.insert("<span style='background-color:#FF0;'>"+selectionHTML+"</span>");
+			break;
 		case "removeformat":
 			a.insert(nl2br(selectionText));
 			break;
@@ -429,9 +433,6 @@ function xEditor(o) {
 		case "fontsize+3": if (selectionHTML) a.insert("<span style='font-size:1.8em;'>"+selectionHTML+"</span>"); break;
 		case "fontsize+4": if (selectionHTML) a.insert("<span style='font-size:2.2em;'>"+selectionHTML+"</span>"); break;
 		case "fontsize+5": if (selectionHTML) a.insert("<span style='font-size:3em;'>"+selectionHTML+"</span>"); break;
-		/*case "test":
-			a.insert("asd<b>asd</b>");
-			break;*/
 		case "image":
 			// si hay newalert, lanzar ventana avanzada
 			if (typeof(newalert) != "undefined") {
