@@ -302,7 +302,6 @@
 .group .cmd:hover,  .group a.cmd:hover,
 .group .cmd:focus,  .group a.cmd:focus,
 .group .cmd:link,   .group a.cmd:link,
-.group label,
 .group .label {
 	background: #DDD;
 	color: #444;
