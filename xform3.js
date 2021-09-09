@@ -249,8 +249,10 @@ function xForm3(o) {
 				if (!a.addEventListenerField(event, f, callback))
 					return false;
 		} else
-			if (!a.addEventListenerField(event, f, callback))
-				return false;
+			if (!Array.isArray(f)) f=[f];
+			for (var i in f)
+				if (!a.addEventListenerField(event, f[i], callback))
+					return false;
 		return true;
 	};
 
@@ -275,7 +277,7 @@ function xForm3(o) {
 									"element":this,
 									"value":a.value(f)
 								};
-								callback(a, event);
+								callback(a, event, a.event);
 							}, false);
 						})();
 				break;
@@ -290,7 +292,7 @@ function xForm3(o) {
 							"element":this,
 							"value":a.value(f)
 						};
-						callback(a, event);
+						callback(a, event, a.event);
 					}, false);
 				})();
 			}
