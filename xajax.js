@@ -158,7 +158,7 @@ function xajax(o){
 		// save marker
 		var i=url.indexOf("#");
 		if (i !== -1) {
-			marker=href.substring(i);
+			marker=url.substring(i);
 			url=url.substring(0, i);
 		}
 		// get current parameters
