@@ -601,6 +601,8 @@ class xForm3 {
 				.($f["title"]?" title='".$this->entities($f["title"])."'":"")
 				.($f["maxlength"]?" maxlength='".intval($f["maxlength"])."'":"")
 				.($f["size"]?" size='".intval($f["size"])."'":"")
+				.($f["rows"]?" rows='".intval($f["rows"])."'":"")
+				.($f["cols"]?" cols='".intval($f["cols"])."'":"")
 				.($f["placeholder"]?" placeholder='".$this->entities($f["placeholder"])."'":"")
 				.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
 				.(isset($f["autocomplete"])?" autocomplete='".($f["autocomplete"]?"on":"off")."'":"")
