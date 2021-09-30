@@ -128,6 +128,7 @@ function newElement(element, o) {
 		if (o.class) e.className=o.class;
 		if (o.html) e.innerHTML=o.html;
 		if (o.title) e.title=o.title;
+		if (o.style) e.style=o.style;
 		if (o.value) e.value=o.value;
 		if (o.attributes)
 			for (var i in o.attributes)
