@@ -304,6 +304,18 @@ class xForm3 {
 		return false;
 	}
 
+	// store/delete file from field
+	function fileUpdate($field, $filename) {
+		if ($file=$this->file($field)) {
+			$p=dirname($filename);
+			if (!is_dir($p)) mkdir($p, 0775, true);
+			if ($file["deleted"] && file_exists($filename)) unlink($filename);
+			else if ($file["uploaded"]) file_put_contents($filename, $file["data"]);
+			return true;
+		}
+		return false;
+	}
+
 	// set, purge & validate
 	function validate($values=null) {
 		if ($values !== null) $this->values($values, false);
