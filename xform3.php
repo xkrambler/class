@@ -904,7 +904,6 @@ class xForm3 {
 	function imageScale($o=array()) {
 		$w=intval($o["w"]); if ($w < 1 || $w > 10240) $w=0;
 		$h=intval($o["h"]); if ($h < 1 || $h > 10240) $h=0;
-		$f=($o["f"]?$o["f"]:"jpg");
 		$q=($o["q"]?$o["q"]:90);
 		if (!$w || !$h) return ""; // can't scale
 		// required classes
@@ -914,16 +913,16 @@ class xForm3 {
 		// if content data specified, load from it
 		if ($o["data"]) {
 			$xi->fromString($o["data"]);
-			$f=$xi->getFormatByMagic($o["data"]);
+			if (!$o["f"]) $o["f"]=$xi->getFormatByMagic($o["data"]);
 		} else {
-			$f=$xi->getFileFormat($o["file"]);
+			if (!$o["f"]) $o["f"]=$xi->getFileFormat($o["file"]);
 		}
 		// fix orientation
 		$xi->fixOrientation();
 		// scale only if dimensions exceeds threshold
 		if ($xi->width() > $w || $xi->height() > $h) $xi->scale($w, $h, false, true);
 		// return content data image
-		return $xi->toString($f, $q);
+		return $xi->toString(($o["f"]?$o["f"]:"jpg"), $q);
 	}
 
 	// AJAX actions
