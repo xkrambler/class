@@ -288,14 +288,14 @@ class Kernel {
 		return ($a?$this->queryStringFromarray($a):"");
 	}
 
-	// obtener mi yo real
+	// DEPRECATED: obtener mi yo real
 	function realme() {
 		$me=$_SERVER["REQUEST_URI"];
 		if ($i=strpos($me, "?")) $me=substr($me, 0, $i);
 		return $me;
 	}
 
-	// alter link: modificar parámetros de URL
+	// DEPRECATED: alter link: modificar parámetros de URL
 	function alink($parametros=array(), $o=array()) {
 		$lnk=(isset($o["link"])?$o["link"]:$this->realme());
 		$entities=(isset($o["entities"])?$o["entities"]:true);
@@ -309,47 +309,57 @@ class Kernel {
 		return $lnk.($entities?str_replace("&","&amp;",$qs):$qs);
 	}
 
-	// contar el tiempo desde la primera vez que se llama hasta la segunda
+	// count timming from first to second call
 	function ctime($doend=true) {
 		static $ctime_called;
 		$t=(time()+microtime());
 		if ($ctime_called) {
-			echo "(ctime) Tiempo: ".($t-$ctime_called)."s<br />\n";
+			echo "(ctime) Time: ".($t-$ctime_called)."s<br />\n";
 			if ($doend) exit;
 		}
 		$ctime_called=$t;
 	}
 
-	// función para simplificar el envío de emails, admite adjuntos
+	// e-mail sending helper
 	/*
-		Ejemplo:
-			Kernel::mailto(array(
-				"to"=>"recipient@domain",
-				"from"=>"sender@domain2",
-				"subject"=>"Subject",
-				"html"=>"Message with <b>HTML</b> <img src='cid:testid' />",
-				"text"=>"Message with text fallback",
-				"attachments"=>array(
-					array("name"=>"test.txt", "data"=>"File data", "id"=>"testid"),
-					//array("file"=>"test.txt", "type"=>"application/octet-stream"),
-				),
-			));
+		Kernel::mailto([
+			"from"=>"sender@domain",
+			"to"=>"recipient1@domain,recipient2@domain",
+			"cc"=>"recipient3@domain,recipient4@domain",
+			"subject"=>"Subject",
+			"html"=>"Message with <b>HTML</b> <img src='cid:testid' />",
+			"text"=>"Message with text fallback",
+			"attachments"=>[
+				array("name"=>"test.txt", "data"=>"File data", "id"=>"testid"),
+				//array("file"=>"test.txt", "type"=>"application/octet-stream"),
+			],
+		]);
 	*/
 	static function mailto($o) {
 		// prepare boundaries
 		$mime_boundary_alt="==awesome_ALT".strtoupper(sha1(uniqid()))."_";
 		$mime_boundary_mix="==awesome_MIX".strtoupper(sha1(uniqid()))."_";
+		// prepare CC
+		$cc="";
+		if ($o["cc"])
+			foreach ($ccs=explode(",", $o["cc"]) as $e)
+				$cc.="Cc: ".$e."\r\n";
+		// prepare BCC
+		$bcc="";
+		if ($o["bcc"])
+			foreach ($bccs=explode(",", $o["bcc"]) as $e)
+				$bcc.="Bcc: ".$e."\r\n";
 		// prepare headers
 		$headers
-			="From: ".$o["from"]."\r\n"
-			."Reply-To: ".($o["reply"]?$o["reply"]:$o["from"])."\r\n"
-			.($o["cc"]?"Cc: ".$o["cc"]."\r\n":"")
-			.($o["bcc"]?"Bcc: ".$o["bcc"]."\r\n":"")
+			=($o["from"]?"From: ".$o["from"]."\r\n":"")
+			.($o["reply"]?"Reply-To: ".$o["reply"]."\r\n":"")
+			.$cc
+			.$bcc
 			."Date: ".date("r")."\r\n"
 			."MIME-Version: 1.0\r\n"
 			."Content-Type: multipart/related;\r\n"
 			." boundary=\"{$mime_boundary_mix}\"\r\n"
-			."X-Mailer: fsme_mailer/1.0.1"
+			."X-Mailer: fsme_mailer/1.0.2"
 		;
 		// prepare body
 		$body="Scrambled for your security by the Flying Spaguetti Monster Engine Mailer.\r\n\r\n";
@@ -358,32 +368,29 @@ class Kernel {
 			." boundary=\"{$mime_boundary_alt}\"\r\n"
 			."\r\n\r\n"
 		;
-		if ($o["text"]) {
+		if ($v=$o["text"]) {
 			$body.="--{$mime_boundary_alt}\r\n"
 				."Content-Type: text/plain; charset=UTF-8\r\n"
 				."Content-Transfer-Encoding: base64\r\n"
-				."\r\n".rtrim(chunk_split(base64_encode($o["text"])))."\r\n\r\n"
+				."\r\n".rtrim(chunk_split(base64_encode($v)))."\r\n\r\n"
 			;
 		}
-		if ($o["html"]) {
+		if ($v=$o["html"]) {
 			$body.="--{$mime_boundary_alt}\r\n"
 				."Content-Type: text/html; charset=UTF-8\r\n"
 				."Content-Transfer-Encoding: base64\r\n"
-				."\r\n".rtrim(chunk_split(base64_encode($o["html"])))."\r\n\r\n"
+				."\r\n".rtrim(chunk_split(base64_encode($v)))."\r\n\r\n"
 			;
 		}
 		$body.="--{$mime_boundary_alt}--\r\n\r\n";
 		if ($o["attachments"]) foreach ($o["attachments"] as $a) {
 			$name=basename($a["name"]);
 			if ($a["file"]) {
-				if (!($a["data"]=file_get_contents($a["file"]))) {
-					// failed to load file, PHP warning must appear if enabled
-					return false;
-				}
+				if (!($a["data"]=file_get_contents($a["file"]))) return false;
 				if (!$name) $name=basename($a["file"]);
 			}
 			if (!$a["type"]) $a["type"]=self::getMimetype($name);
-			if ($name) $name=str_replace('"', '_', str_replace(['\r','*','?','/','\\','\n'], '', $name));
+			if ($name) $name=str_replace('"', '_', str_replace(['\r', '*', '?', '/', '\\', '\n'], '', $name));
 			$temp=rtrim(chunk_split(base64_encode($a["data"])));
 			$body
 				.="--{$mime_boundary_mix}\r\n"
@@ -400,11 +407,11 @@ class Kernel {
 		// prepare destinations
 		$to="";
 		if ($o["to"]) {
-			$tos=explode(",",$o["to"]);
-			foreach ($tos as $rcpt) {
-				if ($i=strpos($rcpt,"<")) $rcpt=substr($rcpt,$i+1);
-				if ($i=strpos($rcpt,">")) $rcpt=substr($rcpt,0,$i);
-				$to.=($to?",":"").$rcpt;
+			$tos=explode(",", $o["to"]);
+			foreach ($tos as $e) {
+				if ($i=strpos($e, "<")) $e=substr($e, $i+1);
+				if ($i=strpos($e, ">")) $e=substr($e, 0, $i);
+				$to.=($to?",":"").$e;
 			}
 		} else {
 			if ($o["bcc"]) $to="undisclosed-recipients:;";
@@ -414,7 +421,7 @@ class Kernel {
 		if (!preg_match("/^[\\040-\\176]+$/", $subject))
 			$subject="=?UTF-8?B?".base64_encode($o["subject"])."?=";
 		// send it!
-		return (@mail($to, $subject, $body, $headers));
+		return @mail($to, $subject, $body, $headers);
 	}
 
 	// ordenación de nombres
