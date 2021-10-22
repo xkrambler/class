@@ -1134,7 +1134,7 @@ var xwidgets={
 					self.unselect();
 					self.refreshCaption();
 					self.focus();
-					if (isset(self.o.del.action)) self.o.del.action(self, action, index);
+					if (isset(self.o.ondel)) self.o.ondel(self, action, index);
 				}
 			}, (self.o.del === true?{}:self.o.del)));
 
