@@ -1,10 +1,10 @@
 // crea un popup de información
 var xtooltip={
-	
+
 	"hide":function(){
 		hide(xtooltip.div);
 	},
-	
+
 	"destroy":function(){
 		xtooltip.timedDestroyClear();
 		xtooltip.timerClear();
@@ -25,7 +25,7 @@ var xtooltip={
 			delete xtooltip._timer;
 		}
 	},
-	
+
 	"timedDestroy":function(){
 		xtooltip.timedDestroyClear();
 		xtooltip._timerDestroy=setTimeout(xtooltip.destroy, 250);
@@ -44,8 +44,10 @@ var xtooltip={
 			var t=getTop(xtooltip.o.div);
 			var h=getHeight(xtooltip.o.div);
 			var position=xtooltip.o.position;
-			if (!position || position=="auto")
-				position=((t+h/2) > windowHeight()/2?"top":"bottom");
+			if (!position || position == "auto") position=((t+h/2) > windowHeight()/2?"top":"bottom");
+
+			var th=getHeight(xtooltip.div);
+
 			xtooltip.div.className="xtooltip xtooltip_"+position;
 			switch (position) {
 			case "top":
@@ -70,7 +72,7 @@ var xtooltip={
 			style(xtooltip.div, {"left":l+"px", "top":t+"px"});
 		}
 	},
-	
+
 	"show":function(o){
 		o.div=gid(o.div);
 		if (!o.msg) o.msg=o.div.alt;
@@ -78,7 +80,9 @@ var xtooltip={
 		if (!o.position) o.position="";
 		xtooltip.o=o;
 		var isie=function(){ return (navigator.userAgent.indexOf("MSIE")!=-1); };
-		
+
+		var mh=(windowHeight()/2.5);
+
 		xtooltip.destroy();
 
 		xtooltip.div=document.createElement("div");
@@ -88,7 +92,7 @@ var xtooltip={
 				+"<div class='xtooltip_tl'><div class='xtooltip_tr'><div class='xtooltip_ti'></div></div></div>"
 			+"</div>"
 			+"<div class='xtooltip_lb'><div class='xtooltip_li'><div class='xtooltip_rb'><div class='xtooltip_ri'>"
-				+"<div class='xtooltip_c'><div class='xtooltip_body"+(o.ico?" xtooltip_body_ico":"")+"' style='"+(o.ico?"background-image:url("+o.ico+")":"")+"'>"
+				+"<div class='xtooltip_c'><div class='xtooltip_body"+(o.ico?" xtooltip_body_ico":"")+"' style='max-height:"+mh+"px;"+(o.ico?"background-image:url("+o.ico+")":"")+"'>"
 					+xtooltip.o.msg
 				+"</div></div>"
 			+"</div></div></div></div>"
@@ -101,9 +105,9 @@ var xtooltip={
 
 		xtooltip.resize();
 		xtooltip.timer();
-		
+
 	}
-	
+
 };
 
 resize(function(){ xtooltip.resize(); })

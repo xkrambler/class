@@ -40,6 +40,9 @@
 .xtooltip_left .xtooltip_c,
 .xtooltip_right .xtooltip_c { min-height: 32px; }
 
+.xtooltip_body {
+	overflow: auto;
+}
 .xtooltip_body_ico {
 	padding-left: 20px;
 	background: 0px 2px no-repeat;
