@@ -165,21 +165,39 @@ class xForm3 {
 	}
 
 	// get/set field caption
-	function caption($field, $caption=null) {
-		if ($caption!==null) $this->fields[$field]["caption"]=$caption;
-		return $this->fields[$field]["caption"];
+	function caption($field, $value=null) {
+		return $this->property($field, "caption", $value);
+	}
+
+	// get/set field disabled
+	function disabled($field, $value=null) {
+		return $this->property($field, "disabled", $value);
 	}
 
 	// get/set field label
-	function label($field, $label=null) {
-		if ($label!==null) $this->fields[$field]["label"]=$label;
-		return $this->fields[$field]["label"];
+	function label($field, $value=null) {
+		return $this->property($field, "label", $value);
 	}
 
 	// get/set field placeholder
-	function placeholder($field, $placeholder=null) {
-		if ($placeholder!==null) $this->fields[$field]["placeholder"]=$placeholder;
-		return $this->fields[$field]["placeholder"];
+	function placeholder($field, $value=null) {
+		return $this->property($field, "placeholder", $value);
+	}
+
+	// get/set field readonly
+	function readonly($field, $value=null) {
+		return $this->property($field, "readonly", $value);
+	}
+
+	// get/set field required
+	function required($field, $value=null) {
+		return $this->property($field, "required", $value);
+	}
+
+	// get/set field property value
+	function property($field, $property, $value=null) {
+		if ($value !== null) $this->fields[$field][$property]=$value;
+		return $this->fields[$field][$property];
 	}
 
 	// get/set field value
