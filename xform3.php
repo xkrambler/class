@@ -214,29 +214,12 @@ class xForm3 {
 				foreach ($info["files"] as $i=>$v)
 					return ($v["deleted"]?"":$v["name"]);
 			return (isset($f["value"])?$f["value"]:"");
+		case "":
 		case "files":
 		case "images":
-			$info=$this->files($field);
-			return $this->files($field);
-			/*if ($info=$this->files($field)) {
-
-				foreach ($info["files"] as $i=>$v)
-					if (is_array($f["value"][$i]))
-						$info["files"][$i]=array_merge($f["value"][$i], $v);
-				if ($f["sortable"]) usort($info["files"], function($a, $b){
-					if (isset($a["orden"]) && isset($b["orden"])) {
-						if ($a["orden"] < $b["orden"]) return -1;
-						else if ($a["orden"] > $b["orden"]) return 1;
-					}
-					return 0;
-				});
-				//foreach ($info["files"] as $photo) { unset($photo["data"]); debug($photo); } exit;
-				return $info["files"];
-			}
-			return (isset($f["value"])?$f["value"]:[]);*/
-		case "": return null;
-		default: return $f["value"];
+			return null;
 		}
+		return $f["value"];
 	}
 
 	// get/set fields values
@@ -259,7 +242,7 @@ class xForm3 {
 		return $values;
 	}
 
-	// get if a field has value
+	// check if a field has value
 	function fieldHasValue($field) {
 		if (!is_array($field)) $field=$this->fields[$field];
 		if ($field) switch ($field["type"]) {
@@ -267,15 +250,8 @@ class xForm3 {
 		case "files":
 		case "images":
 			return false;
-		default:
-			return !$field["ignore"];
 		}
-	}
-
-	// get filename from a supported field, or empty filename
-	function fileName($field) {
-		$file=$this->file($field);
-		return ($file && !$file["deleted"]?$file["name"]:"");
+		return !$field["ignore"];
 	}
 
 	// get/set file from field that supports it
@@ -287,70 +263,10 @@ class xForm3 {
 		return ($files?$files[0]:false);
 	}
 
-	// get/set files from fields that supports it
-	function files($field=null, $files=null) {
-		if ($field === null) {
-			$a=array();
-			if ($this->fields) foreach ($this->fields as $f=>$v)
-				$a[$f]=$this->files($f);
-			return $a;
-		}
-		$f=$this->fields[$field];
-		$limit=$this->filesLimit[$f["type"]];
-		if (isset($limit)) {
-			$svalue=$this->svalue($field);
-			$svalue_store=!$svalue; // if in session, mark to save it
-			// if files specified, assign
-			if ($files) {
-				$index=0;
-				$svalue["files"]=array();
-				$this->fields[$field]["files"]=array();
-				foreach ($files as $f) {
-					if (file_exists($f["file"]) || $f["data"]) {
-						if ($f["file"]) {
-							if (!$f["name"]) $f["name"]=basename($f["file"]);
-							if (!$f["ext"] && (($j=strrpos($f["name"], ".")) !== false)) $f["ext"]=substr($f["name"], $j+1);
-							if (!$f["type"]) $f["type"]=""; // asegurarse que el campo está creado
-							if (file_exists($f["file"])) {
-								$f["size"]=filesize($f["file"]);
-								$f["data"]=file_get_contents($f["file"]);
-							}
-						}
-						if (isset($f["data"])) $f["size"]=strlen($f["data"]);
-						require_once(__DIR__."/mimetypes.php");
-						if (!$f["type"]) $f["type"]=($f["data"]?$this->mimeByMagic(substr($f["data"], 0, 16)):Mimetypes::file($f["name"]));
-						$this->fields[$field]["files"][$index]=$f;
-						$svalue["files"][$index]=$f;
-						$index++;
-					}
-				}
-				// save in session, if required
-				if ($svalue_store) $this->svalue($field, $svalue);
-			}
-			// if there is files in session, and no specified files, return sessioned files
-			if ($svalue["files"] && $files === null) {
-				// mix value data and set last value
-				foreach ($svalue["files"] as $i=>$v) {
-					if (is_array($f["value"][$i])) $svalue["files"][$i]=array_merge($f["value"][$i], $v);
-					$svalue["files"][$i]["last"]=$this->fields[$field]["files"][$i];
-				}
-				// sort, if field is sortable
-				$f=$this->fields[$field];
-				if ($f["sortable"]) usort($svalue["files"], function($a, $b){
-					if (isset($a["orden"]) && isset($b["orden"])) {
-						if ($a["orden"] < $b["orden"]) return -1;
-						else if ($a["orden"] > $b["orden"]) return 1;
-					}
-					return 0;
-				});
-				// return sessioned and sorted files
-				return $svalue["files"];
-			}
-			// otherwise, return field files
-			return $this->fields[$field]["files"];
-		}
-		// field does not support files
-		return false;
+	// get filename from a supported field, or empty filename
+	function fileName($field) {
+		$file=$this->file($field);
+		return ($file && !$file["deleted"]?$file["name"]:"");
 	}
 
 	// store/delete file from field
@@ -362,6 +278,76 @@ class xForm3 {
 			else if ($file["uploaded"]) file_put_contents($filename, $file["data"]);
 			return true;
 		}
+		return false;
+	}
+
+	// sort file function
+	function fileSort($a, $b) {
+		if (isset($a["orden"]) && isset($b["orden"])) {
+			if ($a["orden"] < $b["orden"]) return -1;
+			else if ($a["orden"] > $b["orden"]) return 1;
+		}
+		return 0;
+	}
+
+	// get/set files from fields that supports it
+	function files($field=null, $files=null) {
+		if ($field === null) {
+			$a=array();
+			if ($this->fields) foreach ($this->fields as $f=>$v)
+				$a[$f]=$this->files($f);
+			return $a;
+		}
+		if ($f=$this->fields[$field]) {
+			$limit=$this->filesLimit[$f["type"]];
+			if (isset($limit)) {
+				$svalue=$this->svalue($field);
+				$svalue_store=!$svalue; // if in session, mark to save it
+				// if files specified, assign
+				if ($files) {
+					$index=0;
+					$svalue["files"]=array();
+					$this->fields[$field]["files"]=array();
+					foreach ($files as $f) {
+						if (file_exists($f["file"]) || $f["data"]) {
+							if ($f["file"]) {
+								if (!$f["name"]) $f["name"]=basename($f["file"]);
+								if (!$f["ext"] && (($j=strrpos($f["name"], ".")) !== false)) $f["ext"]=substr($f["name"], $j+1);
+								if (!$f["type"]) $f["type"]=""; // asegurarse que el campo está creado
+								if (file_exists($f["file"])) {
+									$f["size"]=filesize($f["file"]);
+									$f["data"]=file_get_contents($f["file"]);
+								}
+							}
+							if (isset($f["data"])) $f["size"]=strlen($f["data"]);
+							require_once(__DIR__."/mimetypes.php");
+							if (!$f["type"]) $f["type"]=($f["data"]?$this->mimeByMagic(substr($f["data"], 0, 16)):Mimetypes::file($f["name"]));
+							$this->fields[$field]["files"][$index]=$f;
+							$svalue["files"][$index]=$f;
+							$index++;
+						}
+					}
+					// save in session, if required
+					if ($svalue_store) $this->svalue($field, $svalue);
+				}
+				// if there is files in session, and no specified files, return sessioned files
+				if ($svalue["files"] && $files === null) {
+					// mix value data and set last value
+					foreach ($svalue["files"] as $i=>$v) {
+						if (is_array($f["value"][$i])) $svalue["files"][$i]=array_merge($f["value"][$i], $v);
+						$svalue["files"][$i]["last"]=$this->fields[$field]["files"][$i];
+					}
+					// sort if supported by field
+					$f=$this->fields[$field];
+					if ($f["sortable"]) usort($svalue["files"], array($this, "fileSort"));
+					// return sessioned and sorted files
+					return $svalue["files"];
+				}
+				// otherwise, return field files
+				return $this->fields[$field]["files"];
+			}
+		}
+		// field does not support files
 		return false;
 	}
 
@@ -378,22 +364,17 @@ class xForm3 {
 		switch ($field["type"]) {
 		case "integer": return intval($value);
 		case "number": return doubleval($value);
-		case "positive": return abs(doubleval($value));
 		case "decimal": return doubleval($value);
-		//case "datetime": return $this->spdate($value);
-		case "datetime": return $value;
-		default: return $value;
+		case "positive": return abs(doubleval($value));
 		}
+		return $value;
 	}
 
 	// parse out values for a field
 	function parseOutValue($f, $value) {
 		$field=$this->fields[$f];
 		if ($field["nullifempty"] && !strlen($value)) return null;
-		switch ($field["type"]) {
-		//case "datetime": return $this->sqldate($value);
-		default: return $value;
-		}
+		return $value;
 	}
 
 	// DEPRECATED: convert ISO date to Spanish date
@@ -405,7 +386,7 @@ class xForm3 {
 		if (strlen($sqldate)==8) return $sqldate;
 	}
 
-	// convert localized date format (only Spanish supported) to ISO
+	// DEPRECATED: convert localized date format (only Spanish supported) to ISO
 	function sqldate($spdate) {
 		if (strlen($spdate)<10) return($spdate);
 		$t=substr($spdate,11);
@@ -445,13 +426,14 @@ class xForm3 {
 		if ($field["capitalize"]) $value=ucwords(strtolower_utf8($value));
 		if ($field["integer"]) $value=intval($value);
 		if ($field["number"]) $value=doubleval($value);
-		if ($field["positive"]) $value=abs(doubleval($value));
 		if ($field["decimal"]) $value=doubleval($value);
+		if ($field["positive"]) $value=abs(doubleval($value));
 		if ($field["nozero"] && !$value) $value="";
 		// sanitize
 		$value=strip_tags(str_replace(array("<", ">"), array("&lt;", "&gt;"), $value));
 		// nullables
 		if (($field["nullifempty"] || $field["date"] || $field["datetime"]) && !strlen($value)) $value=null;
+		// return
 		return $value;
 	}
 
