@@ -216,19 +216,24 @@ class xForm3 {
 			return (isset($f["value"])?$f["value"]:"");
 		case "files":
 		case "images":
-			if ($info=$this->svalue($field)) {
+			$info=$this->files($field);
+			return $this->files($field);
+			/*if ($info=$this->files($field)) {
+
 				foreach ($info["files"] as $i=>$v)
 					if (is_array($f["value"][$i]))
 						$info["files"][$i]=array_merge($f["value"][$i], $v);
 				if ($f["sortable"]) usort($info["files"], function($a, $b){
-					if (!isset($a["orden"]) || !isset($b["orden"])) return 0;
-					if ($a["orden"] < $b["orden"]) return -1;
-					else if ($a["orden"] > $b["orden"]) return 1;
-					else return 0;
+					if (isset($a["orden"]) && isset($b["orden"])) {
+						if ($a["orden"] < $b["orden"]) return -1;
+						else if ($a["orden"] > $b["orden"]) return 1;
+					}
+					return 0;
 				});
+				//foreach ($info["files"] as $photo) { unset($photo["data"]); debug($photo); } exit;
 				return $info["files"];
 			}
-			return (isset($f["value"])?$f["value"]:[]);
+			return (isset($f["value"])?$f["value"]:[]);*/
 		case "": return null;
 		default: return $f["value"];
 		}
@@ -247,11 +252,24 @@ class xForm3 {
 				}
 		// get values
 		$values=array();
-		foreach ($this->fields as $f=>$field) if ($field["type"] && !$field["ignore"]) {
+		foreach ($this->fields as $f=>$field) if ($this->fieldHasValue($field)) {
 			$value=$this->value($f);
 			$values[$f]=($parse?$this->parseOutValue($f, $value):$value);
 		}
 		return $values;
+	}
+
+	// get if a field has value
+	function fieldHasValue($field) {
+		if (!is_array($field)) $field=$this->fields[$field];
+		if ($field) switch ($field["type"]) {
+		case "":
+		case "files":
+		case "images":
+			return false;
+		default:
+			return !$field["ignore"];
+		}
 	}
 
 	// get filename from a supported field, or empty filename
@@ -311,8 +329,21 @@ class xForm3 {
 			}
 			// if there is files in session, and no specified files, return sessioned files
 			if ($svalue["files"] && $files === null) {
-				foreach ($svalue["files"] as $index=>$file)
-					$svalue["files"][$index]["last"]=$this->fields[$field]["files"][$index];
+				// mix value data and set last value
+				foreach ($svalue["files"] as $i=>$v) {
+					if (is_array($f["value"][$i])) $svalue["files"][$i]=array_merge($f["value"][$i], $v);
+					$svalue["files"][$i]["last"]=$this->fields[$field]["files"][$i];
+				}
+				// sort, if field is sortable
+				$f=$this->fields[$field];
+				if ($f["sortable"]) usort($svalue["files"], function($a, $b){
+					if (isset($a["orden"]) && isset($b["orden"])) {
+						if ($a["orden"] < $b["orden"]) return -1;
+						else if ($a["orden"] > $b["orden"]) return 1;
+					}
+					return 0;
+				});
+				// return sessioned and sorted files
 				return $svalue["files"];
 			}
 			// otherwise, return field files
