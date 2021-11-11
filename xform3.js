@@ -613,7 +613,7 @@ function xForm3(o) {
 			case "files":
 				// name=inmuebles_ver.psd type=image/vnd.adobe.photoshop error=0 size=81062 caption=inmuebles_ver.psd
 				div.className="xform3_files_file";
-				div.innerHTML="<a class='xform3_files_file_name' href='"+a.files.fileURL(o.field, o.index)+"' target='_blank'>"+o.item.name+"</a> <span class='xform3_files_file_size'>("+bytesToString(o.item.size)+")</span>";
+				div.innerHTML="<span class='xform3_files_file_icon xform3_files_file_icon_file'></span><a class='xform3_files_file_name' href='"+a.files.fileURL(o.field, o.index)+"' target='_blank'>"+o.item.name+"</a> <span class='xform3_files_file_size'>("+bytesToString(o.item.size)+")</span>";
 				div.appendChild(a.files.htmlFileButton({"type":"delete","id":a.id(o.field),"index":o.index,"action":a.files.del}));
 				a.data[o.field].container.appendChild(div);
 				break;
@@ -688,7 +688,7 @@ function xForm3(o) {
 					span.setAttribute("data-id", a.id(field));
 					span.onclick=action_upload;
 					span.title="Subir archivos";
-					span.innerHTML=span.title;
+					span.innerHTML="<span class='xform3_files_file_icon xform3_files_file_icon_upload'></span>"+span.title;
 					div.appendChild(span);
 					gid(a.id(field)).appendChild(div);
 					break;
