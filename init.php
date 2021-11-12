@@ -40,7 +40,7 @@ class x {
 		return $GLOBALS["page"]["included"][$m];
 	}
 
-	// add include/set includes/return includes
+	// load module css/js/php
 	static public function module($_module) {
 		$_modulec=0;
 		foreach ($GLOBALS as $i=>$d)
@@ -208,8 +208,8 @@ class x {
 	}
 
 	// set http max age (default: 10 minutes)
-	static public function maxage($maxage=true) {
-		if ($maxage === true || $maxage <= 0) $maxage=600;
+	static public function maxage($maxage=null) {
+		if (!is_numeric($maxage) || $maxage <= 0) $maxage=600;
 		header("Expires: ".gmdate("D, d M Y H:i:s", time()+$maxage)." GMT");
 		header("Cache-Control: max-age=".$maxage);
 		header("Pragma: cache");
