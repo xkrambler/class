@@ -856,6 +856,7 @@ function xForm3(o) {
 				var files=uploader.files();
 				for (var i in files) {
 					var item=files[i];
+					if (!a.data[field].files) a.data[field].files=[];
 					var index=a.data[field].files.length;
 					var limit=a.files.getLimit(field);
 					if (limit && (index+1 > limit)) index=limit-1;
