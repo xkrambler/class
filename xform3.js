@@ -232,11 +232,11 @@ function xForm3(o) {
 	a.values=function(values){
 		if (isset(values))
 			for (var f in values)
-				if (a.o.fields[f] && a.o.fields[f].type && !a.o.fields[f].ignore)
+				if (a.o.fields[f] && a.o.fields[f].type)
 					a.value(f, values[f]);
 		var values={};
 		for (var f in a.o.fields)
-			if (a.o.fields[f].type && !a.o.fields[f].ignore)
+			if (a.o.fields[f].type)
 				values[f]=a.value(f);
 		return values;
 	};
@@ -956,6 +956,19 @@ function xForm3(o) {
 					a.set(f, n, o.set[f][n]);
 			switch (field.type) {
 			case "datetime":
+				(function(id){
+					gid(id+":d").onfocus=function(){
+						this.setAttribute("data-lastvalue", this.value);
+					};
+					gid(id+":d").oninput=function(){
+						if (
+							!this.getAttribute("data-lastvalue")
+							&& gid(id+":t")
+							&& !gid(id+":t").value
+							&& this.value
+						) gid(id+":t").value="00:00";
+					};
+				})(id);
 				break;
 			case "number":
 			case "text":
