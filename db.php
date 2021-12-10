@@ -736,8 +736,6 @@ if ((!defined("DB_SETUP") || DB_SETUP) && @$db_setup) {
 			} else {
 				$db_config["err"]=DB_ERR_CLASS;
 			}
-		} else {
-			$db_config["err"]=DB_ERR_TYPE;
 		}
 		if ($db_config["err"]) $db_errors=true;
 	} unset($db_config);
