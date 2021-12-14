@@ -179,6 +179,17 @@ class xError {
 		;
 	}
 
+	// convert first trace to file/line
+	function traceFileLine(array $err) {
+		$err["trace"]=$this->trace(["start"=>1]);
+		if ($t=$err["trace"][0]) {
+			$err["file"]=$t["file"];
+			$err["line"]=$t["line"];
+			$err["trace"]=$this->trace(["start"=>2]);
+		}
+		return $err;
+	}
+
 	// get/set database event errors
 	function db($db=null) {
 		if ($db !== null) {
@@ -186,13 +197,13 @@ class xError {
 
 			// set db error event
 			$this->db->event("error", function($o){
-				$this->err([
+				$this->err($this->traceFileLine([
 					"type"=>self::ERR_DB,
 					"message"=>""
-						." #".$o["num"]." ".$o["db"].":<br />\n"
-						."<b>".$o["error"]."</b><br />\n",
+						."<span>#".$o["num"]." ".$o["db"].":</span><br />"
+						." <b>".$o["error"]."</b>",
 					"sql"=>$o["lastquery"],
-				], $o["doexit"]);
+				]), $o["doexit"]);
 			});
 
 			/*
@@ -240,8 +251,7 @@ class xError {
 				if (!($t["class"] == "xError" && in_array($t["function"], ["trace", "error"])))
 					if ($p++ >= $o["start"])
 						$a[]=array_merge($t, [
-							"message"=>"#".count($a)
-								." ".$t["file"]."(".$t["line"].")"
+							"message"=>"#".count($a)." ".$t["file"]."(".$t["line"].")"
 								.($t["class"] != "xError"?": ".$t["class"].$t["type"].$t["function"].($t["args"]?"(".$this->args($t["args"]).")":""):"")
 							,
 						]);
@@ -251,25 +261,18 @@ class xError {
 	// get/set error
 	function error($err=null) {
 		if ($err === null) return $this->error;
-		if (is_string($err)) {
-			$err=[
-				"type"=>-1,
-				"message"=>$err,
-				"trace"=>$this->trace(),
-			];
-			if ($t=$err["trace"][0]) {
-				$err["file"]=$t["file"];
-				$err["line"]=$t["line"];
-				$err["trace"]=$this->trace(["start"=>1]);
-			}
-		}
-		$err["title"]=(($et=$this->error_types[$err["type"]])?$et:"Error[".$err["type"]."]");
-		$err["text"]=strip_tags($err["message"]).($err["file"]?""
-			.(strpos($err["message"], "\n")?"\n":"")
+		if (is_string($err)) $err=$this->traceFileLine([
+			"type"=>self::ERR_APP,
+			"message"=>$err,
+		]);
+		if (!$err["title"]) $err["title"]=(($et=$this->error_types[$err["type"]])?$et:"Error[".$err["type"]."]");
+		if (!$err["text"]) $err["text"]=strip_tags($err["message"]).($err["file"]?""
+			.(strpos($err["message"], "\n")?"\n ":"")
 			." - ".$err["file"]." line ".$err["line"]:"");
 		if (!isset($err["trace"])) $err["trace"]=$this->trace();
-		if ($err["trace"]) foreach ($err["trace"] as $t)
-			$err["text"].="\n  ".$t["message"];
+		if ($err["trace"])
+			foreach ($err["trace"] as $t)
+				$err["text"].="\n  ".$t["message"];
 		$this->error=$err;
 		// error log
 		if ($f=$this->errors_path) {
@@ -364,7 +367,7 @@ class xError {
 			<head>
 				<meta http-equiv="Content-Type" content="text/html; charset=<?=\x::charset()?>" />
 				<style>
-					._xerror { margin: 12px; border: 1px solid #FD4; font-family: Open Sans, Arial, Sans !important; font-size: 15px !important; box-shadow: 0 3px 5px rgba(0,0,0,0.3); }
+					._xerror { background: #FFF; margin: 12px; border: 1px solid #FD4; font-family: Open Sans, Arial, Sans !important; font-size: 15px !important; box-shadow: 0 3px 5px rgba(0,0,0,0.3); }
 					._xerror_h b { display: inline-block; padding: 4px 12px; color: #822; background: #FD4; margin: 0; font-size: inherit; }
 					._xerror_c { border-color: #F88; }
 					._xerror_c ._xerror_h b { background: #F88; }
@@ -372,6 +375,7 @@ class xError {
 					._xerror_f { display: inline-block; margin: 0 1px; color: #444; }
 					._xerror_f b { padding: 2px 6px; background: #DDD; white-space: nowrap; }
 					._xerror_m { margin: 12px; color: #000; background-color: #FFFDF4; }
+					._xerror_m span { color: #055; font-weight: normal; }
 					._xerror_sql { margin: 12px; color: #05A; font-size: 13px; }
 				</style>
 			</head>
@@ -439,7 +443,7 @@ class xError {
 
 }
 
-// instanciar, si setup
+// instance, if setup defined
 if ($error_setup)
 	foreach ($error_setup as $_n=>$_s)
 		$$_n=new xError($_s);
