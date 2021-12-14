@@ -14,6 +14,7 @@ require_once(__DIR__."/init.php");
 			"generic"=>false, // show a generic error message
 			"render"=>function($err){ print_r($err); }, // custom renderer
 			"display"=>true, // display errors
+			"args"=>true, // visible arguments if true, not only types (false), or disabled (null)
 			"mail"=>[ // set mailing on errors
 				"from"=>"from@email.com",
 				"to"=>"to@email.com",
@@ -29,22 +30,35 @@ require_once(__DIR__."/init.php");
 class xError {
 
 	const ERR_APP=-1;
-	const ERR_DB=-2;
+	const ERR_DB =-2;
 
 	static protected $default=false;
-	protected $setup=array();
+	protected $setup=[];
 	protected $error=false;
-	protected $T=array(
-		"en"=>array(
+	protected $T=[
+		"en"=>[
 			"generic"=>"An error that has been recorded has occurred. Contact your application administrator for more details.",
-		),
-		"es"=>array(
+		],
+		"es"=>[
 			"generic"=>"Ha ocurrido un error que ha sido registrado. Contacte al administrador de la aplicación para más detalles.",
-		),
-	);
+		],
+	];
+	protected $warnings=[E_DEPRECATED, E_WARNING];
+	protected $criticals=[E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR];
+	protected $error_types=[
+		self::ERR_APP  =>"APP",
+		self::ERR_DB   =>"DB",
+		E_ERROR        =>"Fatal",
+		E_PARSE        =>"Parse",
+		E_CORE_ERROR   =>"Core",
+		E_COMPILE_ERROR=>"Compile",
+		E_USER_ERROR   =>"User",
+		E_DEPRECATED   =>"Deprecated",
+		E_WARNING      =>"Warning",
+	];
 
 	// constructor
-	function __construct($setup=array()) {
+	function __construct(array $setup=[]) {
 
 		// setup
 		$this->setup($setup);
@@ -54,14 +68,9 @@ class xError {
 			file_put_contents($f, $this->accessEntry(), FILE_APPEND);
 
 		// disable critical errors
-		error_reporting(
-			error_reporting()
-			& ~E_ERROR
-			& ~E_PARSE
-			& ~E_CORE_ERROR
-			& ~E_COMPILE_ERROR
-			& ~E_USER_ERROR
-		);
+		$e=error_reporting();
+		foreach ($this->criticals as $c) $e&=~$c;
+		error_reporting($e);
 
 		// set default perror instance
 		if (!self::$default) self::$default=$this;
@@ -81,60 +90,60 @@ class xError {
 	}
 
 	// setup
-	function setup($setup=null) {
+	function setup(array $setup=[]) {
 
 		// define setup
-		if (is_array($setup)) {
-			$this->setup=$setup;
+		$this->setup=$setup;
 
-			// burst time
-			if (!$this->mail_bursttime) $this->mail_bursttime=60;
+		// burst time
+		if (!$this->mail_bursttime) $this->mail_bursttime=60;
 
-			// setup logs
-			$this->access($this->access);
-			$this->errors($this->errors);
+		// setup logs
+		$this->access($this->access);
+		$this->errors($this->errors);
 
-			// by default, capture is activated
-			if (!isset($this->capture) || $this->capture) {
+		// by default, capture is activated
+		if (!isset($this->capture) || $this->capture) {
 
-				// hide errors
-				$this->visible(false);
+			// hide errors
+			$this->visible(false);
 
-				// capture non-critical errors
-				set_error_handler(function($type, $message, $file, $line, $context){
-					if (!error_reporting()) return false; // prevent @-operator reporting
-					$error=array(
+			// capture non-critical errors
+			set_error_handler(function($type, $message, $file, $line, $context){
+				if (error_reporting() && in_array($type, $this->warnings)) {
+					$this->err([
 						"type"=>$type,
 						"message"=>$message,
 						"file"=>$file,
 						"type"=>$type,
 						"line"=>$line,
+						"trace"=>$this->trace(),
 						//"context"=>$context,
-					);
-					//print_r($error);
-					switch ($error["type"]) {
-					case E_DEPRECATED:
-					case E_WARNING:
-						$this->err($error, false);
-					}
-				});
+					], false);
+				}
+			});
 
-				// capture critical errors
-				register_shutdown_function(function(){
-					if ($error=error_get_last()) {
-						switch ($error["type"]) {
-						case E_ERROR:
-						case E_PARSE:
-						case E_CORE_ERROR:
-						case E_COMPILE_ERROR:
-						case E_USER_ERROR:
-							$this->err($error);
-						}
+			// capture critical errors
+			register_shutdown_function(function(){
+				if (error_reporting() && ($e=error_get_last())) {
+					if (in_array($e["type"], $this->criticals)) {
+						// split message and trace
+						$a=explode("\n", $e["message"]);
+						$e["message"]=$a[0];
+						unset($a[0]);
+						$e["trace"]=[];
+						foreach ($a as $l)
+							if (!in_array($l, ["Stack trace:", "  thrown"]))
+								$e["trace"][]=["message"=>$l];
+						$this->err($e);
 					}
-				});
+				}
+			});
 
-			}
 		}
+
+		// set database
+		if ($setup["db"]) $this->db($setup["db"]);
 
 		// return setup
 		return $this->setup;
@@ -165,7 +174,7 @@ class xError {
 			." ".($_SERVER["HTTP_HOST"]?$_SERVER["HTTP_HOST"]:"-")
 			." ".($_SERVER["REMOTE_ADDR"]?$_SERVER["REMOTE_ADDR"]:"-")
 			." ".(is_string($_SESSION["user"])?$_SESSION["user"]:"-")
-			." ".x::request()."\n"
+			." ".\x::request()."\n"
 			.($_POST?" POST ".substr(serialize($_POST), 0, 64*1024)."]\n":"")
 		;
 	}
@@ -177,25 +186,25 @@ class xError {
 
 			// set db error event
 			$this->db->event("error", function($o){
-				$this->err(array(
+				$this->err([
 					"type"=>self::ERR_DB,
 					"message"=>""
 						." #".$o["num"]." ".$o["db"].":<br />\n"
 						."<b>".$o["error"]."</b><br />\n",
 					"sql"=>$o["lastquery"],
-				), $o["doexit"]);
+				], $o["doexit"]);
 			});
 
 			/*
 				// future table access-log
-				if (!$db->query($db->sqlinsert("access_log", array(
+				if (!$db->query($db->sqlinsert("access_log", [
 					"host"=>$_SERVER["HTTP_HOST"],
 					"datetime"=>$db->now(),
 					"ip"=>$_SERVER["REMOTE_ADDR"],
 					"agent"=>substr($_SERVER["HTTP_USER_AGENT"], 0, 255),
-					"url"=>substr(x::request(), 0, 4096),
+					"url"=>substr(\x::request(), 0, 4096),
 					"post"=>($_POST?json_encode($_POST):null),
-				)))) $db->err();
+				]))) $db->err();
 			*/
 
 		}
@@ -211,23 +220,56 @@ class xError {
 		ini_set('display_startup_errors', $visible);
 	}
 
+	// return argument as string representation
+	function args($a) {
+		$s="";
+		if (isset($this->args) && $a)
+			foreach ($a as $i=>$v)
+				$s.=($i?", ":"").($this->args === true?var_export($v, true):gettype($v));
+		return $s;
+	}
+
+	// get stack trace
+	function trace(array $o=[]) {
+		if (!$o["start"]) $o["start"]=0;
+		$p=0;
+		$a=[];
+		$exception=new \Exception();
+		if ($trace=$exception->getTrace())
+			foreach ($trace as $i=>$t)
+				if (!($t["class"] == "xError" && in_array($t["function"], ["trace", "error"])))
+					if ($p++ >= $o["start"])
+						$a[]=array_merge($t, [
+							"message"=>"#".count($a)
+								." ".$t["file"]."(".$t["line"].")"
+								.($t["class"] != "xError"?": ".$t["class"].$t["type"].$t["function"].($t["args"]?"(".$this->args($t["args"]).")":""):"")
+							,
+						]);
+		return $a;
+	}
+
 	// get/set error
 	function error($err=null) {
 		if ($err === null) return $this->error;
-		if (is_string($err)) $err=array("type"=>-1, "message"=>$err);
-		$error_types=array(
-			self::ERR_APP=>"APP",
-			self::ERR_DB=>"DB",
-			E_ERROR=>"Fatal",
-			E_PARSE=>"Parse",
-			E_CORE_ERROR=>"Core",
-			E_COMPILE_ERROR=>"Compile",
-			E_USER_ERROR=>"User",
-			E_DEPRECATED=>"Deprecated",
-			E_WARNING=>"Warning",
-		);
-		$err["title"]=(($et=$error_types[$err["type"]])?$et:"Error[".$err["type"]."]");
-		$err["text"]=strip_tags($err["message"]).($err["file"]?" - file ".$err["file"]." line ".$err["line"]:"");
+		if (is_string($err)) {
+			$err=[
+				"type"=>-1,
+				"message"=>$err,
+				"trace"=>$this->trace(),
+			];
+			if ($t=$err["trace"][0]) {
+				$err["file"]=$t["file"];
+				$err["line"]=$t["line"];
+				$err["trace"]=$this->trace(["start"=>1]);
+			}
+		}
+		$err["title"]=(($et=$this->error_types[$err["type"]])?$et:"Error[".$err["type"]."]");
+		$err["text"]=strip_tags($err["message"]).($err["file"]?""
+			.(strpos($err["message"], "\n")?"\n":"")
+			." - ".$err["file"]." line ".$err["line"]:"");
+		if (!isset($err["trace"])) $err["trace"]=$this->trace();
+		if ($err["trace"]) foreach ($err["trace"] as $t)
+			$err["text"].="\n  ".$t["message"];
 		$this->error=$err;
 		// error log
 		if ($f=$this->errors_path) {
@@ -273,7 +315,7 @@ class xError {
 		return ($e["text"]?$e["text"]:"")
 			.$err["title"].": ".strip_tags($err["message"])."\n"
 			.($err["file"]?"File: ".$err["file"].($err["line"]?" at line ".$err["line"]:"")."\n":"")
-			.($_SERVER["HTTP_HOST"]?"URL: ".x::base().x::alink()."\n":"")
+			.($_SERVER["HTTP_HOST"]?"URL: ".\x::base().\x::alink()."\n":"")
 			.(($v=$_SERVER["REMOTE_ADDR"])?"Remote_Addr: ".$v."\n":"")
 			."Time: ".date("d/m/Y H:i:s")."\n"
 			.(isset($this->burst_loop)?"Burst: ".$this->burst_loop."\n":"")
@@ -283,15 +325,15 @@ class xError {
 
 	// e-mail data
 	function emailData($err) {
-		return array(
+		return [
 			"subject"=>$this->emailSubject($err),
 			"text"=>$this->emailText($err),
-		);
+		];
 	}
 
 	// returns text by code in current language
 	function _T($t) {
-		$lang=x::page("lang");
+		$lang=\x::page("lang");
 		if (isset($this->T[$lang][$t])) return $this->T[$lang][$t];
 		return $this->T["en"][$t];
 	}
@@ -300,65 +342,60 @@ class xError {
 	function dump($err) {
 
 		// use generic error message
-		if ($this->generic) {
-			$err=array(
-				"title"=>($err["title"]?$err["title"]:"ERROR"),
-				"message"=>($this->generic === true?$this->_T("generic"):$this->generic),
-			);
-		}
+		if ($this->generic) $err=[
+			"type"=>$err["type"],
+			"title"=>($err["title"]?$err["title"]:"ERROR"),
+			"message"=>($this->generic === true?$this->_T("generic"):$this->generic),
+		];
 
 		// si no tengo versión de texto, preparar ahora
 		if (!$err["text"]) $err["text"]=strip_tags(nl2br($err["message"]));
 
 		// AJAX
 		if ($GLOBALS["ajax"] && function_exists("ajax")) {
-			ajax(array("err"=>$err["title"].": ".$err["text"], "code"=>$exit));
+			ajax(["err"=>$err["title"].": ".$err["text"], "code"=>$exit]);
 		// CLI
 		} else if (!$_SERVER["HTTP_HOST"]) {
 			error_log("[".date("YmdHis")."] ".$err["title"].": ".$err["text"]);
 		// HTML
 		} else {
 			?><!doctype html>
-			<html lang="<?=x::page("lang")?>">
+			<html lang="<?=\x::page("lang")?>">
 			<head>
-				<meta http-equiv="Content-Type" content="text/html; charset=<?=x::charset()?>" />
+				<meta http-equiv="Content-Type" content="text/html; charset=<?=\x::charset()?>" />
 				<style>
-					._xerror { margin: 12px; border: 2px solid #FD4; font-family: Open Sans, Segoe UI, Arial !important; font-size: 15px !important; box-shadow: 0px 3px 5px rgba(0,0,0,0.3); }
-					._xerror_t {}
-					._xerror_t b { display: inline-block; padding: 6px 16px; color: #822; background: #FD4; margin: 0px; font-size: inherit; }
-					._xerror_m { padding: 12px 16px; color: #000; background-color: #FFFDF4; }
-					._xerror_sql { padding: 12px 16px; color: #05A; font-size: 13px; }
-					._xerror_f { padding: 12px 16px 0px 12px; color: #444; }
+					._xerror { margin: 12px; border: 1px solid #FD4; font-family: Open Sans, Arial, Sans !important; font-size: 15px !important; box-shadow: 0 3px 5px rgba(0,0,0,0.3); }
+					._xerror_h b { display: inline-block; padding: 4px 12px; color: #822; background: #FD4; margin: 0; font-size: inherit; }
+					._xerror_c { border-color: #F88; }
+					._xerror_c ._xerror_h b { background: #F88; }
+					._xerror_t { margin: 12px; color: #666; }
+					._xerror_f { display: inline-block; margin: 0 1px; color: #444; }
 					._xerror_f b { padding: 2px 6px; background: #DDD; white-space: nowrap; }
-					._xerror_hr { background: #FD4; border: 0px; height: 2px; margin: 0px; }
-					._xerror_foot { padding: 6px 12px; background: #FFFDF4; font-size: 12px !important; }
-					._xerror_a { float: left; }
-					._xerror_a a { color: #0AB; }
-					._xerror_a a:hover { color: #089; }
-					._xerror_ss { float: right; margin-left: 16px; color: #666; font-size: 13px; }
-					._xerror_clr { clear: both; }
+					._xerror_m { margin: 12px; color: #000; background-color: #FFFDF4; }
+					._xerror_sql { margin: 12px; color: #05A; font-size: 13px; }
 				</style>
 			</head>
 			<body>
-				<div class='_xerror'>
-					<div class='_xerror_t'><b><?=$err["title"]?></b></div>
+				<div class='_xerror <?=(in_array($err["type"], $this->criticals)?"_xerror_c":"")?>'>
+					<span class='_xerror_h'><b><?=$err["title"]?></b></span>
 					<?php if ($err["file"]) { ?>
-						<div class='_xerror_f'>
+						<span class='_xerror_f'>
 							<b><?=$err["file"]?></b> line <b><?=$err["line"]?></b>
-						</div>
+						</span>
 					<?php } ?>
 					<div class='_xerror_m'>
-						<?=$err["message"]?>
+						<b><?=$err["message"]?></b>
 					</div>
+					<?php if ($trace=$err["trace"]) { ?>
+						<div class='_xerror_t'>
+							<?php if ($trace=$err["trace"]) foreach ($trace as $t) { ?>
+								<?=$t["message"]?><br />
+							<?php } ?>
+						</div>
+					<?php } ?>
 					<?php if ($err["sql"]) { ?>
 						<pre class='_xerror_sql'><?=$err["sql"]?></pre>
 					<?php } ?>
-					<hr class='_xerror_hr' />
-					<div class='_xerror_foot'>
-						<div class='_xerror_a'><a href='<?=x::url()?>'><?=x::url()?></a></div>
-						<div class='_xerror_ss'><?=$_SERVER["SERVER_SOFTWARE"]?></div>
-						<div class='_xerror_clr'></div>
-					</div>
 				</div>
 			</body>
 			</html><?php
@@ -376,7 +413,7 @@ class xError {
 		// send e-mail
 		if (($e=$this->mail) && method_exists("Kernel", "mailto"))
 			if ($this->burstCheck())
-				$this->mailed=Kernel::mailto($this->emailData($err)+$e);
+				$this->mailed=\Kernel::mailto($this->emailData($err)+$e);
 
 		// custom renderer (if display enabled or not set)
 		if (!isset($this->display) || $this->display) {
