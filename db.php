@@ -563,7 +563,7 @@ abstract class dbbase {
 	// dump error message depending of current output media
 	function err($querynum=null, $doexit=1) {
 		global $ajax;
-		// if error handler, call it
+		// if error handler defined, call it
 		if ($this->events["error"]) {
 			$this->events["error"](array(
 				"db"=>$this,
@@ -578,8 +578,9 @@ abstract class dbbase {
 			));
 		} else {
 			// default error output handlers
-			if ($ajax) $this->aerr($querynum, $doexit);
-			else $this->herr($querynum, $doexit);
+			if ($ajax) $this->aerr($querynum, $doexit); // ajax: json
+			else if ($argv) $this->perr($querynum, $doexit); // cli: plain
+			else $this->herr($querynum, $doexit); // default: html
 		}
 		// ensure exit with code, if defined
 		if ($doexit) exit($doexit);
@@ -613,9 +614,8 @@ abstract class dbbase {
 	// AJAX/JSON error output handler (using library VeryTinyAJAX2 if defined)
 	function aerr($querynum=null,$doexit=1) {
 		if (!$querynum) $querynum="%".$this->lastquerynum;
-		$out=array("err"=>"Error al realizar petición a la base de datos:"
-			."\n\n"."db(".$this->driver().") Error ".$this->errnum().":\n".$this->error()
-			."\n\n"."Consulta(".$querynum."): ".$this->lastquery($querynum));
+		$out=array("err"=>"db(".$this->driver().") Error ".$this->errnum().":\n".$this->error()
+			."\n\n"."query(".$querynum."): ".$this->lastquery($querynum));
 		if (function_exists("ajax")) ajax($out);
 		echo json_encode($out);
 		if ($doexit) exit($doexit); // nunca se ejecuta con ajax()
