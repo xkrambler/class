@@ -367,7 +367,7 @@ class xError {
 			<head>
 				<meta http-equiv="Content-Type" content="text/html; charset=<?=\x::charset()?>" />
 				<style>
-					._xerror { background: #FFF; margin: 12px; border: 1px solid #FD4; font-family: Open Sans, Arial, Sans !important; font-size: 15px !important; box-shadow: 0 3px 5px rgba(0,0,0,0.3); }
+					._xerror { background: #FFF; margin: 12px; border: 1px solid #FD4; font-family: Open Sans, Arial, Sans !important; font-size: 15px !important; box-shadow: 0 3px 5px rgba(0,0,0,0.3); tab-size: 2 !important; -moz-tab-size: 2 !important; }
 					._xerror_h b { display: inline-block; padding: 4px 12px; color: #822; background: #FD4; margin: 0; font-size: inherit; }
 					._xerror_c { border-color: #F88; }
 					._xerror_c ._xerror_h b { background: #F88; }
