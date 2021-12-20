@@ -33,7 +33,6 @@ function xajax(o){
 	const self=this;
 	self.o=o;
 	self.err="";
-	self.charset=o.charset || "UTF-8";
 	self.states=["Uninitialized", "Loading", "Loaded", "Interactive", "Complete", "Server Crashed"];
 
 	// get/set last error
@@ -258,32 +257,47 @@ function xajax(o){
 
 		// prepare POST
 		var post=(o.post?o.post:false);
+		var fd=(o.formdata?o.formdata:false);
+
+		// JSON post/custom
 		if (isset(o.json)) {
-			mime="application/json";
+			mime="application/json; charset=UTF-8";
 			post=self.json(o.json);
-		} else if (isset(o.data)) {
-			if (!post) post={};
-			post.data=self.json(o.data);
+		} else {
+
+			// instance FormData
+			if (!fd && (post || isset(o.data))) fd=new FormData();
+
+			// POST fields
+			if (post) for (var k in post) fd.append(k, post[k]);
+
+			// data JSON
+			if (isset(o.data)) {
+				// separate Files/Blobs to FormData
+				for (var k in o.data) if (o.data[k] instanceof Blob || o.data[k] instanceof File) {
+					fd.append(k, o.data[k]);
+					delete o.data[k];
+				}
+				// data as JSON
+				fd.append("data", self.json(o.data));
+			}
+
 		}
-		var post_s=(post?self.param(post):"");
 
 		// prepare final parameters
 		var async=(o.sync?false:true);
-		o.method=(o.method?o.method:self.isset(post)?"POST":"GET");
+		o.method=(o.method?o.method:(post || fd?"POST":"GET"));
 		o.url=self.alink(get, (o.url?o.url:location.href));
 
 		// do AJAX request
 		var r=false;
 		try {
 			http.open(o.method, o.url, async, (self.isset(o.user)?o.user:null), (self.isset(o.pass)?o.pass:null));
-			if (async) http.onreadystatechange=function(){
-				self.onreadystatechange(http, o);
-			};
+			if (mime) http.setRequestHeader('Content-Type', mime);
+			if (async) http.onreadystatechange=function(){ self.onreadystatechange(http, o); };
 			if (o.progress) http.onprogress=o.progress;
 			if (o.uploadprogress && http.upload) http.upload.onprogress=o.uploadprogress;
-			http.setRequestHeader('Content-Type', (mime || "application/x-www-form-urlencoded")+'; charset='+self.charset);
-			//try { http.setRequestHeader("Content-Length", post_s.length); } catch(e) {}
-			http.send(post?post_s:null);
+			http.send(fd?fd:(post?post:null));
 			if (!async) return self.onreadystatechange(http, o);
 		} catch(e) {
 			return self.error(".ajax(): "+e);
@@ -300,10 +314,10 @@ function xajax(o){
 }
 
 // abbreviated call
-function ajax(o, b, c, d){
-	if (typeof(o) == "string") {
-		var o={
-			"ajax":o,
+function ajax(a, b, c, d){
+	if (typeof(a) == "string") {
+		var a={
+			"ajax":a,
 			"data":b,
 			"error":function(r){
 				console.warn("ajax("+a+") "+r.status+": "+r.text);
@@ -319,5 +333,5 @@ function ajax(o, b, c, d){
 		};
 		if (!d) delete o.always;
 	}
-	new xajax(o);
+	return new xajax(a);
 }
