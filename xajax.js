@@ -300,22 +300,24 @@ function xajax(o){
 }
 
 // abbreviated call
-function ajax(a, b, c, d){
-	var o={
-		"ajax":a,
-		"data":b,
-		"error":function(r){
-			console.warn("ajax("+a+") "+r.status+": "+r.text);
-			var error=(r.status
-				?"Se ha encontrado el error "+r.status+" en el servidor."
-				:"El servidor no responde a la petición!\nPruebe dentro de unos instantes."
-			);
-			if (typeof(newerror) == "function") newerror(error);
-			else alert(error);
-		},
-		"always":c,
-		"complete":(d?d:c)
-	};
-	if (!d) delete o.always;
+function ajax(o, b, c, d){
+	if (typeof(o) == "string") {
+		var o={
+			"ajax":o,
+			"data":b,
+			"error":function(r){
+				console.warn("ajax("+a+") "+r.status+": "+r.text);
+				var error=(r.status
+					?"Se ha encontrado el error "+r.status+" en el servidor."
+					:"El servidor no responde a la petición!\nPruebe dentro de unos instantes."
+				);
+				if (typeof(newerror) == "function") newerror(error);
+				else alert(error);
+			},
+			"always":c,
+			"complete":(d?d:c)
+		};
+		if (!d) delete o.always;
+	}
 	new xajax(o);
 }
