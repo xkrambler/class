@@ -605,7 +605,7 @@ class Kernel {
 		exit;
 	}
 
-	// sustituye valores de un template por sus correspondientes en los datos
+	// replace template values enclosed between tags characters
 	static function template($template, $fields, $o=array()) {
 		if (!$o["tags"]) $o["tags"]="%%";
 		$j=0;
@@ -613,17 +613,17 @@ class Kernel {
 			$i=strpos($template, substr($o["tags"], 0, 1), $j);   if ($i === false) break;
 			$j=strpos($template, substr($o["tags"], 1, 1), $i+1); if ($j === false) break;
 			$v=substr($template, $i+1, $j-$i-1);
-			if ($v==="") {
+			if ($v === "") {
 				$template=substr($template, 0, $i).substr($template, $j);
 			} else {
 				$vs=explode(".", $v);
 				$l=&$fields;
-				foreach ($vs as $v) {
-					if (!isset($l)) break;
-					$l=&$l[$v];
+				foreach ($vs as $ni=>$nv) {
+					if (!isset($l) || !is_array($l)) break;
+					$l=&$l[$nv];
 				}
 				if (isset($l)) {
-					$r=(is_callable($l)?$l():$l);
+					$r=(is_callable($l)?$l($v, $nv, $ni):$l);
 					$template=substr($template, 0, $i).$r.substr($template, $j+1);
 					$j=$i+strlen($r)-1;
 				}
@@ -633,7 +633,7 @@ class Kernel {
 		return $template;
 	}
 
-	// verificación de email
+	// e-mail verification
 	static function verifyEmail($email) {
 		if (!$email) return array(false,"Dirección de correo no especificada");
 		$atIndex = strrpos($email, "@");
@@ -660,7 +660,7 @@ class Kernel {
 		}
 		// domain not found in DNS
 		if (function_exists("checkdnsrr")) {
-			if (!(checkdnsrr($domain,"MX") || checkdnsrr($domain,"A"))) return array(false,"Dominio no existe.");
+			if (!(checkdnsrr($domain, "MX") || checkdnsrr($domain, "A"))) return array(false,"Dominio no existe.");
 		}
 		// all OK
 		return array(true,"Dirección de correo electrónico ".$email." es correcta.");
