@@ -1,6 +1,6 @@
 <?php
 
-// controlador general
+// global core
 class Kernel {
 
 	static $id=0;
@@ -424,13 +424,12 @@ class Kernel {
 		return @mail($to, $subject, $body, $headers);
 	}
 
-	// ordenación de nombres
+	// dir filename sorting
 	static function name_sort($a,$b) {
 		return (strtolower($a["name"]) > strtolower($b["name"])?1:(strtolower($a["name"]) < strtolower($b["name"])?-1:0));
 	}
 
-	// lee un directorio y lo devuelve como array ordenado con sus propiedades
-	// (primero carpetas, luego ficheros)
+	// read a directory sorting it, first folders, and return entries as array
 	static function dir($p) {
 		if (substr($p, -1, 1) != DIRECTORY_SEPARATOR) $p.=DIRECTORY_SEPARATOR;
 		$fd=array();
@@ -463,9 +462,9 @@ class Kernel {
 		return $a;
 	}
 
-	// localización de ficheros/directorios recursivamente
+	// recursive file find
 	function dir_recursive($root, $paths=false) {
-		if (substr($root,-1,1)!="/") $root.="/";
+		if (substr($root, -1, 1) != "/") $root.="/";
 		$a=array();
 		$d=dir($root);
 		while ($e=$d->read()) {
@@ -484,7 +483,7 @@ class Kernel {
 		return $a;
 	}
 
-	// borrado de ficheros de forma recursiva (USAR CON OJO)
+	// recursive file deletion (USE WITH CARE)
 	function rm_recursive($base) {
 		if (!$base) return false;
 		if (substr($base,-1,1)!="/") return false;
@@ -498,8 +497,7 @@ class Kernel {
 		return true;
 	}
 
-	// devuelve el nombre del fichero saneado sin comas, etc.
-	// o bien devuelve una cadena vacía si encuentra indicios de hack
+	// return filename trimed and saned without quotes, or empty string if possible hack detected
 	static function fileSanity($f) {
 		if (strpos($f, "\\") !== false) return "";
 		if (strpos($f, "/") !== false) return "";
@@ -554,18 +552,18 @@ class Kernel {
 		return true;
 	}
 
-	// lanza un adjunto
+	// dump file as attachment
 	static function attachment($o) {
 		return self::dumpfile($o+array("attachment"=>true));
 	}
 
-	// obtener mimetype de un nombre de fichero dada su extensión
+	// get mimetype for a given filename
 	static function getMimetype($f) {
 		require_once(__DIR__."/mimetypes.php");
 		return Mimetypes::file($f);
 	}
 
-	// exportar datos a CSV
+	// output data as CSV
 	static function csv($o) {
 		foreach ($defaults=array(
 			"attachment"=>true,
@@ -666,12 +664,12 @@ class Kernel {
 		return array(true,"Dirección de correo electrónico ".$email." es correcta.");
 	}
 
-	// convertir a entidades HTML UTF-8 incluidas comillas dobles y simples
+	// default HTML entities conversion to UTF-8 with double and single quotes
 	static function entities($s) {
 		return htmlentities($s, ENT_QUOTES, "UTF-8");
 	}
 
-	// sanea los campos de entrada, quitando espacios y tags
+	// sanitize input values, trimming outer spaces and HTML tags
 	static function sanitize($value, $exclude=array()) {
 		if (is_array($value)) {
 			$a=array();
@@ -686,23 +684,23 @@ class Kernel {
 
 	/*
 		pexec.
-		Ejecutar mediante tuberías (piped exec).
+		Execute command using pipes.
 
-		Parámetros:
-	   cmd  Comando a ejecutar. Obligatorio.
-	   out  Salida del comando, se pasa por referencia.
-	   o    Opciones, un array que puede contener:
-	     in        Datos de entrada a enviar al comando.
-	     cwd       Directorio de ejecución.
-	     env       Datos de entorno adicionales.
-	     buffer    Buffer. Por defecto, 4KB.
-	     callback  Función de callback, se llama con los parámetros $data, $pipes y $proc.
-	 Devuelve:
-	   Código de retorno, o false si ha ocurrido algún error
+		Parameters:
+	    cmd  Command (required)
+	    out  Output returned. (reference)
+	    o    Options:
+	      in        Send data to the input pipe.
+	      cwd       Current Working Directory.
+	      env       Setup Environment.
+	      buffer    Buffer. (defult 4KB)
+	      callback  Callback function for output. Called with ($data, $pipes, $proc) parameters.
+	  Returns:
+	    Return code, false if any error found.
 	*/
 	static function pexec($cmd, &$out=null, $o=array()) {
 
-		// lanzar comando
+		// start process
 		$proc=proc_open(
 			$cmd,
 			array(
@@ -717,10 +715,10 @@ class Kernel {
 		);
 		if (is_resource($proc)) {
 
-			// escribir datos iniciales en entrada del comando
+			// write data to input pipe
 			if ($o["in"]) fwrite($pipes[0], $o["in"]);
 
-			// leer lineas en bloques de 4KB
+			// read output and call back if requested
 			while (!feof($pipes[1])) {
 				$data=fread($pipes[1], ($o["buffer"]?$o["buffer"]:4096));
 				if ($o["callback"]) {
@@ -730,38 +728,38 @@ class Kernel {
 				$out.=$data;
 			}
 
-			// cerrar tuberías
+			// close pipes
 			fclose($pipes[0]);
 			fclose($pipes[1]);
+			fclose($pipes[2]);
 
-			// terminar proceso y obtener código de retorno
+			// terminate process and get return code
 			$ret=proc_close($proc);
 
 		} else {
-			$out="";
 			$ret=false;
 		}
 
-		// devolver código de error
+		// return
 		return $ret;
 
 	}
 
 	/**
 	 * getEncoding.
-	 * Detecta la codificación de un texto dado.
+	 * Detects charset encoding for a given string.
 	 * Thanks to the public code ofered by Clbustos in http://php.apsique.com/node/536
 	 * and modified by mape367 in http://www.forosdelweb.com/f18/como-detectar-codificacion-string-448344/
 	 *
-	 * @param String Texto cuya codificación se va a detectar.
-	 * @return Encoding (UTF-8, ASCII o ISO-8859-1)
+	 * @param String String to detect charset
+	 * @return Encoding (UTF-8, ASCII or ISO-8859-1)
 	 */
 	static function getEncoding($text) {
-		$c = 0;
-		$ascii = true;
-		for ($i=0;$i<strlen($text);$i++) {
-			$byte = ord($text[$i]);
-			if ($c>0) {
+		$c=0;
+		$ascii=true;
+		for ($i=0; $i < strlen($text); $i++) {
+			$byte=ord($text[$i]);
+			if ($c > 0) {
 				if (($byte>>6) != 0x2) {
 					return "ISO-8859-1";
 				} else {
@@ -770,11 +768,11 @@ class Kernel {
 			} elseif ($byte&0x80) {
 				$ascii = false;
 				if (($byte>>5) == 0x6) {
-					$c = 1;
+					$c=1;
 				} elseif (($byte>>4) == 0xE) {
-					$c = 2;
+					$c=2;
 				} elseif (($byte>>3) == 0x14) {
-					$c = 3;
+					$c=3;
 				} else {
 					return "ISO-8859-1";
 				}
@@ -783,15 +781,7 @@ class Kernel {
 		return ($ascii?"ASCII":"UTF-8");
 	}
 
-	/**
-	 * validate.
-	 * Comprueba si una cadena contiene sólo caracteres válidos
-	 * especificados en la segunda cadena.
-	 *
-	 * @param String Cadena a verificar.
-	 * @param String Cadena de caracteres válidos.
-	 * @return Boolean true si cadena correcta, false en caso contrario.
-	 */
+	// DEPRECATED: validate a string for valid bytes
 	static function validate($s, $validCharset) {
 		for ($i=0; $i<strlen($s); $i++)
 			if (strpos($validCharset, $s[$i]) === false)
@@ -799,7 +789,7 @@ class Kernel {
 		return true;
 	}
 
-	// devolver un fichero via HTTP aceptando rangos
+	// return file via HTTP accepting a byte range protocol
 	static function httpOutput($o) {
 		if ($o["file"]) {
 			if (!$o["type"]) $o["type"]=self::getMimetype($o["file"]);
@@ -861,7 +851,7 @@ class Kernel {
 		exit;
 	}
 
-	// registra un mensaje
+	// DEPRECATED: log a message
 	function log($msg) {
 		if ($this->o["log"]) {
 			$s="[".($this->o["log"]["app"]?$this->o["log"]["app"]." ":"").date("YmdHis")."] ".$msg."\n";
@@ -873,17 +863,17 @@ class Kernel {
 		}
 	}
 
-	// registra un evento de advertencia
+	// DEPRECATED: log a warning message
 	function warn($msg) {
 		$this->log("[WARN] ".$msg);
 	}
 
-	// registra un evento de error
+	// DEPRECATED: log an error message
 	function err($msg) {
 		$this->log("[ERROR] ".$msg);
 	}
 
-	// lanzar error
+	// DEPRECATED: launch error
 	function perror($o) {
 		if (!$o["error"]) $o["error"]="Unknown";
 		if (isset($o["visible"]) && $o["visible"] || !isset($o["visible"])) {
@@ -904,7 +894,7 @@ class Kernel {
 		if (!isset($o["exit"]) || (isset($o["exit"]) && $o["exit"])) exit(1);
 	}
 
-	// registrar eventos de error a fichero
+	// DEPRECATED: setup logging to file
 	function setuplog($o) {
 		if ($o["file"]===true) $o["file"]=dirname(__DIR__)."/data/log/error.log";
 		if (!$o["level"]) $o["level"]=E_ALL & ~E_NOTICE;
