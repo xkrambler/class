@@ -694,7 +694,9 @@ class Kernel {
 	      cwd       Current Working Directory.
 	      env       Setup Environment.
 	      buffer    Buffer. (defult 4KB)
-	      callback  Callback function for output. Called with ($data, $pipes, $proc) parameters.
+	      out       Callback function for output. Called with ($data, $pipes, $proc) parameters.
+	      err       Callback function for errors. Called with ($error, $pipes, $proc) parameters.
+	      callback  DEPRECATED. Callback function for output. Called with ($data, $pipes, $proc) parameters.
 	  Returns:
 	    Return code, false if any error found.
 	*/
@@ -723,19 +725,26 @@ class Kernel {
 			}
 
 			// read output and call back if requested
-			while (!feof($pipes[1])) {
-				$data=fread($pipes[1], ($o["buffer"]?$o["buffer"]:4096));
-				if ($o["callback"]) {
-					$in=$o["callback"]($data, $pipes, $proc);
-					if (strlen($in)) fwrite($pipes[0], $in);
+			while (!feof($pipes[1]) || !feof($pipes[2])) {
+				if (!feof($pipes[1])) $data=fread($pipes[1], ($o["buffer"]?$o["buffer"]:4096));
+				if (!feof($pipes[2])) $error=fread($pipes[2], ($o["buffer"]?$o["buffer"]:4096));
+				if (strlen($error) && $redir=$o["redir"]) {
+					if (is_callable($redir)) $error=$redir($error, $pipes, $proc);
+					if (is_string($error)) $data.=$error;
 				}
+				if (is_callable($o["out"])) $o["out"]($data, $pipes, $proc);
+				else if ($o["callback"]) {
+					$in=$o["callback"]($data, $pipes, $proc);
+					if (is_string($in) && strlen($in)) fwrite($pipes[0], $in);
+				}
+				if (is_callable($o["err"])) $o["err"]($error, $pipes, $proc);
 				$out.=$data;
 			}
 
 			// close pipes
 			if ($in) @fclose($pipes[0]);
-			fclose($pipes[1]);
-			fclose($pipes[2]);
+			@fclose($pipes[1]);
+			@fclose($pipes[2]);
 
 			// terminate process and get return code
 			$ret=proc_close($proc);
