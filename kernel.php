@@ -718,10 +718,8 @@ class Kernel {
 			// write data to input pipe
 			if ($in=$o["in"]) {
 				if (is_callable($in)) $in($o, $pipes, $proc);
-				else {
-					fwrite($pipes[0], $in);
-					fclose($pipes[0]);
-				}
+				else fwrite($pipes[0], $in);
+				fclose($pipes[0]);
 			}
 
 			// read output and call back if requested
@@ -735,7 +733,7 @@ class Kernel {
 			}
 
 			// close pipes
-			fclose($pipes[0]);
+			if ($in) @fclose($pipes[0]);
 			fclose($pipes[1]);
 			fclose($pipes[2]);
 
