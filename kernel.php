@@ -716,7 +716,13 @@ class Kernel {
 		if (is_resource($proc)) {
 
 			// write data to input pipe
-			if ($o["in"]) fwrite($pipes[0], $o["in"]);
+			if ($in=$o["in"]) {
+				if (is_callable($in)) $in($o, $pipes, $proc);
+				else {
+					fwrite($pipes[0], $in);
+					fclose($pipes[0]);
+				}
+			}
 
 			// read output and call back if requested
 			while (!feof($pipes[1])) {
