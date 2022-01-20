@@ -331,7 +331,7 @@ function ajax(a, b, c, d){
 			"always":c,
 			"complete":(d?d:c)
 		};
-		if (!d) delete o.always;
+		if (!d) delete a.always;
 	}
 	return new xajax(a);
 }
