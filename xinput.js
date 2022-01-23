@@ -137,12 +137,11 @@ function xInput(o){
 	// añadir item
 	a.add=function(item, select){
 		if (!a.o.options) a.o.options=[];
+		var index=a.o.options.length;
 		a.o.options.push(item);
-		if (isset(select)) {
-			a.o.item=item;
-			a.refreshItem();
-		}
+		if (isset(select)) a.o.item(item, index);
 		a.refresh();
+		return index;
 	};
 
 	// devolver/establecer opciones
@@ -166,10 +165,13 @@ function xInput(o){
 	};
 
 	// devolver/establecer item actual
-	a.item=function(item){
+	a.item=function(item, index){
 		if (isset(item)) {
 			a.o.item=item;
 			a.refreshItem();
+			a.actual({"item":a.o.item, "ajax":false, "index":index});
+			if (a.o.onchange) a.o.onchange(a, null); // FIXME: only fire when item/value changes
+			if (a.o.onselect) return a.o.onselect(a, a.actual());
 		}
 		return a.o.item;
 	};
