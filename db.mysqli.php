@@ -304,6 +304,7 @@ class dbMySQLi extends dbbase {
 
 	// perform multiple query
 	function multi($sql, $querynum=null) {
+		if ($this->setup["delayed"] && !($this->idcon > 0) && !$this->rconnect()) return false;
 		$querynum=$this->querynum($querynum, true);
 		$st=microtime(true);
 		$retries=0;
