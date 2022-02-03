@@ -562,7 +562,7 @@ abstract class dbbase {
 
 	// dump error message depending of current output media
 	function err($querynum=null, $doexit=1) {
-		global $ajax;
+		global $ajax, $argv;
 		// if error handler defined, call it
 		if ($this->events["error"]) {
 			$this->events["error"](array(
