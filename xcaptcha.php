@@ -73,11 +73,12 @@ class xCaptcha {
 		// default options
 		$o=array_merge($this->defaults, $o);
 
-		if (!$o["width"]) $o["width"]=20+$o["maxWordLength"]*20;
-
 		// required options
 		foreach ($this->required as $n=>$v)
 			if (!$o[$n]) $o[$n]=$v;
+
+		// check width
+		if (!$o["width"]) $o["width"]=20+$o["maxWordLength"]*20;
 
 		// other requisites
 		if ($o["color"]) $o["colors"]=array($o["color"]);
