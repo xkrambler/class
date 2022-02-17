@@ -163,6 +163,313 @@ var xwidgets={
 
 	},
 
+	/*
+
+		xwidgets.hsearch()
+		HTML SearchBox.
+
+		Example:
+
+			var hsearch=new xwidgets.hsearch({
+				"id":"element",
+				"render":function(self, item){
+					return (item
+						?"<b>"+item.caption+"</b> ("+item.id+")"
+						:"- Please, select an option -"
+					);
+				},
+				"search":function(self, search){
+					var items=[
+						{"id":1, "caption":"First Option"},
+						{"id":2, "caption":"Second Option"}
+					];
+					var r=[];
+					for (var i in items) {
+						var item=items[i];
+						if (!search || self.searchWords(item.caption, search)) {
+							r.push(self.optionElement({
+								"html":"<b>"+item.caption+"</b> ("+item.id+")",
+								"item":item
+								//"onselect":function(self){ self.select(item); }
+							}));
+						}
+					}
+					return r;
+				}
+			});
+			//alert(hsearch.item());
+
+		Parameters:
+
+			id:element (required)
+				Element or element identifier.
+
+			render:function(self, item) (required)
+				returns Rendered element or HTML string.
+
+			search:function(self, search) (required)
+				returns Rendered element or HTML string of options.
+
+			item:any (optional)
+				Sets initial item.
+
+		Methods:
+
+			.close()
+				Close search.
+
+			.open()
+				Open search.
+
+			.init()
+				Initialize (called at startup).
+	
+			.item(item):any
+				Get/Set current item.
+
+			.optionElement(options):element
+				Creates a clickable option element.
+
+				options:object (required)
+
+					Parameters:
+
+						class:string (optional)
+							CSS class/classes to apply.
+
+						item:any (optional, required if no onselect)
+							Item to be selected.
+
+						html:string (optional, required if no child)
+							HTML content.
+
+						child:array (optional, required if no html)
+							Array of child elements.
+
+					Events:
+
+						onselect(self, options) (optional, required if no item)
+							Fired on element click/selection.
+
+			.refresh()
+				Refresh item.
+
+			.search()
+				Invocate search.
+
+			.searchWords(text, search):boolean
+				Do a natural case insensitive word search in the specified text.
+
+			.select(item)
+				Sets item selection and close search (if opened).
+
+		Properties:
+
+			.opened:boolean (readonly)
+				Returns current dropdown state.
+
+		Events:
+
+			onchange(self, item)
+				Fires on item change.
+
+			onclose(self)
+				Fires on close search.
+
+			onopen(self)
+				Fires on open search.
+
+			onselect(self, item)
+				Fires on item selection.
+
+	*/
+	"hsearch":function(o) {
+		var self=this;
+		self.o=o;
+
+		self.select=function(item){
+			var item=(typeof(item) != "undefined"?item:null);
+			self.item(item);
+			if (self.o.onselect) self.o.onselect(self, item);
+			setTimeout(function(){
+				self.close();
+			},1);
+		};
+
+		self.open=function(){
+			self.opened=true;
+			classAdd(self.o.id, "hsearch_open");
+			gidfocus(self._search);
+			self.search();
+			if (self.o.onopen) self.o.onopen(self);
+		};
+
+		self.closeChecked=function(){
+			setTimeout(function(){
+				//alert(document.activeElement+"/"+gid(self.o.id).matches(':focus-within'));
+				if (!gid(self.o.id).matches(':focus-within')) self.close();
+			}, 1);
+		};
+
+		self.close=function(){
+			if (self.opened) {
+				self.opened=false;
+				classDel(self.o.id, "hsearch_open");
+				if (self.o.onclose) self.o.onclose(self);
+			}
+		};
+
+		self.search=function(){
+			var s=self.o.search(self, gid(self._search).value);
+			gidset(self._results, (s?(typeof s == "string"?s:""):(self.o.noresults?self.o.noresults:"<i>Sin resultados</i>")));
+			if (s instanceof Array) {
+				for (var i=0; i < s.length; i++) gid(self._results).appendChild(s[i]);
+			} else if (typeof s != "string") {
+				gid(self._results).appendChild(s);
+			}
+			classEnable(self._pop, "hsearch_empty", !s);
+		};
+
+		self.searchWords=function(text, search){
+			var w=search.toLowerCase().split(" ");
+			if (!w.length) return false;
+			for (var i in w)
+				if (text.toLowerCase().indexOf(w[i]) == -1)
+					return false;
+			return true;
+		};
+
+		self.item=function(item){
+			if (typeof(item) != "undefined") {
+				self.o.item=item;
+				self.refresh();
+				if (self.o.onchange) self.o.onchange(self, item);
+			}
+			return self.o.item;
+		};
+
+		self.refresh=function(){
+			var e=self.o.render(self, self.o.item);
+			gidset(self._item, (typeof e == "string"?e:""));
+			if (e && typeof e != "string") gid(self._item).appendChild(e);
+		};
+
+		self.optionElement=function(o){
+			function select() {
+				if (o.onselect) o.onselect(self, o);
+				if (o.item) self.select(o.item);
+			}
+			return newElement("div", {
+				"class":"cmb_item"+(o.class?" "+o.class:""),
+				"attributes":{
+					"tabindex":"0",
+				},
+				"properties":{
+					"onclick":function(){ select(); },
+					"onkeypress":function(){ if (event.keyCode == 13) select(); }
+				},
+				"html":(o.html?o.html:""),
+				"child":(o.child?o.child:"")
+			});
+		};
+
+		self.init=function(){
+
+			// ensure requisites
+			if (!self.o.render) return console.error("hsearch: render method required.");
+			if (!self.o.search) return console.error("hsearch: search method required.");
+
+			classAdd(self.o.id, "hsearch");
+
+			gid(self.o.id).onclick=function(){
+				if (!self.opened) self.open();
+			};
+
+			self._item=newElement("div", {
+				"class":"hsearch_item",
+				"attributes":{
+					"tabindex":"0",
+				},
+				"properties":{
+					"onclick":function(){
+						self.open();
+					},
+					"onkeypress":function(){
+						if ([13,32].includes(event.keyCode) && self.canopen) {
+							self.open();
+							event.preventDefault();
+						}
+					},
+					"onkeydown":function(){
+						if ([9,16,13].includes(event.keyCode)) return;
+						if (self.canopen) self.open();
+					},
+					"onfocus":function(){
+						self.canopen=true;
+					},
+					"onblur":function(){
+						//console.log("blur:"+this.contains(document.activeElement));
+						self.canopen=false;
+					}
+				}
+			});
+
+			self._pop=newElement("div", {
+				"class":"hsearch_pop",
+				"attributes":{
+					"tabindex":"0",
+				},
+				"properties":{
+					"onblur":function(){
+						self.closeChecked();
+						//console.log("blur:"+gid(self.o.id).matches(':focus-within'));
+					}
+				}
+			});
+
+			self._search=newElement("input", {
+				"class":"hsearch_input",
+				"attributes":{
+					"type":"text",
+					"value":""
+				},
+				"properties":{
+					"ondblclick":function(){
+						this.value="";
+						self.search();
+					},
+					"oninput":function(){
+						self.search();
+					},
+					"onkeyup":function(){
+						if (event.keyCode == 27 && self.opened) self.close();
+					},
+					"onblur":function(){
+						self.closeChecked();
+					}
+				}
+			});
+
+			self._search_container=newElement("div", {
+				"class":"hsearch_input_container",
+				"childs":[self._search]
+			});
+
+			self._results=newElement("div");
+
+			gidset(self.o.id, "");
+			self._pop.appendChild(self._results);
+			gid(self.o.id).appendChild(self._search_container);
+			gid(self.o.id).appendChild(self._item);
+			gid(self.o.id).appendChild(self._pop);
+
+			self.refresh();
+
+		};
+
+		self.init();
+
+	},
 
 	/*
 
