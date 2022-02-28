@@ -254,8 +254,8 @@ class dbMySQLi extends dbbase {
 	}
 
 	// return current date/time field
-	function now() {
-		return new dbrawvalue("NOW()");
+	function now($precission=null) {
+		return new dbrawvalue("NOW(".($precission?intval($precission):"").")");
 	}
 
 	// get date in ISO format
