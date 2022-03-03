@@ -706,8 +706,8 @@ class Kernel {
 		$proc=proc_open(
 			$cmd,
 			array(
-				0=>array("pipe", 'r'),
-				1=>array("pipe", 'w'),
+				0=>array('pipe', 'r'),
+				1=>array('pipe', 'w'),
 				2=>array('pipe', 'w'),
 			),
 			$pipes,
