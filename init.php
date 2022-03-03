@@ -228,7 +228,7 @@ class x {
 // dump error
 if (!function_exists("perror")) {
 	function perror($err="Unexpected error", $exit=1) {
-		if (class_exists("xError") && ($error=xError::default())) {
+		if (class_exists("xError") && ($error=xError::current())) {
 			$error->err($err, $exit);
 		} else {
 			$err=strip_tags($err);
