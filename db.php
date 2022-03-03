@@ -92,7 +92,7 @@ abstract class dbbase {
 	function __isset($n) { return isset($this->setup[$n]); }
 
 	// return database class by type
-	static function class($db_type) {
+	static function dbclass($db_type) {
 		return "db".$db_type;
 	}
 
@@ -111,7 +111,7 @@ abstract class dbbase {
 			]);
 		}
 		require_once($lib);
-		$dbc=self::class($db["type"]);
+		$dbc=self::dbclass($db["type"]);
 		if (!class_exists($dbc)) {
 			return new dbVoid([
 				"errnum"=>-2,
@@ -717,7 +717,7 @@ class dbVoid extends dbbase {
 
 // DEPRECATED: if db_setup defined, fill values
 if (@$db_setup) foreach ($db_setup as $db_name=>&$db_config) {
-	$db_config["class"]=dbbase::class($db_config["type"]);
+	$db_config["class"]=dbbase::dbclass($db_config["type"]);
 	$db_config["lib"]=dbbase::lib($db_config["type"]);
 } unset($db_config);
 
