@@ -32,7 +32,7 @@ class xError {
 	const ERR_APP=-1;
 	const ERR_DB =-2;
 
-	static protected $default=false;
+	static protected $current=false;
 	protected $setup=[];
 	protected $error=false;
 	protected $T=[
@@ -72,8 +72,8 @@ class xError {
 		foreach ($this->criticals as $c) $e&=~$c;
 		error_reporting($e);
 
-		// set default perror instance
-		if (!self::$default) self::$default=$this;
+		// set current perror instance
+		if (!self::$current) self::$current=$this;
 
 	}
 
@@ -83,10 +83,10 @@ class xError {
 	function __call($n, $a) { $f=$this->setup[$n]; if (is_callable($f)) call_user_func_array($f, $a); }
 	function __isset($n) { return isset($this->setup[$n]); }
 
-	// get/set default instance
-	static function default($default=null) {
-		if ($default !== null) self::$default=$default;
-		return self::$default;
+	// get/set current instance
+	static function current($current=null) {
+		if ($current !== null) self::$current=$current;
+		return self::$current;
 	}
 
 	// setup
