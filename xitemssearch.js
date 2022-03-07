@@ -664,17 +664,15 @@ function xItemsSearch(o) {
 			if (r.data.err) newerror(r.data.err);
 			if (r.data.ok) {
 				a.setVisible(r.data.visible);
-				if (p.onsearchok) p.onsearchok(a,r);
+				if (p.onsearchok) p.onsearchok(a, r);
 				if ((a.page*a.getVisible()) > r.data.max) {
 					a.page=parseInt((r.data.max-1)/a.getVisible()); if (a.page < 0) a.page=0;
 					a.search();
 				} else {
 					if (a.o.cookie) {
-						//if (!isset(a.o.finder) || a.o.finder) {
-							a.store("search",  a.getSearchValue());
-							a.store("page",    a.page);
-							a.store("visible", a.getVisible());
-						//}
+						a.store("search",  a.getSearchValue());
+						a.store("page",    a.page);
+						a.store("visible", a.getVisible());
 					}
 					a.data=r.data;
 					if (a.selected && a.data.data)

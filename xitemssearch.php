@@ -112,7 +112,7 @@ class xItemsSearch {
 		if ($o["filter"]) $o["filter"]($datos);
 
 		// devolver datos
-		return array(
+		return array_merge(($o["data"]?$o["data"]:array()), array(
 			"timeout"=>$o["timeout"],
 			"timedout"=>$timedout,
 			"page"=>$page,
@@ -120,7 +120,7 @@ class xItemsSearch {
 			"visible"=>$visible,
 			"data"=>$datos,
 			"extra"=>$extra,
-		);
+		));
 
 	}
 
