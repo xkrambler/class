@@ -79,7 +79,7 @@ function ws($url, $fields=null, $options=[]) {
 // convert ajax data from JSON
 function aget($data=null) {
 	if ($data === "") return "";
-	return json_decode((get_magic_quotes_gpc()?stripslashes($data):$data), true); // siempre es UTF-8
+	return json_decode((doubleval(phpversion()) < 5.4 && get_magic_quotes_gpc()?stripslashes($data):$data), true); // siempre es UTF-8
 }
 
 // output AJAX data as JSON
