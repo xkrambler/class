@@ -271,6 +271,7 @@ class xForm3 {
 
 	// store/delete file from field
 	function fileUpdate($field, $filename) {
+		if (!strlen($filename)) return null;
 		if ($file=$this->file($field)) {
 			$p=dirname($filename);
 			if (!is_dir($p)) mkdir($p, 0775, true);
