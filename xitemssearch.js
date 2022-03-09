@@ -50,12 +50,12 @@ function xItemsSearch(o) {
 
 	// establecer/devolver/borrar filtro
 	a.filter=function(f,v){
-		if (typeof(f)=="object") {
+		if (typeof(f) == "object") {
 			for (var i in f)
-				a.filter(i,f[i]);
+				a.filter(i, f[i]);
 		} else {
-			if (typeof(v)=="undefined") return a.filters[f];
-			if (v===null) delete a.filters[f];
+			if (typeof(v) == "undefined") return a.filters[f];
+			if (v === null) delete a.filters[f];
 			else a.filters[f]=v;
 			a.timedSearch(1);
 		}
@@ -80,7 +80,7 @@ function xItemsSearch(o) {
 
 	// establecer parámetros extra
 	a.extra=function(v){
-		if (typeof(v)=="undefined") return a.o.extra;
+		if (typeof(v) == "undefined") return a.o.extra;
 		a.o.extra=v;
 	};
 
@@ -108,27 +108,24 @@ function xItemsSearch(o) {
 	// seleccionar una fila
 	a.select=function(i){
 		if (!a.o.multiselect) {
-			if (isset(a.select_last))
-				classDel(a.o.id+"_tr_"+a.select_last, "xitemssearch_tr_item_active");
-			a.select_last=i;
-			classAdd(a.o.id+"_tr_"+i, "xitemssearch_tr_item_active");
 			a.selected={};
-			a.selected[a.data.data[i][a.key]]=a.data.data[i];
+			if (isset(a.select_last)) a.trRefresh(a.select_last);
 		}
-		if (a.o.select)
-			a.o.select(a.data.data[i]);
+		a.select_last=i;
+		a.selected[a.data.data[i][a.key]]=a.data.data[i];
+		a.trRefresh(i);
+		if (a.o.select) a.o.select(a.data.data[i]);
 	};
 
 	// seleccionar una fila con doble click
 	a.dblclick=function(i){
-		if (a.o.dblclick)
-			a.o.dblclick(a.data.data[i]);
+		if (a.o.dblclick) a.o.dblclick(a.data.data[i]);
 	};
 
 	// seleccionar por valor de un campo
-	a.selectByField=function(field,value){
+	a.selectByField=function(field, value){
 		for (var i in a.data.data) {
-			if (a.data.data[i][field]==value) {
+			if (a.data.data[i][field] == value) {
 				a.select(i);
 				return true;
 			}
@@ -165,7 +162,7 @@ function xItemsSearch(o) {
 	};
 
 	// obtener items recibidos
-	a.getItems=function(index){
+	a.getItems=function(){
 		return a.data.data;
 	};
 
@@ -174,7 +171,7 @@ function xItemsSearch(o) {
 		if (a.o.multiselect) {
 			var n=a.selectCount();
 			if (!n) return false;
-			if (n==1) {
+			if (n == 1) {
 				for (var id in a.selected)
 					return id;
 			} else {
@@ -195,7 +192,7 @@ function xItemsSearch(o) {
 		var n=a.selectCount();
 		var elements=[];
 		if (n) {
-			if (n==1) {
+			if (n == 1) {
 				elements.push(selected);
 			} else {
 				for (var i in selected)
@@ -211,16 +208,14 @@ function xItemsSearch(o) {
 		var elements=[];
 		for (var i in a.data.data) {
 			var id=a.data.data[i][a.key];
-			if (selected.indexOf(id)!=-1)
-				elements.push(id);
+			if (selected.indexOf(id) != -1) elements.push(id);
 		}
 		return elements;
 	};
 
 	// obtener items de selección
 	a.getSelectedItems=function(){
-		var selected=a.getSelected();
-		var n=a.selectCount();
+		a.getSelected();
 		return a.selected;
 	};
 
@@ -230,8 +225,8 @@ function xItemsSearch(o) {
 		if (e.shiftKey) {
 			if (isset(a.select_last)) {
 				var js=a.select_last,je=i,jaux;
-				if (js>je) { jaux=js; js=je; je=jaux; } else { js++; je++; }
-				for (var j=js;j<je;j++) {
+				if (js > je) { jaux=js; js=je; je=jaux; } else { js++; je++; }
+				for (var j=js; j < je; j++) {
 					if (a.selected[a.data.data[j][a.key]]) delete a.selected[a.data.data[j][a.key]];
 					else a.selected[a.data.data[j][a.key]]=a.data.data[j];
 					a.trRefresh(j);
@@ -280,8 +275,7 @@ function xItemsSearch(o) {
 	a.selectCount=function(){
 		if (a.o.multiselect) {
 			var n=0;
-			for (var i in a.selected)
-				n++;
+			for (var i in a.selected) n++;
 			return n;
 		} else {
 			return (isset(a.select_last)?1:0);
@@ -345,8 +339,8 @@ function xItemsSearch(o) {
 		var mostrar=a.pagerNum;
 		var pages=parseInt(a.data.max / a.data.visible);
 		if ((a.data.max / a.data.visible) != parseInt(a.data.max / a.data.visible)) pages++;
-		var start=(a.page - parseInt(a.pagerNum/2)); if (start<0) start=0;
-		if (pages>a.pagerNum && start+a.pagerNum>pages) start=pages - a.pagerNum;
+		var start=(a.page - parseInt(a.pagerNum/2)); if (start < 0) start=0;
+		if (pages > a.pagerNum && start+a.pagerNum > pages) start=pages - a.pagerNum;
 		return {
 			"href":"window.xItemsSearchs[\""+a.o.id+"\"]",
 			"max":a.data.max,
@@ -363,9 +357,9 @@ function xItemsSearch(o) {
 		var o=o||{};
 		var page=parseInt(i)+1;
 		if (!page) return "";
-		if (i==a.page) {
+		if (i == a.page) {
 			return "<input class='txt xitemsearch_page_input xitemsearch_page_input_length_"+(""+page).length+(o.input_alone?" xitemsearch_page_input_alone":"")+"' type='text' value='"+page+"' onFocus='this.select();'"
-				+" onKeyPress='javascript:if(event.keyCode==13){ window.xItemsSearchs[\""+a.o.id+"\"].go(parseInt(this.value)-1, {\"down\":"+(o.down?"true":"false")+"}); }' />"
+				+" onKeyPress='javascript:if(event.keyCode == 13){ window.xItemsSearchs[\""+a.o.id+"\"].go(parseInt(this.value)-1, {\"down\":"+(o.down?"true":"false")+"}); }' />"
 		}
 		return ""
 			+"<span class='noselect xitemsearch_page xitemsearch_page_enabled'"
@@ -381,10 +375,10 @@ function xItemsSearch(o) {
 		var o=o||{};
 		var page=parseInt(i)+1;
 		if (!page) return "";
-		var enabled=(page>1);
+		var enabled=(page > 1);
 		return ""
 			+"<span class='noselect xitemsearch_page "+(enabled?"xitemsearch_page_enabled":"xitemsearch_page_disabled")+"'"
-				+(page>1?" onClick='javascript:void(window.xItemsSearchs[\""+a.o.id+"\"].go("+(page-2)+",{\"down\":"+(o.down?"true":"false")+"}))'":"")
+				+(page > 1?" onClick='javascript:void(window.xItemsSearchs[\""+a.o.id+"\"].go("+(page-2)+", {\"down\":"+(o.down?"true":"false")+"}))'":"")
 			+">&lt;<span class='nomobile'> Anterior</span></span>"
 		;
 	};
@@ -394,10 +388,10 @@ function xItemsSearch(o) {
 		var o=o||{};
 		var page=parseInt(i)+1;
 		if (!page) return "";
-		var enabled=(page<o.pages);
+		var enabled=(page < o.pages);
 		return ""
 			+"<span class='noselect xitemsearch_page "+(enabled?"xitemsearch_page_enabled":"xitemsearch_page_disabled")+"'"
-				+(page<o.pages?" onClick='javascript:void(window.xItemsSearchs[\""+a.o.id+"\"].go("+page+",{\"down\":"+(o.down?"true":"false")+"}))'":"")
+				+(page < o.pages?" onClick='javascript:void(window.xItemsSearchs[\""+a.o.id+"\"].go("+page+", {\"down\":"+(o.down?"true":"false")+"}))'":"")
 			+"><span class='nomobile'>Siguiente </span>&gt;</span>"
 		;
 	};
@@ -413,8 +407,8 @@ function xItemsSearch(o) {
 			h+=a.pagerLinkHTML(0, o);
 			if (info.start > 1) h+="<span class='xitemsearch_page noselect'>...</span>";
 		}
-		for (i=info.start;i<info.start+mostrar;i++) {
-			if (i==info.pages) break;
+		for (i=info.start; i < info.start+mostrar; i++) {
+			if (i == info.pages) break;
 			h+=a.pagerLinkHTML(i, o);
 		}
 		if (i < info.pages) {
@@ -428,7 +422,7 @@ function xItemsSearch(o) {
 	a.pagerCountHTML=function(o){
 		return (a.o.count?a.o.count(o):""
 			+"<span class='nowrap'>"
-				+"<b>"+spd(a.data.max)+"</b> "+(a.data.max!=1?"items":"item")
+				+"<b>"+spd(a.data.max)+"</b> "+(a.data.max != 1?"items":"item")
 				+(a.data.timedout?" <b>(alcanzado límite de tiempo)</b>":"")
 			+"</span>"
 		);
@@ -457,16 +451,16 @@ function xItemsSearch(o) {
 
 		// empezar desde la página actual a renderizar páginas hacia fuera
 		var w=pager_pages.offsetWidth, h="", lh="";
-		h+=(o.page!=0 && o.page!=o.pages-1?a.pagerLinkHTML(o.page, o):""); // página actual
-		if (o.pages>1) {
-			for (var i=1; i<o.pages; i++) {
+		h+=(o.page != 0 && o.page != o.pages-1?a.pagerLinkHTML(o.page, o):""); // página actual
+		if (o.pages > 1) {
+			for (var i=1; i < o.pages; i++) {
 				var pp=o.page-i, np=o.page+i;
 				h=(pp > 0?a.pagerLinkHTML(o.page-i, o):"") // anterior
 					+h // anteriores
 					+(np < o.pages-1?a.pagerLinkHTML(o.page+i, o):"") // siguiente
 				;
 				var hfiller="<span class='xitemsearch_page xitemsearch_page_filler noselect'>...</span>";
-				var hpp=(pp>1?hfiller:""), npp=(np<o.pages-2?hfiller:"");
+				var hpp=(pp > 1?hfiller:""), npp=(np < o.pages-2?hfiller:"");
 				var hstart="<div class='xitemsearch_pager_pages_divisor'>"
 					+a.pagerLinkPrevHTML(o.page, o)
 					+a.pagerLinkNextHTML(o.page, o)
@@ -512,7 +506,7 @@ function xItemsSearch(o) {
 		if (a.o.pager) a.o.pager(a, a.pagerInfo());
 		else {
 			if (a.o.paged) {
-				for (var pager=0; pager<2; pager++)
+				for (var pager=0; pager < 2; pager++)
 					a.renderPager(array_merge(pi, {"id":a.o.id+"_pager"+(pager+1), "down":(pager?true:false)}));
 			} else {
 				hide(a.o.id+"_pager1");
@@ -555,13 +549,13 @@ function xItemsSearch(o) {
 			for (var i in a.fields) {
 				var n=a.fields[i];
 				if (!n.disabled) {
-					var v=(e[i]===null?"":e[i]);
-					if (n.filter && typeof(n.filter)=="string") n.filter=eval(n.filter);
-					else if (v && n.limit) v=(v.length>=n.limit?v.substring(0,n.limit-1)+"…":v);
+					var v=(e[i] === null?"":e[i]);
+					if (n.filter && typeof(n.filter) == "string") n.filter=eval(n.filter);
+					else if (v && n.limit) v=(v.length >= n.limit?v.substring(0, n.limit-1)+"…":v);
 					var caption=(n.filter?n.filter(e[i],i,e,c-1,n):v);
 					var tdextra=(n.tdextra?n.tdextra(e[i],i,e,c-1,n):"");
 					var tdstyle=(n.tdstyle?n.tdstyle(e[i],i,e,c-1,n):"");
-					var tdtitle=(n.tdtitle?(typeof(n.tdtitle)=="function"?n.tdtitle(e[i],i,e,c-1,n):n.tdtitle):htmlentities(v));
+					var tdtitle=(n.tdtitle?(typeof(n.tdtitle) == "function"?n.tdtitle(e[i],i,e,c-1,n):n.tdtitle):htmlentities(v));
 					h+="<td"
 							+(n.width?" width='"+n.width+"'":"")
 							+(n.align?" align='"+n.align+"'":"")
@@ -569,9 +563,9 @@ function xItemsSearch(o) {
 							+" style='"+(n.minwidth?"min-width:"+n.minwidth+";":"")+(n.maxwidth?"max-width:"+n.maxwidth+";":"")+(n.style?n.style+";":"")+(n.color?"color:"+n.color+";":"")+(n.nowrap?"white-space:nowrap;":"")+tdstyle+"'"
 						+" title='"+tdtitle+"'"
 						+tdextra+">"
-						+(n.cut?"<div style='position:relative;"+(n.width && n.width.indexOf && n.width.indexOf("px")!=-1?"width:"+n.width+";":"")+"overflow:hidden;'><div style='position:absolute;white-space:nowrap;'>":"")
+						+(n.cut?"<div style='position:relative;"+(n.width && n.width.indexOf && n.width.indexOf("px") != -1?"width:"+n.width+";":"")+"overflow:hidden;'><div style='position:absolute;white-space:nowrap;'>":"")
 						+(n.link
-							?"<a href=\""+n.link(e[i],i,e,c-1,n)+"\""+(n.ico?" class='icon' style='background-image:url("+n.ico+")'":"")+">"
+							?"<a href=\""+n.link(e[i], i, e, c-1, n)+"\""+(n.ico?" class='icon' style='background-image:url("+n.ico+")'":"")+">"
 							:"<span"+(n.ico && caption?" class='icon' ":"")+" style='"+(n.nowrap?"white-space:nowrap;":"")+(n.ico?"background-image:url("+n.ico+");":"")+"'>"
 						)
 							+caption
@@ -583,11 +577,11 @@ function xItemsSearch(o) {
 			}
 			h+="</tr>";
 		}
-		if (!a.o.noempty) for (j=0;j<(a.data.visible-c);j++) {
+		if (!a.o.noempty) for (j=0; j < (a.data.visible-c); j++) {
 			h+="<tr class='xitemssearch_tr_none' onMouseDown='javascript:window.xItemsSearchs[\""+a.o.id+"\"].clearSelection();return false;'>";
 			for (var i in a.fields)
-					if (!a.fields[i].disabled) 
-						h+="<td><div style='visibility:hidden;'>&nbsp;</div></td>"
+				if (!a.fields[i].disabled) 
+					h+="<td><div style='visibility:hidden;'>&nbsp;</div></td>"
 			h+="</tr>";
 		}
 		h+="</tbody></table>";
@@ -776,8 +770,8 @@ function xItemsSearch(o) {
 			if (search_txt) {
 				search_txt.onkeypress=function(e){
 					if (!e) var e=window.event;
-					if (e.keyCode==9) return;
-					if (e.keyCode==13) {
+					if (e.keyCode == 9) return;
+					if (e.keyCode == 13) {
 						a.page=0;
 						a.timedSearch(1);
 					}

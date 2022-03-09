@@ -646,7 +646,7 @@ function xForm3(o) {
 			// generar el listado de ficheros
 			for (var index in a.data[field].files) {
 				var item=a.data[field].files[index];
-				if (item._deleted) continue;
+				if (item.deleted) continue;
 				a.files.add({
 					"index":index,
 					"item":item,
@@ -736,7 +736,7 @@ function xForm3(o) {
 				var count=0;
 				for (var i in sortedIDs) {
 					var index=parseInt(gid(sortedIDs[i]).getAttribute("data-index"));
-					if (!a.data[field].files[index]._deleted) gidset(a.id(field)+"_number_"+index, ++count);
+					if (!a.data[field].files[index].deleted) gidset(a.id(field)+"_number_"+index, ++count);
 				}
 			}
 
@@ -781,7 +781,7 @@ function xForm3(o) {
 			},function(r){
 				if (r.data.err) newerror(r.data.err);
 				if (r.data.ok) {
-					a.data[field].files[index]._deleted=true;
+					a.data[field].files[index].deleted=true;
 					if (gid(item_id)) {
 						if (supportsTransitions) {
 							gid(item_id).addEventListener("transitionend",function(){
@@ -808,7 +808,7 @@ function xForm3(o) {
 				var count=0;
 				var list=[];
 				for (var i in a.data[field].files)
-					if (!a.data[field].files[i]._deleted) {
+					if (!a.data[field].files[i].deleted) {
 						if (index == i) actual=list.length;
 						list.push({"img":a.files.fileURL(field, i)}); // "caption":(a.data[field].files[i].name?a.data[field].files[i].name:false),
 					}
@@ -884,7 +884,7 @@ function xForm3(o) {
 		"count":function(field){
 			var count=0;
 			for (var i in a.data[field].files)
-				if (!a.data[field].files[i]._deleted)
+				if (!a.data[field].files[i].deleted)
 					count++;
 			return count;
 		},
