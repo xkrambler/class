@@ -276,7 +276,6 @@ function xajax(o){
 				// separate Files/Blobs to FormData
 				for (var k in o.data) if (o.data[k] instanceof Blob || o.data[k] instanceof File) {
 					fd.append(k, o.data[k]);
-					delete o.data[k];
 				}
 				// data as JSON
 				fd.append("data", self.json(o.data));
@@ -286,13 +285,13 @@ function xajax(o){
 
 		// prepare final parameters
 		var async=(o.sync?false:true);
-		o.method=(o.method?o.method:(post || fd?"POST":"GET"));
-		o.url=self.alink(get, (o.url?o.url:location.href));
+		var method=(o.method?o.method:(post || fd?"POST":"GET"));
+		var url=self.alink(get, (o.url?o.url:location.href));
 
 		// do AJAX request
 		var r=false;
 		try {
-			http.open(o.method, o.url, async, (self.isset(o.user)?o.user:null), (self.isset(o.pass)?o.pass:null));
+			http.open(method, url, async, (self.isset(o.user)?o.user:null), (self.isset(o.pass)?o.pass:null));
 			if (mime) http.setRequestHeader('Content-Type', mime);
 			if (async) http.onreadystatechange=function(){ self.onreadystatechange(http, o); };
 			if (o.progress) http.onprogress=o.progress;
