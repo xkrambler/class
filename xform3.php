@@ -16,6 +16,7 @@
 			"images" =>["caption"=>"Images","type"=>"images"],
 			"file" =>["caption"=>"One File","type"=>"file"],
 			"files" =>["caption"=>"Files","type"=>"files"],
+			//"file" =>["caption"=>"One File","type"=>"file","file"=>"data/file.txt"], // load file
 			//"file" =>["caption"=>"One File","type"=>"file","file"=>["file"=>"data/file.txt"]], // load file
 			//"files" =>["caption"=>"Files","type"=>"files","files"=>[["file"=>"data/file.txt"]]], // load files
 		],
@@ -295,8 +296,9 @@ class xForm3 {
 	function files($field=null, $files=null) {
 		if ($field === null) {
 			$a=array();
-			if ($this->fields) foreach ($this->fields as $f=>$v)
-				$a[$f]=$this->files($f);
+			if ($this->fields)
+				foreach ($this->fields as $f=>$v)
+					$a[$f]=$this->files($f);
 			return $a;
 		}
 		if ($f=$this->fields[$field]) {
@@ -316,12 +318,9 @@ class xForm3 {
 								if (!$f["name"]) $f["name"]=basename($f["file"]);
 								if (!$f["ext"] && (($j=strrpos($f["name"], ".")) !== false)) $f["ext"]=substr($f["name"], $j+1);
 								if (!$f["type"]) $f["type"]=""; // asegurarse que el campo está creado
-								if (file_exists($f["file"])) {
-									$f["size"]=filesize($f["file"]);
-									$f["data"]=file_get_contents($f["file"]);
-								}
+								if (file_exists($f["file"])) $f["size"]=filesize($f["file"]);
 							}
-							if (isset($f["data"])) $f["size"]=strlen($f["data"]);
+							if (!isset($f["size"]) && isset($f["data"])) $f["size"]=strlen($f["data"]);
 							require_once(__DIR__."/mimetypes.php");
 							if (!$f["type"]) $f["type"]=($f["data"]?$this->mimeByMagic(substr($f["data"], 0, 16)):Mimetypes::file($f["name"]));
 							$this->fields[$field]["files"][$index]=$f;
@@ -343,10 +342,18 @@ class xForm3 {
 					$f=$this->fields[$field];
 					if ($f["sortable"]) usort($svalue["files"], array($this, "fileSort"));
 					// return sessioned and sorted files
-					return $svalue["files"];
+					$files=$svalue["files"];
+				} else {
+					// files from field
+					$files=$this->fields[$field]["files"];
 				}
+				// fill always with data
+				foreach ($files as $i=>&$f) {
+					if (is_array($f) && file_exists($f["file"]) && !isset($f["data"]))
+						$f["data"]=file_get_contents($f["file"]);
+				} unset($f);
 				// otherwise, return field files
-				return $this->fields[$field]["files"];
+				return $files;
 			}
 		}
 		// field does not support files
@@ -410,6 +417,8 @@ class xForm3 {
 			$value !== null
 			&& !$field["nopurge"]
 			&& $field["type"] != "html"
+			&& $field["type"] != "file"
+			&& $field["type"] != "image"
 			&& $field["type"] != "files"
 			&& $field["type"] != "images"
 		);
@@ -550,6 +559,7 @@ class xForm3 {
 			"class"=>$this->o["class"],
 			"fields"=>array(),
 		);
+		if (isset($this->o["chunksize"])) $info["chunksize"]=$this->o["chunksize"];
 		foreach ($this->fields as $field=>&$f)
 			$info["fields"][$field]=$this->jsfield($field);
 		unset($f);
@@ -1002,8 +1012,14 @@ class xForm3 {
 					// try to get mimetype
 					if (!$file["type"]) $file["type"]=$this->mimeByMagic(substr($file["data"], 0, 16));
 					// scale, if requested
-					if (($w=intval($_REQUEST["w"])) && ($h=intval($_REQUEST["h"])) && $file["type"])
-						$file["data"]=$this->imageScale(array("data"=>$file["data"], "w"=>$w, "h"=>$h)+($f["scale"]?$f["scale"]:array()));
+					if (($w=intval($_REQUEST["w"])) && ($h=intval($_REQUEST["h"])) && $file["type"]) {
+						$file["data"]=$this->imageScale(array_merge(($f["scale"]?$f["scale"]:array()), array(
+							"file"=>$file["file"],
+							"data"=>$file["data"],
+							"w"=>$w,
+							"h"=>$h
+						)));
+					}
 					// dump file to HTTP (required: kernel)
 					require_once(__DIR__."/kernel.php");
 					Kernel::httpOutput(array(
@@ -1038,6 +1054,7 @@ class xForm3 {
 						"_xf"=>$this,
 						"_limit"=>$limit,
 						"oncomplete"=>function($uploader, $upload, $o){ // at the end of a completed upload
+							//$field=$o["_field"];
 							$f=$o["_f"];
 							$limit=$o["_limit"];
 							// session value for field
@@ -1057,6 +1074,17 @@ class xForm3 {
 								"sizeo"=>$upload["size"],
 								"type"=>$upload["type"],
 							);
+							// check file, if check callback
+							if (($check=$f["check"]) && is_callable($check) && !$check($f, $file)) ajax(["err"=>"No se permite subir el fichero especificado."]);
+							// check if extensions is in allowed list
+							if ($exts=$f["allowedext"]) {
+								$ext=strtolower($file["ext"]);
+								foreach ($exts as $e) if ($ext == strtolower($e)) {
+									$ext=false;
+									break;
+								}
+								if ($ext) ajax(array("err"=>"La extensión .".$file["ext"]." no está permitida, sólo se permite".(count($exts) == 1?"":"s")." <b>".implode(", ", $exts)."</b>."));
+							}
 							// automatic name assignment based on filename
 							if ($f["filecaption"]) $file["caption"]=$upload["name"];
 							// prepare content data, scale if required

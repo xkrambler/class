@@ -31,7 +31,7 @@ function xForm3(o) {
 	// obtiene el campo por su identificador
 	a.fieldById=function(id){
 		for (var field in a.o.fields)
-			if (a.id(field)==id)
+			if (a.id(field) == id)
 				return field;
 		return false;
 	};
@@ -80,28 +80,42 @@ function xForm3(o) {
 		else e.setAttribute("disabled", "");
 	};
 
-	// devuelve un valor de un campo
-	a.formValue=function(id){
-		var object=gid(id);
-		if (!object) return null;
-		switch (object.type) {
-		case "checkbox": return a.value(id);
-		case "select-multiple": var d=[]; for (var i=0; i<object.length; i++) if (object.options[i].selected) d.push(object.options[i].value); return d;
-		case "date": return (object.value?object.value:null);
-		case "radio": case "button": case "select-one": case "text": case "number": case "textarea": default: return object.value;
+	// devuelve todos los campos y datos de un formulario en formato JSON
+	a.form=function(form){
+		var form=gid(form);
+		var values={};
+		for (i=0; i < form.length; i++) {
+			if (!form[i].name) continue;
+			if (form[i].type == "radio" && !form[i].checked) continue;
+			values[form[i].name]=a.formValue(form[i]);
 		}
+		return values;
 	};
 
-	// devuelve todos los campos y datos de un formulario en formato JSON
-	a.form=function(formObject){
-		var formObject=gid(formObject);
-		var fields={};
-		for (i=0;i<formObject.length;i++) {
-			if (!formObject[i].name) continue;
-			if (formObject[i].type=="radio" && !formObject[i].checked) continue;
-			fields[formObject[i].name]=a.formValue(formObject[i]);
+	// devuelve un valor de un campo
+	a.formValue=function(id){
+		var e=gid(id);
+		if (!e) return null;
+		switch (e.type) {
+		case "checkbox":
+			return a.value(id);
+		case "select-multiple":
+			var d=[];
+			for (var i=0; i < e.length; i++)
+				if (e.options[i].selected)
+					d.push(e.options[i].value);
+			return d;
+		case "date":
+			return (e.value?e.value:null);
+		case "radio":
+		case "button":
+		case "select-one":
+		case "text":
+		case "number":
+		case "textarea":
+		default:
+			return e.value;
 		}
-		return fields;
 	};
 
 	// establecer opciones de un campo
@@ -222,9 +236,8 @@ function xForm3(o) {
 		var f=a.o.fields[field];
 		if (!f) return null;
 		var id=a.id(field);
-		alert(adump(f));
-		if (!gid(id)) alert("xform3: id "+a.id(field)+" not found!");
-		gid(id).setAttribute("placeholder", placeholder);
+		if (gid(id)) gid(id).setAttribute("placeholder", placeholder);
+		else console.warn("xform3: id "+a.id(field)+" not found!");
 		return null;
 	};
 
@@ -302,12 +315,11 @@ function xForm3(o) {
 	};
 
 	// subir fichero
-	a.fileUpload=function(options, onok){
+	a.fileUpload=function(o, onok){
 		if (typeof(xUploader) == "undefined") {
-			alert("xUploader no activo, subida cancelada.");
+			console.warn("xUploader no activo, subida cancelada.");
 			return false;
 		}
-		//var f=a.o.fields[field];
 		a.files.xuploader=new xUploader(array_merge({
 			"name":"xform3_upload",
 			"chunked":(isset(a.o.chunksize)?a.o.chunksize:false), // default not chunked
@@ -358,7 +370,7 @@ function xForm3(o) {
 				//alert(adump(r));
 			},
 			"browse":true
-		}, options));
+		}, o));
 	};
 
 	// borrar fichero
@@ -668,11 +680,12 @@ function xForm3(o) {
 			if (!isset(f.upload)) {
 				switch (f.type) {
 				case "image":
+					limit=1;
 				case "images":
 					var limit=a.files.getLimit(field);
 					div.className="xform3_files_item"
 						+" xform3_files_upload"
-						+(f.type=="images"?" xform3_files_upload_images":" xform3_files_upload_files")
+						+(f.type == "images"?" xform3_files_upload_images":" xform3_files_upload_files")
 					;
 					div.onclick=action_upload;
 					div.title=(limit == 1?"Subir imágen":"Subir imágenes");
@@ -680,6 +693,8 @@ function xForm3(o) {
 					gid(a.id(field)).appendChild(div);
 					break;
 
+				case "file":
+					limit=1;
 				case "files":
 				default:
 					div.className="xform3_files_file xform3_files_file_upload";
@@ -687,7 +702,7 @@ function xForm3(o) {
 					span.className="a xform3_files_file_upload_caption";
 					span.setAttribute("data-id", a.id(field));
 					span.onclick=action_upload;
-					span.title="Subir archivos";
+					span.title=(limit == 1?"Subir archivo":"Subir archivos");
 					span.innerHTML="<span class='xform3_files_file_icon xform3_files_file_icon_upload'></span>"+span.title;
 					div.appendChild(span);
 					gid(a.id(field)).appendChild(div);
@@ -851,7 +866,7 @@ function xForm3(o) {
 					"field":field,
 					"nocache":a.nocache()
 				}),
-				"multiple":true
+				"multiple":(a.files.getLimit(field) == 1?false:true)
 			}, function(uploader, r){
 				var files=uploader.files();
 				for (var i in files) {
