@@ -105,7 +105,7 @@ class xStripe {
 		]);
 		$this->response=curl_exec($ch);
 		$this->info=curl_getinfo($ch);
-		file_put_contents("data/curldebug.txt", "\n[REQUEST]\n".json_encode($this->info, JSON_PRETTY_PRINT)."\n[POST]\n".$post."\n[RESPONSE]\n".$this->response."\n\n", FILE_APPEND);
+		//file_put_contents("data/curldebug.txt", "\n[REQUEST]\n".json_encode($this->info, JSON_PRETTY_PRINT)."\n[POST]\n".$post."\n[RESPONSE]\n".$this->response."\n\n", FILE_APPEND);
 
 		// separate headers
 		/*if ($i=strpos($r, "\r\n\r\n")) {
