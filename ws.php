@@ -42,6 +42,7 @@ class WS {
 		case "ping":
 			$this->out(["pong"=>substr($this->data["ping"], 0, 256)]);
 		case "status":
+			$key=$this->key();
 			if (isset($this->key)) $iskeyok=($key == $this->key);
 			else if (is_array($this->keys)) $iskeyok=$this->keys[$key];
 			$actions=($iskeyok && $this->keys[$key]?$this->keys[$key]:($iskeyok?["*"]:[]));
@@ -78,8 +79,8 @@ class WS {
 		}
 	}
 
-	// ensure authentication beyond this point
-	function auth() {
+	// get current key
+	function key() {
 
 		// get key from data
 		$key=$this->data["key"];
@@ -91,6 +92,17 @@ class WS {
 				if (isset($headers[$k]))
 					$key=$headers[$k];
 		}
+
+		// return key
+		return $key;
+
+	}
+
+	// ensure authentication beyond this point
+	function auth() {
+
+		// get current key
+		$key=$this->key();
 
 		// ask for key
 		if (!is_string($key) && isset($_REQUEST["askkey"])) {
@@ -183,7 +195,7 @@ class WS {
 			case "csv":
 				header("Content-type: text/plain");
 				foreach ($d as $r) break;
-				if (!is_array($r)) $d=array($d);
+				if (!is_array($r)) $d=[$d];
 				$head=true;
 				foreach ($d as $r) {
 					if ($head) {
