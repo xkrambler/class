@@ -568,7 +568,8 @@ class xForm3 {
 
 	// get field identifier
 	function id($field) {
-		return $this->o["name"]."_".$field;
+		$f=$this->fields[$field];
+		return (isset($f["id"])?$f["id"]:$this->o["name"]."_".$field);
 	}
 
 	// get all field identifiers
