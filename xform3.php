@@ -348,7 +348,7 @@ class xForm3 {
 					$files=$this->fields[$field]["files"];
 				}
 				// fill always with data
-				foreach ($files as $i=>&$f) {
+				if (is_array($files)) foreach ($files as $i=>&$f) {
 					if (is_array($f) && file_exists($f["file"]) && !isset($f["data"]))
 						$f["data"]=file_get_contents($f["file"]);
 				} unset($f);
