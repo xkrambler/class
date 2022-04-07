@@ -164,14 +164,24 @@ function xInput(o){
 		a.selectOption(null);
 	};
 
+	// lanzar evento sin posibilidad de invocar recursión
+	a.triggerEvent=function(event, p1, p2, p3, p4, p5, p6){
+		if (a.triggerRunning) return;
+		a.triggerRunning=true;
+		var r=event(a, p1, p2, p3, p4, p5, p6);
+		a.triggerRunning=false;
+		return r;
+	};
+
 	// devolver/establecer item actual
 	a.item=function(item, index){
 		if (isset(item)) {
 			a.o.item=item;
 			a.refreshItem();
 			a.actual({"item":a.o.item, "ajax":false, "index":index});
-			if (a.o.onchange) a.o.onchange(a, null); // FIXME: only fire when item/value changes
-			if (a.o.onselect) return a.o.onselect(a, a.actual());
+			a.trigger_onselect=true;
+			if (a.o.onchange) return a.triggerEvent(a.o.onchange, null); // FIXME: only fire when item/value changes
+			if (a.o.onselect) return a.triggerEvent(a.o.onselect, a.actual());
 		}
 		return a.o.item;
 	};
@@ -310,12 +320,11 @@ function xInput(o){
 
 	// seleccionar opción
 	a.selectOption=function(index, ajax){
-		if (index===null) a.o.item=null;
-		else a.o.item=(ajax?a.o.data[index]:a.o.options[index]);
+		a.o.item=(index === null?null:(ajax?a.o.data[index]:a.o.options[index]));
 		a.actual({"item":(isset(a.o.item)?a.o.item:null), "ajax":ajax, "index":index});
 		a.refreshItem();
-		if (a.o.onchange) a.o.onchange(a, null); // FIXME: only fire when item/value changes
-		if (a.o.onselect) return a.o.onselect(a, a.actual());
+		if (a.o.onchange) return a.triggerEvent(a.o.onchange, null); // FIXME: only fire when item/value changes
+		if (a.o.onselect) return a.triggerEvent(a.o.onselect, a.actual());
 	};
 
 	// buscar (temporizado si no es primera petición)
@@ -619,7 +628,7 @@ function xInput(o){
 				}
 				if (e.keyCode==13)
 					if (a.o.onenter)
-						a.o.onenter();
+						a.triggerEvent(a.o.onenter);
 			}
 		};
 
@@ -638,11 +647,11 @@ function xInput(o){
 						"value":(a.o.item?a.o.item:""),
 						"onchange":function(e){
 							if (!e) var e=window.event;
-							if (a.o.onchange) a.o.onchange(a, e);
+							if (a.o.onchange) a.triggerEvent(a.o.onchange, e);
 						},
 						"oninput":function(e){
 							if (!e) var e=window.event;
-							if (a.o.oninput) a.o.oninput(a, e);
+							if (a.o.oninput) a.triggerEvent(a.o.oninput, e);
 							if (a.o.search) a.search(this.value);
 						}
 					}, input_events)
