@@ -43,9 +43,11 @@ class WS {
 			$this->out(["pong"=>substr($this->data["ping"], 0, 256)]);
 		case "status":
 			$key=$this->key();
-			if (isset($this->key)) $iskeyok=($key == $this->key);
-			else if (is_array($this->keys)) $iskeyok=$this->keys[$key];
-			$actions=($iskeyok && $this->keys[$key]?$this->keys[$key]:($iskeyok?["*"]:[]));
+			$iskeyok=(
+				(isset($this->key) && $key == $this->key)
+				|| (is_array($this->keys) && $this->keys[$key])
+			);
+			$actions=($iskeyok && $this->keys[$key]?$this->keys[$key]:$iskeyok);
 			$this->out([
 				"iskeyok"=>$iskeyok,
 				"actions"=>$actions,
@@ -124,15 +126,16 @@ class WS {
 		// key/keys authentication
 		if (is_string($key)) {
 			if (isset($this->key) && $key === $this->key) return;
-			else if (is_array($this->keys) && is_array($this->keys[$key])) {
-				if (in_array($this->action, $this->keys[$key])) return;
+			else if (is_array($this->keys)) {
+				if ($this->keys[$key] === true) return;
+				else if (is_array($this->keys[$key]) && in_array($this->action, $this->keys[$key])) return;
 				else $this->out(["auth"=>"failed", "err"=>"Authorization key valid but failed for this action."]);
 			}
 			$this->out(["auth"=>"failed", "err"=>"Authorization key invalid."]);
 		}
 
 		// not beyond this point
-		$this->out(["auth"=>"required", "err"=>"No authorization key was provided for this action."]);
+		$this->out(["auth"=>"required", "err"=>"No authorization key was provided."]);
 		exit; // fallback
 
 	}
