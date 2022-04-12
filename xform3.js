@@ -63,11 +63,22 @@ function xForm3(o) {
 	};
 
 	// establece el foco al primer campo
-	a.focusfirst=function(){
+	a.focusfirst=a.focusFirst=function(){
 		for (var field in a.o.fields) {
 			a.focus(field);
 			a.select(field);
 			return true;
+		}
+		return false;
+	};
+
+	// establece el foco al primer campo vacío
+	a.focusFirstEmpty=function(){
+		for (var field in a.o.fields) {
+			if (!a.value(field)) {
+				a.focus(field);
+				return true;
+			}
 		}
 		return false;
 	};
