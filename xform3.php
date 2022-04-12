@@ -74,6 +74,8 @@ class xForm3 {
 	function __construct($o) {
 		self::$sid++;
 		$default_class=array(
+			"tel"=>"txt",
+			"email"=>"txt",
 			"text"=>"txt",
 			"number"=>"txt",
 			"date"=>"txt",
@@ -462,6 +464,14 @@ class xForm3 {
 					"type"=>"required",
 					"err"=>(is_string($f["required"])?$f["required"]:$prefix."Campo requerido."),
 				);
+			// is e-mail, check
+			if ($f["type"] == "email" && !filter_var($v, FILTER_VALIDATE_EMAIL))
+				$this->errors[$field]=array(
+					"id"=>$this->id($field),
+					"field"=>$field,
+					"type"=>"email",
+					"err"=>$prefix."El e-mail no es válido.",
+				);
 			// check length interval
 			if ($f["minlength"] && $f["maxlength"] && (
 				($f["minlength"] > strlen($v)) || ($f["maxlength"] < strlen($v))
@@ -621,6 +631,9 @@ class xForm3 {
 		// types with conversions
 		switch ($f["type"]) {
 		case "area":
+		case "tel":
+		case "url":
+		case "email":
 		case "number":
 		case "text":
 			if ($f["lowercase"]) $styles.="text-transform: lowercase;";
@@ -758,6 +771,7 @@ class xForm3 {
 				." />"
 			;
 
+		case "tel":
 		case "url":
 		case "email":
 		case "number":
