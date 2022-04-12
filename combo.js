@@ -75,13 +75,13 @@ function comboClear(combo) {
 // obtener valor o reemplazar
 function comboValue(combo, value, newvalue) {
 	combo=gid(combo);
-	if (newvalue==undefined) {
+	if (newvalue == undefined) {
 		if (combo.selectedIndex<0) return(false);
-		if (value!=undefined) { combo.value=value; return true; }
+		if (value != undefined) { combo.value=value; return true; }
 		return combo.value;
 	} else {
 		for (var i in combo.options) {
-			if (combo.options[i].value==value) {
+			if (combo.options[i].value == value) {
 				combo.options[i].value=newvalue;
 				return true;
 			}
@@ -101,12 +101,12 @@ function comboValueIfExists(combo, value) {
 function comboText(combo, id, text) {
 	var combo=gid(combo);
 	if (typeof(id)=="undefined") {
-		if (combo.selectedIndex<0) return(false);
+		if (combo.selectedIndex < 0) return(false);
 		return(combo.options[combo.selectedIndex].text);
 	} else {
 		for (var i in combo.options) {
-			if (combo.options[i].value==id) {
-				if (typeof(text)=="undefined") return combo.options[i].text;
+			if (combo.options[i].value == id) {
+				if (typeof(text) == "undefined") return combo.options[i].text;
 				else {
 					combo.options[i].text=text;
 					return true;
@@ -120,34 +120,34 @@ function comboText(combo, id, text) {
 // obtener índice por valor
 function comboIndexByValue(combo,value) {
 	combo=gid(combo);
-	for (var i=0;i<combo.options.length;i++)
-		if (combo.options[i].value==value) return(i);
+	for (var i=0; i < combo.options.length; i++)
+		if (combo.options[i].value == value) return(i);
 	return -1;
 }
 
 // obtener índice por texto
 function comboIndexByText(combo,text) {
 	combo=gid(combo);
-	for (var i=0;i<combo.options.length;i++)
-		if (combo.options[i].text==text) return(i);
+	for (var i=0; i < combo.options.length; i++)
+		if (combo.options[i].text == text) return(i);
 	return -1;
 }
 
 // comprobar si el valor existe
 function comboValueExists(combo, value) {
 	combo=gid(combo);
-	return (comboIndexByValue(combo, value)>=0);
+	return (comboIndexByValue(combo, value) >= 0);
 }
 
 // comprobar si el texto existe
 function comboTextExists(combo, text) {
 	combo=gid(combo);
-	return (comboIndexByText(combo, text)>=0);
+	return (comboIndexByText(combo, text) >= 0);
 }
 
 // limpiar y rellenar combo
-function comboClearFill(combo,lista,valorActual,formaMostrar,indiceValor,filtro) {
-	comboFill(combo,lista,valorActual,formaMostrar,indiceValor,filtro, {"clear":true});
+function comboClearFill(combo, lista, valorActual, formaMostrar, indiceValor, filtro) {
+	comboFill(combo, lista, valorActual, formaMostrar, indiceValor, filtro, {"clear":true});
 }
 
 // comprobar si el objeto es un elemento HTML
@@ -168,12 +168,12 @@ function comboFill(combo, lista, renderer, formaMostrar, indiceValor, filtro, o)
 			var item=combo.item(combo.items[i], i);
 			if (item) comboAdd(combo.id, item.caption, item.value, (item.value === valorActual), item);
 		}
-	} else if (typeof renderer=="function") {
-		var valorActual=gidval(combo);
+	} else if (typeof renderer == "function") {
+		var valorActual=(isset(formaMostrar)?formaMostrar:gidval(combo));
 		if (o && o.clear) comboClear(combo);
 		for (var i in lista) {
 			var item=renderer(lista[i], i);
-			if (item !== null) comboAdd(combo, item.caption, item.value, (item.value===valorActual), item);
+			if (item !== null) comboAdd(combo, item.caption, item.value, (item.value === valorActual), item);
 		}
 	} else {
 		var valorActual=renderer;
