@@ -421,7 +421,7 @@ function xEditor(o) {
 			}
 			break;
 		case "strike": self.insert("<s>"+selectionHTML+"</s>"); break;
-		case "highlighter": if (selectionHTML) self.insert("<span style='background-color:#FFFF00;'>"+selectionHTML+"</span>"); break;
+		case "highlighter": if (selectionHTML) self.insert("<span style='color:#000;background-color:#FFFF00;'>"+selectionHTML+"</span>"); break;
 		case "removeformat": if (selectionText) self.insert(nl2br(selectionText)); break;
 		case "unorderedlist": document.execCommand("insertunorderedlist", false, null); break;
 		case "orderedlist": document.execCommand("insertorderedlist", false, null); break;
