@@ -292,6 +292,17 @@ class View {
 		);
 	}
 
+	// returns formatted time as XX:XX:XX
+	static function secToTime($t) {
+		$ts=floor($t%60);
+		$tm=floor($t/60)%60;
+		$th=floor($t/3600);
+		//$td=floor($t/86400);
+		return str_pad($th, 2, "0", STR_PAD_LEFT)
+			.":".str_pad($tm, 2, "0", STR_PAD_LEFT)
+			.":".str_pad($ts, 2, "0", STR_PAD_LEFT)
+		;
+	}
 	// formatear un número flotante como X.XXX,DD
 	static function spf($n, $flo=2, $sflo=",", $sdec=".") {
 		return number_format($n, $flo, $sflo, $sdec);
