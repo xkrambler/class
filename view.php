@@ -268,7 +268,7 @@ class View {
 		if ($bytes >= 1073741824) return number_format(round($bytes/10737418.24)/100,2,",",".")." GB";
 		if ($bytes >= 1048576) return number_format(round($bytes/10485.76)/100,2,",",".")." MB";
 		if ($bytes >= 1024) return number_format(round($bytes/10.24)/100,2,",",".")." KB";
-		return (strlen($bytes)?($bytes?number_format($bytes,2,",","."):"0")." bytes":"");
+		return (strlen($bytes)?($bytes?number_format($bytes,0,",","."):"0")." bytes":"");
 	}
 
 	// returns formatted time
