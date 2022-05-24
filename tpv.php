@@ -97,6 +97,20 @@ abstract class TPV {
 		return $this->setup["table"];
 	}
 
+	// get/set credit card
+	function cc($cc=null) {
+		if (is_array($cc)) $this->set([
+			"pan"       =>(string)substr(preg_replace("/[^0-9]/", "", $cc["pan"]), 0, 16),
+			"expirydate"=>(string)substr(preg_replace("/[^0-9]/", "", $cc["expirydate"]), 0, 4),
+			"cvv2"      =>(string)substr(preg_replace("/[^0-9]/", "", $cc["cvv2"]), 0, 3),
+		]);
+		return [
+			"pan"       =>$this->setup["pan"],
+			"expirydate"=>$this->setup["expirydate"],
+			"cvv2"      =>$this->setup["cvv2"],
+		];
+	}
+
 	// verify URL
 	function fullurl($url) {
 		// base vars

@@ -61,14 +61,30 @@ class TPVSERMEPA extends TPV {
 				"DS_MERCHANT_ORDER"=>$this->localizador(),
 				"DS_MERCHANT_MERCHANTCODE"=>$this->setup["clave_comercio"],
 				"DS_MERCHANT_CURRENCY"=>$this->setup["moneda"],
-				"DS_MERCHANT_TRANSACTIONTYPE"=>0,
+				"DS_MERCHANT_TRANSACTIONTYPE"=>'0',
 				"DS_MERCHANT_TERMINAL"=>$this->setup["terminal"],
 				"DS_MERCHANT_MERCHANTURL"=>$this->urlnotify(),
 				"DS_MERCHANT_URLOK"=>$this->urlok(),
 				"DS_MERCHANT_URLKO"=>$this->urlko(),
 			);
-			if ($this->setup["bizum"]) $fields["DS_MERCHANT_PAYMETHODS"]="z"; // BIZUM
+			if ($v=$this->setup["comercio"]) $fields["DS_MERCHANT_MERCHANTNAME"]=$v;
+			if (($v=$this->setup["titular"]) || ($v=$this->setup["cliente"])) $fields["DS_MERCHANT_TITULAR"]=$v;
+			if ($this->setup["bizum"]) {
+				$fields["DS_MERCHANT_PAYMETHODS"]="z"; // BIZUM
+			} else if (
+				($pan=$this->setup["pan"])
+				&& ($expirydate=$this->setup["expirydate"])
+				&& ($cvv2=$this->setup["cvv2"])
+			) {
+				$fields=array_merge($fields, array(
+					"DS_MERCHANT_PAYMETHODS"=>"C",
+					"DS_MERCHANT_PAN"       =>$pan,
+					"DS_MERCHANT_EXPIRYDATE"=>substr($expirydate, 2, 2).substr($expirydate, 0, 2),
+					"DS_MERCHANT_CVV2"      =>$cvv2,
+				));
+			}
 			$fields=array(
+				//"fields"=>$fields,
 				"Ds_SignatureVersion"=>'HMAC_SHA256_V1',
 				"Ds_MerchantParameters"=>base64_encode(json_encode($fields)),
 				"Ds_Signature"=>$this->getSignature($fields),
