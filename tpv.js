@@ -109,6 +109,7 @@ var tpv={
 		// get/set values
 		self.values=function(values){
 			var id=self.id();
+			if (!gid(id)) return null;
 			if (values) {
 				gidval(id+"_pan",        self.filterPAN(values.pan));
 				gidval(id+"_expirydate", self.filterExpiryDate(values.expirydate));
@@ -161,6 +162,8 @@ var tpv={
 			self.o=o;
 
 			var id=self.id();
+
+			if (!gid(id)) return false;
 
 			classAdd(id, "tpv_cc");
 			gidset(id, ""
@@ -297,6 +300,8 @@ var tpv={
 				this.value=self.filterCVV2(this.value);
 				self.check();
 			};
+
+			return true;
 
 		};
 
