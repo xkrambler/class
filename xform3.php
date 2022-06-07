@@ -206,9 +206,8 @@ class xForm3 {
 	// get/set field value
 	function value($field, $value=null) {
 		$f=$this->fields[$field];
-		if ($value !== null)
-			if (!$f["readonly"])
-				$f["value"]=$value;
+		if (!is_array($f)) return null;
+		if ($value !== null && !$f["readonly"]) $this->fields[$field]["value"]=$value;
 		switch ($f["type"]) {
 		case "audio":
 		case "file":
