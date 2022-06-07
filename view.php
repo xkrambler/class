@@ -303,6 +303,7 @@ class View {
 			.":".str_pad($ts, 2, "0", STR_PAD_LEFT)
 		;
 	}
+
 	// formatear un número flotante como X.XXX,DD
 	static function spf($n, $flo=2, $sflo=",", $sdec=".") {
 		return number_format($n, $flo, $sflo, $sdec);
