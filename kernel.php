@@ -794,12 +794,18 @@ class Kernel {
 		return ($ascii?"ASCII":"UTF-8");
 	}
 
-	// DEPRECATED: validate a string for valid bytes
-	static function validate($s, $validCharset) {
-		for ($i=0; $i<strlen($s); $i++)
-			if (strpos($validCharset, $s[$i]) === false)
-				return false;
-		return true;
+	/**
+	 * autoload.
+	 * Register generic autoloader.
+	 *
+	 * @param String Base path (Optional)
+	 */
+	static function autoload($base=null) {
+		spl_autoload_register(function($c){
+			if ($base === null) $base=getcwd();
+			$f=$base.(strpos($base, -1, 1) != "/"?"/":"").strtolower(str_replace('\\', '/', $c)).".php";
+			if (file_exists($f)) require_once($f);
+		});
 	}
 
 	// return file via HTTP accepting a byte range protocol
@@ -862,6 +868,14 @@ class Kernel {
 			}
 		}
 		exit;
+	}
+
+	// DEPRECATED: validate a string for valid bytes
+	static function validate($s, $validCharset) {
+		for ($i=0; $i<strlen($s); $i++)
+			if (strpos($validCharset, $s[$i]) === false)
+				return false;
+		return true;
 	}
 
 	// DEPRECATED: log a message
