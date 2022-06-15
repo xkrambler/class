@@ -64,7 +64,6 @@ function xajax(o){
 		return self.states[parseInt(state)];
 	};
 
-
 	// aux function to escape JSON strings
 	self.jescape=function(s) {
 		var r=""+s;
@@ -214,9 +213,10 @@ function xajax(o){
 		// state change events
 		if (o.event) o.event(r);
 
-		// always/complete/error events
+		// always/async/complete/error events
 		if (r.complete) {
 			if (o.always) o.always(r);
+			if (o.async) o.async(r);
 			if (o.complete && r.status >= 200 && r.status < 300) o.complete(r);
 			else if (o.error) o.error(r);
 		}
@@ -308,7 +308,11 @@ function xajax(o){
 	};
 
 	// if complete at startup, request ajax
-	if (self.o && self.o.complete) self.ajax();
+	if (self.o && (
+		self.o.complete
+		|| self.o.sync
+		|| self.o.async
+	)) self.ajax();
 
 }
 
