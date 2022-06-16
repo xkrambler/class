@@ -40,21 +40,24 @@ class x {
 		return $GLOBALS["page"]["included"][$m];
 	}
 
-	// load module css/js/php
+	// load module/s css/js/php
 	static public function module($_module) {
 		global $css, $js;
 		$_modulec=0;
-		foreach ($GLOBALS as $i=>$d)
-			if (substr($i, 0, 1) != "_" && $i != "GLOBALS")
-				global $$i;
-		if (file_exists($_module.".css")) { $_modulec++; $css[$_module.".css"]=false; }
-		if (file_exists($_module.".js")) { $_modulec++; $js[$_module.".js"]=false; }
-		if (file_exists($_module.".php")) { $_modulec++; require_once($_module.".php"); }
-		$v=get_defined_vars();
-		unset($v["_module"]);
-		unset($v["_modulec"]);
-		foreach ($v as $i=>&$d)
-			$GLOBALS[$i]=$d;
+		if (is_array($_module)) {
+			foreach ($_module as $_m) $_modulec+=self::module($_m);
+		} else {
+			foreach ($GLOBALS as $i=>$d)
+				if (substr($i, 0, 1) != "_" && $i != "GLOBALS")
+					global $$i;
+			if (file_exists($_module.".css")) { $_modulec++; $css[$_module.".css"]=false; }
+			if (file_exists($_module.".js")) { $_modulec++; $js[$_module.".js"]=false; }
+			if (file_exists($_module.".php")) { $_modulec++; require_once($_module.".php"); }
+			$v=get_defined_vars();
+			unset($v["_module"]);
+			unset($v["_modulec"]);
+			foreach ($v as $i=>&$d) $GLOBALS[$i]=$d;
+		}
 		return $_modulec;
 	}
 
