@@ -180,7 +180,10 @@ function newalert(o) {
 			+"</tr>"
 		;
 		if (buttons.length) {
-			s+="<tr height='1'><td id='"+_newalert.id+id+"_cmds' "+cols+" class='newalert_cmds'>";
+			s+="<tr height='1'>"
+					+"<td "+cols+" id='"+_newalert.id+id+"_cmds_td'>"
+						+"<div id='"+_newalert.id+id+"_cmds' "+cols+" class='newalert_cmds'>"
+			;
 			for (var i in buttons) {
 				if (!buttons[i].id) buttons[i].id=_newalert.id+id+"_cmd_"+i;
 				if (buttons[i].default) index_default=i;
@@ -202,7 +205,7 @@ function newalert(o) {
 				}
 			}
 			newalerts[id].buttons=buttons;
-			s+"</td></tr>";
+			s+"</div></td></tr>";
 		}
 		s+="</table>";
 	}

@@ -100,6 +100,9 @@
 	width: 48px;
 	vertical-align: top;
 }
+.newalert_mobile .newalert_icon {
+	display: none;
+}
 
 /* body */
 .newalert_body {
