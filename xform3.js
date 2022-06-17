@@ -1,16 +1,16 @@
-/*
-	xForm3: clase soporte cliente de formularios, versión 3
-*/
+// xForm3: form client class support, v3
 function xForm3(o) {
 	if (!o) o={};
 	var a=this;
-	a.o=array_copy(o);
+	a.o=array_merge({
+		"thumbnail":{"w":170, "h":128}
+	}, array_copy(o));
 	a.data={};
 
 	// nocache token
 	a.nocache=function(){ return (new Date().getTime()); };
 
-	// inmediatos
+	// inmediate
 	a.name=function(n){
 		if (isset(n)) a.o.name=n;
 		return (a.o.name?a.o.name:null);
@@ -18,6 +18,9 @@ function xForm3(o) {
 	a.class=function(f){ return (a.o.class?(f?a.o.class[f]:a.o.class):null); };
 	a.field=function(f){ return a.o.fields[f]; };
 	a.fields=function(){ return a.o.fields; };
+	a.get=function(f,n,v){
+		return a.o.fields[f][n];
+	};
 	a.set=function(f,n,v){
 		if (isset(v)) a.o.fields[f][n]=v;
 		return a.o.fields[f][n];
@@ -28,7 +31,7 @@ function xForm3(o) {
 	a.gidval=function(f, value){ return (a.id(f)?gidval(a.id(f), value):null); }; // DEPRECATED
 	a.gidfocus=function(f){ gidfocus(a.id(f)); }; // DEPRECATED
 
-	// obtiene el campo por su identificador
+	// get field by its identifier
 	a.fieldById=function(id){
 		for (var field in a.o.fields)
 			if (a.id(field) == id)
@@ -36,7 +39,7 @@ function xForm3(o) {
 		return false;
 	};
 
-	// establece el foco a un campo
+	// set focus to a field
 	a.focus=function(f){
 		var field=a.field(f);
 		var e=false;
@@ -50,19 +53,19 @@ function xForm3(o) {
 		if (e && e.focus) e.focus();
 	};
 
-	// establece la selección en un campo
+	// select a text field
 	a.select=function(f){
 		var e=gid(a.id(f));
 		if (e && e.select) e.select();
 	};
 
-	// establece el foco y selección a un campo para corregir
+	// select and set focus to correct a field
 	a.correct=function(f){
 		a.focus(f);
 		a.select(f);
 	};
 
-	// establece el foco al primer campo
+	// set focus to first field
 	a.focusfirst=a.focusFirst=function(){
 		for (var field in a.o.fields) {
 			a.focus(field);
@@ -72,7 +75,7 @@ function xForm3(o) {
 		return false;
 	};
 
-	// establece el foco al primer campo vacío
+	// set focus to first empty field
 	a.focusFirstEmpty=function(){
 		for (var field in a.o.fields) {
 			if (!a.value(field)) {
@@ -83,7 +86,7 @@ function xForm3(o) {
 		return false;
 	};
 
-	// obtiene/establece estado de un campo
+	// get/set if a field is enabled
 	a.enabled=function(f, enabled){
 		var e=gid(a.id(f));
 		if (!e) return null;
@@ -91,7 +94,7 @@ function xForm3(o) {
 		else e.setAttribute("disabled", "");
 	};
 
-	// devuelve todos los campos y datos de un formulario en formato JSON
+	// get all fields values from a form
 	a.form=function(form){
 		var form=gid(form);
 		var values={};
@@ -103,7 +106,7 @@ function xForm3(o) {
 		return values;
 	};
 
-	// devuelve un valor de un campo
+	// get field value from a form
 	a.formValue=function(id){
 		var e=gid(id);
 		if (!e) return null;
@@ -129,12 +132,16 @@ function xForm3(o) {
 		}
 	};
 
-	// establecer opciones de un campo
+	// set combo options
 	a.options={
+
+		// clear all options
 		clear:function(field){
 			var combo=gid(a.id(field));
 			combo.options.length=0;
 		},
+
+		// add option
 		add:function(field, caption, value){
 			var combo=gid(a.id(field));
 			var option=new Option(caption, (typeof(value) == "undefined"?caption:value));
@@ -145,6 +152,8 @@ function xForm3(o) {
 			}
 			return option;
 		},
+
+		// fill with options
 		fill:function(field, options){
 			var f=a.o.fields[field];
 			if (isset(options)) {
@@ -162,6 +171,7 @@ function xForm3(o) {
 			}
 			return a.o.fields[field].options;
 		}
+
 	};
 
 	// return null if empty value
@@ -169,7 +179,7 @@ function xForm3(o) {
 		return (value === ""?null:value);
 	};
 
-	// filtrar valor
+	// filtrer value
 	a.filter=function(field, value){
 		var f=a.o.fields[field];
 		if (f) {
@@ -182,14 +192,16 @@ function xForm3(o) {
 		return value;
 	};
 
-	// obtener/establecer el valor de un campo
+	// get/set field value
 	a.value=function(field, value){
 		var f=a.o.fields[field];
 		if (!f) return null;
 		var id=a.id(field);
 		if (f.type) {
 			switch (f.type) {
+			case "file":
 			case "files":
+			case "image":
 			case "images":
 				return a.filter(field, a.files.value(field));
 			case "html":
@@ -242,7 +254,7 @@ function xForm3(o) {
 		return null;
 	};
 
-	// obtener/establecer el placeholder de un campo
+	// get/set field placeholder
 	a.placeholder=function(field, placeholder){
 		var f=a.o.fields[field];
 		if (!f) return null;
@@ -252,7 +264,7 @@ function xForm3(o) {
 		return null;
 	};
 
-	// obtiene/establece los valores del formulario
+	// get/set all form values
 	a.values=function(values){
 		if (isset(values))
 			for (var f in values)
@@ -265,7 +277,7 @@ function xForm3(o) {
 		return values;
 	};
 
-	// crea event listener en un campo o en todos los campos (si f=callback)
+	// add event listener in a field or all fields (if f is callback function)
 	a.addEventListener=function(event, f, callback){
 		if (typeof(f) == "function") {
 			var callback=f;
@@ -280,7 +292,7 @@ function xForm3(o) {
 		return true;
 	};
 
-	// crea event listener en el campo especificado
+	// add event listener for an specific field
 	a.addEventListenerField=function(event, f, callback){
 		var field=a.o.fields[f];
 		var field_id=a.id(f);
@@ -325,7 +337,7 @@ function xForm3(o) {
 		return false;
 	};
 
-	// subir fichero
+	// upload file using xUploader
 	a.fileUpload=function(o, onok){
 		if (typeof(xUploader) == "undefined") {
 			console.warn("xUploader no activo, subida cancelada.");
@@ -384,7 +396,7 @@ function xForm3(o) {
 		}, o));
 	};
 
-	// borrar fichero
+	// delete file
 	a.fileDel=function(action, onok){
 		newsimplewait();
 		ajax(alink(action), {}, function(){
@@ -396,10 +408,10 @@ function xForm3(o) {
 		return true;
 	};
 
-	// acciones de tipo audio
+	// audio related actions
 	a.audio={
 
-		// subir audio
+		// upload audio
 		"upload":function(field){
 			a.fileUpload({
 				"url":alink(a.files.fileLink(field, 0, {"ajax":"xform3.files.upload"}))
@@ -414,12 +426,12 @@ function xForm3(o) {
 			});
 		},
 
-		// descargar audio
+		// download audio
 		"download":function(field){
 			location.href=alink(a.files.fileLink(field, 0, {"attachment":""}));
 		},
 
-		// borrar audio
+		// delete audio
 		"del":function(field){
 			a.fileDel(a.files.fileLink(field, 0, {"ajax":"xform3.file.del"}), function(r){
 				delete a.o.fields[field].value;
@@ -428,7 +440,7 @@ function xForm3(o) {
 			});
 		},
 
-		// actualizar HTML
+		// refresh HTML
 		"refresh":function(f){
 			var field=a.o.fields[f];
 			var d=a.data[f];
@@ -450,7 +462,7 @@ function xForm3(o) {
 			d.audio_div.appendChild(audio);
 		},
 
-		// inicializar
+		// setup
 		"init":function(f){
 			var field=a.o.fields[f];
 			var container=document.createElement("div");
@@ -498,14 +510,23 @@ function xForm3(o) {
 
 	};
 
-	// acciones de tipo files
+	// files actions
 	a.files={
 
-		"set":function(field, files){
-			a.data[field].files=files;
+		// get all files
+		"get":function(field){
+			return a.data[field].files;
 		},
 
-		// devuelve parámetros de acceso al fichero por el servidor
+		// set all files
+		"set":function(field, files){
+			if (!a.data[field]) return false;
+			a.data[field].files=files;
+			a.files.refresh(field);
+			return true;
+		},
+
+		// return a remote link to file
 		"fileLink":function(field, index, ao){
 			var ao=ao||{};
 			return array_merge({
@@ -518,21 +539,21 @@ function xForm3(o) {
 			}, ao);
 		},
 
-		// devuelve URL del fichero
+		// return current file URL
 		"fileURL":function(field, index){
 			var url=a.data[field].files[index].url;
 			if (!url) url=alink(a.files.fileLink(field, index));
 			return url;
 		},
 
-		// devuelve imagen de captura
+		// return current file Thumbnail URL
 		"fileThumbnail":function(field, index, ao){
 			var tn=a.data[field].files[index].tn;
 			if (!tn) tn=alink(a.files.fileLink(field, index, ao));
 			return tn;
 		},
 
-		// generar etiqueta
+		// return caption element
 		"htmlImageCaption":function(o){
 			var e=document.createElement("div");
 			e.className="xform3_files_upload_caption";
@@ -540,7 +561,7 @@ function xForm3(o) {
 			return e;
 		},
 
-		// generar botón (para imagen)
+		// return image button element
 		"htmlImageButton":function(o){
 			var e=document.createElement(o.href?"a":"div");
 			e.className="xform3_files_item_button xform3_files_item_button_"+o.type;
@@ -558,7 +579,7 @@ function xForm3(o) {
 			return e;
 		},
 
-		// generar botón (para fichero)
+		// return file button element
 		"htmlFileButton":function(o){
 			var span=document.createElement("span");
 			span.className="xform3_files_file_button xform3_files_item_button_"+o.type;
@@ -574,16 +595,15 @@ function xForm3(o) {
 			return span;
 		},
 
-		// añadir fichero
+		// add file element
 		"add":function(o){
 			var field=a.o.fields[o.field];
 
-			//location.href=url;
 			var div=document.createElement("div");
 			div.setAttribute("data-index", o.index);
 			div.id=a.id(o.field)+"_item_"+o.index;
 
-			// renderizar dependiendo del tipo
+			// render depending on field type
 			switch (field.type) {
 			case "image":
 			case "images":
@@ -593,8 +613,8 @@ function xForm3(o) {
 				div.setAttribute("data-index", o.index);
 				var buttons=document.createElement("div");
 				buttons.className="xform3_files_item_buttons";
-				buttons.appendChild(a.files.htmlImageButton({"type":"delete","id":a.id(o.field),"index":o.index,"action":a.files.del}));
-				//buttons.appendChild(a.files.htmlImageButton({"type":"zoom","id":a.id(o.field),"index":o.index,"action":a.files.zoom,"href":a.files.fileURL(o.field, o.index)}));
+				buttons.appendChild(a.files.htmlImageButton({"type":"delete", "id":a.id(o.field), "index":o.index, "action":a.files.del}));
+				//buttons.appendChild(a.files.htmlImageButton({"type":"zoom", "id":a.id(o.field), "index":o.index, "action":a.files.zoom, "href":a.files.fileURL(o.field, o.index)}));
 				div.onclick=function(){
 					var index=parseInt(this.getAttribute("data-index"));
 					var field=a.fieldById(this.getAttribute("data-id"));
@@ -618,55 +638,54 @@ function xForm3(o) {
 					number.innerHTML=(parseInt(o.index)+1);
 					div.appendChild(number);
 				}
-				// obtener ancho/alto de una captura (se hace así por si está en pestañas, obtener igualmente resolución)
+				// get width/height of a thumbnail (it's done this way because if in hidden field it does not calculate it properly)
 				document.body.appendChild(div);
 				var w=div.offsetWidth;
 				var h=div.offsetHeight;
 				div.parentNode.removeChild(div);
 				a.data[o.field].container.appendChild(div);
-				// URL de captura
+				// get capture URL
 				var url=a.files.fileThumbnail(o.field, o.index, {
-					"w":(w?w:170),
-					"h":(h?h:128)
+					"w":(w?w:a.o.thumbnail.w),
+					"h":(h?h:a.o.thumbnail.h)
 				});
 				div.style.backgroundImage="url("+url+")";
 				break;
 
 			case "file":
 			case "files":
-				// name=inmuebles_ver.psd type=image/vnd.adobe.photoshop error=0 size=81062 caption=inmuebles_ver.psd
+				// name=file.psd type=image/vnd.adobe.photoshop error=0 size=999 caption=file.psd
 				div.className="xform3_files_file";
 				div.innerHTML="<span class='xform3_files_file_icon xform3_files_file_icon_file'></span><a class='xform3_files_file_name' href='"+a.files.fileURL(o.field, o.index)+"' target='_blank'>"+o.item.name+"</a> <span class='xform3_files_file_size'>("+bytesToString(o.item.size)+")</span>";
-				div.appendChild(a.files.htmlFileButton({"type":"delete","id":a.id(o.field),"index":o.index,"action":a.files.del}));
+				div.appendChild(a.files.htmlFileButton({"type":"delete", "id":a.id(o.field), "index":o.index, "action":a.files.del}));
 				a.data[o.field].container.appendChild(div);
 				break;
 
 			}
 
-			// si se solicita, evento para enviar el elemento generado a tratar
-			if (a.o.fields[o.field].onelement)
-				a.o.fields[o.field].onelement(a, div, o);
+			// if requested, event to send the element generated to filter
+			if (a.o.fields[o.field].onelement) a.o.fields[o.field].onelement(a, div, o);
 
-			// evento de actualización de campo
+			// refresh field
 			a.files.refreshField(o.field);
 
 		},
 
-		// actualizar lista de ficheros/imágenes
+		// refresh all files or images
 		"refresh":function(field){
 			var f=a.o.fields[field];
 
-			// limpiar
+			// clean
 			gidset(a.id(field),"");
 
-			// crear lista
+			// create list
 			a.data[field].container=document.createElement("ul");
 			a.data[field].container.className="xform3_files_container";
 
-			// añadir contenedor
+			// add container to HTML field element
 			gid(a.id(field)).appendChild(a.data[field].container);
 
-			// generar el listado de ficheros
+			// generate file listing
 			for (var index in a.data[field].files) {
 				var item=a.data[field].files[index];
 				if (item.deleted) continue;
@@ -677,7 +696,7 @@ function xForm3(o) {
 				});
 			}
 
-			// añadir botón de subida
+			// prepare upload button
 			var div=document.createElement("div");
 			div.id=a.id(field)+"_item_upload";
 			div.setAttribute("data-id", a.id(field));
@@ -687,11 +706,11 @@ function xForm3(o) {
 				a.files.upload(field);
 			};
 
-			// renderizar dependiendo del tipo
+			// render by field type
 			if (!isset(f.upload)) {
 				switch (f.type) {
-				case "image":
-					limit=1;
+
+				case "image": limit=1; // no break
 				case "images":
 					var limit=a.files.getLimit(field);
 					div.className="xform3_files_item"
@@ -704,8 +723,7 @@ function xForm3(o) {
 					gid(a.id(field)).appendChild(div);
 					break;
 
-				case "file":
-					limit=1;
+				case "file": limit=1; // no break
 				case "files":
 				default:
 					div.className="xform3_files_file xform3_files_file_upload";
@@ -727,7 +745,7 @@ function xForm3(o) {
 			div.className="clear";
 			gid(a.id(field)).appendChild(div);
 
-			// si es ordenable, lanzar
+			// if sortable, setup
 			if (f.sortable) {
 				a.data[field].sortable=$(a.data[field].container).sortable({
 					cancel:".xform3_files_upload",
@@ -742,21 +760,21 @@ function xForm3(o) {
 							  Math.pow(ui.position.top - ui.originalPosition.top, 2)
 							+ Math.pow(ui.position.left - ui.originalPosition.left, 2)
 						));
-						if (distance>=10) a.cancelSortableClick=true;
+						if (distance >= 10) a.cancelSortableClick=true;
 					}
 				});
 			}
 
-			// actualizar campo
+			// refresh field
 			a.files.refreshField(field);
 
 		},
 
-		// actualizar campo
+		// refresh field
 		"refreshField":function(field){
 			var f=a.o.fields[field];
 
-			// actualizar numeración (si numerado)
+			// update numeration (if numbered)
 			if (isset(f.numbered) && f.numbered && a.data[field].sortable) {
 				var sortedIDs=$(a.data[field].container).sortable("toArray");
 				var count=0;
@@ -766,13 +784,13 @@ function xForm3(o) {
 				}
 			}
 
-			// actualizar visibilidad de botón de subir
+			// update visibility of upload button
 			var limit=a.files.getLimit(field);
 			classEnable(a.id(field)+"_item_upload", "xform3_files_item_hide", (limit && a.files.count(field) >= limit));
 
 		},
 
-		// borrar fichero
+		// delete file
 		"del":function(field, index, confirmed){
 			var f=a.o.fields[field];
 			var item_id=a.id(field)+"_item_"+index;
@@ -824,12 +842,12 @@ function xForm3(o) {
 			});
 		},
 
-		// ampliar una fotografía
+		// zoom a photo
 		"zoom":function(field, index){
 			var url=a.files.fileURL(field, index);
 			if (typeof(xPhotos) != "undefined") {
 
-				// construir lista
+				// create list
 				var actual=0;
 				var count=0;
 				var list=[];
@@ -839,7 +857,7 @@ function xForm3(o) {
 						list.push({"img":a.files.fileURL(field, i)}); // "caption":(a.data[field].files[i].name?a.data[field].files[i].name:false),
 					}
 
-				// mostrar xPhotos
+				// show using xPhotos
 				var xphotos=new xPhotos({
 					"list":list,
 					"actual":actual,
@@ -848,7 +866,7 @@ function xForm3(o) {
 
 			} else if (typeof(newalert) != "undefined") {
 
-				// newalert
+				// show using newalert
 				newalert({
 					"id":"xform3_image_zoom",
 					"full":true,
@@ -867,7 +885,7 @@ function xForm3(o) {
 			return false;
 		},
 
-		// subir fichero
+		// upload file
 		"upload":function(field){
 			a.fileUpload({
 				"url":alink({
@@ -896,6 +914,7 @@ function xForm3(o) {
 			});
 		},
 
+		// get count limit of files
 		"getLimit":function(field){
 			var f=a.o.fields[field];
 			switch (f.type) {
@@ -906,7 +925,7 @@ function xForm3(o) {
 			}
 		},
 
-		// conteo
+		// count files
 		"count":function(field){
 			var count=0;
 			for (var i in a.data[field].files)
@@ -915,7 +934,7 @@ function xForm3(o) {
 			return count;
 		},
 
-		// get/set valores
+		// get/set files
 		"value":function(field){
 			var f=a.o.fields[field];
 			if (f.sortable) {
@@ -925,28 +944,27 @@ function xForm3(o) {
 					a.data[field].files[index].orden=i;
 				}
 			}
-			if (f.onvalues)
-				a.data[field].files=f.onvalues(a, a.data[field].files);
-			return a.data[field].files;
+			if (f.onvalues) a.data[field].files=f.onvalues(a, a.data[field].files);
+			return (a.data[field]?a.data[field].files:[]);
 		},
 
-		// inicializar
+		// setup
 		"init":function(field){
 			var f=a.o.fields[field];
-			// asegurarse de que es un array
+			// ensure it's an array
 			a.data[field].files=array_values(f.files);
-			// actualizar
+			// refresh
 			a.files.refresh(field);
 		}
 
 	};
 
-	// asignar una lista de datos a un campo
+	// assign a data list for a field
 	a.datalist=function(f, items){
 		var datalist_id=a.id(f)+"_datalist";
-		// si ya existía, suprimir antiguo
+		// if previously exists, remove
 		if (gid(datalist_id)) gid(datalist_id).parentNode.removeChild(gid(datalist_id));
-		// crear datalist y asignar items
+		// create datalist and render options
 		var datalist=document.createElement("datalist");
 		datalist.id=datalist_id;
 		for (var i in items) {
@@ -955,11 +973,11 @@ function xForm3(o) {
 			datalist.appendChild(option);
 		}
 		document.body.appendChild(datalist);
-		// asignar datalist al input
+		// assign datalist to input
 		a.gid(f).setAttribute("list", datalist_id);
 	};
 
-	// input date supported
+	// is input date supported
 	a.isInputDateSupported=function(){
 		var input=document.createElement('input');
 		var value='a';
@@ -968,7 +986,7 @@ function xForm3(o) {
 		return (input.value !== value);
 	};
 
-	// inicializar
+	// setup
 	a.init=function(o){
 		var o=o||{};
 		if (o.name) a.name(o.name);
