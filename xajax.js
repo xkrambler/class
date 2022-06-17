@@ -255,6 +255,12 @@ function xajax(o){
 			for (var k in o.get)
 				get[k]=o.get[k];
 
+		// prepare PUT
+		if (o.put) {
+			o.method="PUT";
+			o.post=o.put;
+		}
+
 		// prepare POST
 		var post=(o.post?o.post:false);
 		var fd=(o.formdata?o.formdata:false);
@@ -265,20 +271,25 @@ function xajax(o){
 			post=self.json(o.json);
 		} else {
 
-			// instance FormData
-			if (!fd && (post || isset(o.data))) fd=new FormData();
+			// if post is object, convert
+			if (typeof(post) == "object") {
 
-			// POST fields
-			if (post) for (var k in post) fd.append(k, post[k]);
+				// instance FormData
+				if (!fd && (post || isset(o.data))) fd=new FormData();
 
-			// data JSON
-			if (isset(o.data)) {
-				// separate Files/Blobs to FormData
-				for (var k in o.data) if (o.data[k] instanceof Blob || o.data[k] instanceof File) {
-					fd.append(k, o.data[k]);
+				// POST fields
+				if (post) for (var k in post) fd.append(k, post[k]);
+
+				// data JSON
+				if (isset(o.data)) {
+					// separate Files/Blobs to FormData
+					for (var k in o.data) if (o.data[k] instanceof Blob || o.data[k] instanceof File) {
+						fd.append(k, o.data[k]);
+					}
+					// data as JSON
+					fd.append("data", self.json(o.data));
 				}
-				// data as JSON
-				fd.append("data", self.json(o.data));
+
 			}
 
 		}
