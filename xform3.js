@@ -192,6 +192,21 @@ function xForm3(o) {
 		return value;
 	};
 
+	// get/set file value
+	a.file=function(field, value){
+		var f=a.o.fields[field];
+		if (!f) return null;
+		var id=a.id(field);
+		switch (f.type) {
+		case "file":
+		case "files":
+		case "image":
+		case "images":
+			return a.files.value(field);
+		}
+		return null;
+	};
+
 	// get/set field value
 	a.value=function(field, value){
 		var f=a.o.fields[field];
