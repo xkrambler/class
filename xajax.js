@@ -272,7 +272,7 @@ function xajax(o){
 		} else {
 
 			// if post is object, convert
-			if (typeof(post) == "object") {
+			if (fd || post || isset(o.data)) {
 
 				// instance FormData
 				if (!fd && (post || isset(o.data))) fd=new FormData();
