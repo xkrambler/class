@@ -1,0 +1,55 @@
+.tpv_cc {
+	position: relative;
+	display: inline-block;
+	border: 1px solid #CCC;
+	border-radius: 4px;
+	padding: 18px 12px 8px 12px;
+	color: #333;
+	vertical-align: middle;
+}
+.tpv_cc:focus-within {
+	border-color: #888;
+}
+.tpv_cc_marv {
+	margin: 4px;
+}
+.tpv_cc_ok {
+	/*border-color: #690;*/
+}
+.tpv_cc_bad {
+	border-color: #D75;
+}
+.tpv_cc_bad_input {
+	color: #C33;
+}
+.tpv_cc_caption {
+	font-size: 0.7em;
+	color: #888;
+	position: absolute;
+	top: 4px;
+}
+.tpv_cc_input {
+	appearance: none;
+	border: 0;
+}
+.tpv_cc_input::placeholder {
+	color: #000;
+}
+.tpv_cc #tpv_cc_pan {
+	dwidth: 12em;
+}
+.tpv_cc {
+	/*perspective: 500px;*/
+}
+.tpv_cc_icon {
+	position: relative;
+	display: inline-block;
+	transition: 0.3s all ease-in-out;
+	margin: 0 4px;
+	opacity: 0.7;
+	transform: scaleX(1);
+}
+.tpv_cc_cvv2_focus .tpv_cc_icon {
+	transform: scaleX(-1);
+	opacity: 0.5;
+}
