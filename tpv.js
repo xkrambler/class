@@ -77,6 +77,7 @@ var tpv={
 
 		// return named id
 		self.id=function(){
+			if (!gid(self.o.id)) return false;
 			var id=gid(self.o.id).id;
 			if (!id) gid(self.o.id).id=id="tpv_id";
 			return id;
