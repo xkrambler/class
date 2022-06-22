@@ -354,6 +354,13 @@ function xForm3(o) {
 
 	// upload file using xUploader
 	a.fileUpload=function(o, onok){
+		o.field=a.o.fields[o.f];
+		console.log(o.f);
+		console.log(a.data[o.f]);
+		if (a.data[o.f] && a.data[o.f].uploader) {
+			a.data[o.f].uploader.upload(self, o, onok);
+			return true;
+		}
 		if (typeof(xUploader) == "undefined") {
 			console.warn("xUploader no activo, subida cancelada.");
 			return false;
@@ -409,6 +416,7 @@ function xForm3(o) {
 			},
 			"browse":true
 		}, o));
+		return true;
 	};
 
 	// delete file
@@ -429,6 +437,7 @@ function xForm3(o) {
 		// upload audio
 		"upload":function(field){
 			a.fileUpload({
+				"f":field,
 				"url":alink(a.files.fileLink(field, 0, {"ajax":"xform3.files.upload"}))
 			}, function(uploader, r){
 				delete a.data[field].deleted;
@@ -525,6 +534,12 @@ function xForm3(o) {
 
 	};
 
+	// set custom file uploader
+	a.uploader=function(field, uploader){
+		if (!a.data[field]) a.data[field]={};
+		a.data[field].uploader=uploader;
+	};
+
 	// files actions
 	a.files={
 
@@ -556,6 +571,7 @@ function xForm3(o) {
 
 		// return current file URL
 		"fileURL":function(field, index){
+			if (a.data[field] && a.data[field].uploader && a.data[field].uploader.url) return a.data[field].uploader.url(self, {"f":field, "field":a.o.fields[field]});
 			var url=a.data[field].files[index].url;
 			if (!url) url=alink(a.files.fileLink(field, index));
 			return url;
@@ -563,6 +579,8 @@ function xForm3(o) {
 
 		// return current file Thumbnail URL
 		"fileThumbnail":function(field, index, ao){
+			if (a.data[field] && a.data[field].uploader && a.data[field].uploader.tn) return a.data[field].uploader.tn(self, {"f":field, "field":a.o.fields[field]});
+			if (a.data[field] && a.data[field].uploader && a.data[field].uploader.url) return a.data[field].uploader.url(self, {"f":field, "field":a.o.fields[field]});
 			var tn=a.data[field].files[index].tn;
 			if (!tn) tn=alink(a.files.fileLink(field, index, ao));
 			return tn;
@@ -829,6 +847,25 @@ function xForm3(o) {
 			case "images": classAdd(item_id, "xform3_files_item_deleting"); break;
 			case "files": default: supportsTransitions=false; break;
 			}
+			var ondelete=function(){
+				a.data[field].files[index].deleted=true;
+				if (gid(item_id)) {
+					if (supportsTransitions) {
+						gid(item_id).addEventListener("transitionend",function(){
+							a.files.refreshField(field);
+							if (gid(item_id)) gid(item_id).parentNode.removeChild(gid(item_id));
+						},true);
+					} else {
+						a.files.refreshField(field);
+						classDel(item_id, "xform3_files_item_deleting");
+						gid(item_id).parentNode.removeChild(gid(item_id));
+					}
+				}
+			};
+			if (a.data[field] && a.data[field].uploader && a.data[field].uploader.del) {
+				if (a.data[field].uploader.del(self, {"f":field, "field":a.o.fields[field], "index":index, "confirmed":confirmed})) ondelete();
+				return;
+			}
 			ajax("xform3.file.del",{
 				"ssid":a.o.ssid,
 				"name":a.o.name,
@@ -839,21 +876,7 @@ function xForm3(o) {
 				newwait_close();
 			},function(r){
 				if (r.data.err) newerror(r.data.err);
-				if (r.data.ok) {
-					a.data[field].files[index].deleted=true;
-					if (gid(item_id)) {
-						if (supportsTransitions) {
-							gid(item_id).addEventListener("transitionend",function(){
-								a.files.refreshField(field);
-								if (gid(item_id)) gid(item_id).parentNode.removeChild(gid(item_id));
-							},true);
-						} else {
-							a.files.refreshField(field);
-							classDel(item_id, "xform3_files_item_deleting");
-							gid(item_id).parentNode.removeChild(gid(item_id));
-						}
-					}
-				}
+				if (r.data.ok) ondelete();
 			});
 		},
 
@@ -903,6 +926,7 @@ function xForm3(o) {
 		// upload file
 		"upload":function(field){
 			a.fileUpload({
+				"f":field,
 				"url":alink({
 					"ajax":"xform3.files.upload",
 					"ssid":a.o.ssid,
