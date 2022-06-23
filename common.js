@@ -1,49 +1,31 @@
 // common.js by mr.xkr v2 rev.4b
-// Gracias a Binny V A (binnyva -en- hotmail -punto- com - binnyva.com) por la función adump.
 
-// saber si una variable está establecida o no
-function isset(v) { return (typeof(v)!="undefined"?true:false); }
+// check if a variable is set
+function isset(v) { return (typeof(v) != "undefined"?true:false); }
 
 // if not (a), then (b)
 function ifnot(a, b) { return (a?a:b); }
 
-// pequeñas funciones para reducir código
-function gid(id) {
-	try {
-		var rid=(typeof(id)=="object"?id:document.getElementById(id));
-		return rid;
-	} catch(e) {
-		return null;
-	}
-}
+// little functions to reduce code
+function gid(id) { try { var rid=(typeof(id) == "object"?id:document.getElementById(id)); return rid; } catch(e) { return null; } }
 function gidget(id) { return gid(id).innerHTML; }
-function gidset(id, html) { var e=gid(id); try { e.innerHTML=html; } catch(e) { console.log("gidset("+id+", html): "+e); } }
-function gidval(id, data) { if (typeof(data)!="undefined") gid(id).value=(data==null?"":data); else return(gid(id).type=="checkbox"?(gid(id).checked?gid(id).value:""):gid(id).value); }
+function gidset(id, html) { var e=gid(id); try { e.innerHTML=(typeof(html) == "undefined"?"":html); } catch(e) { console.log("gidset("+id+", html): "+e); } }
+function gidval(id, data) { if (typeof(data) != "undefined") gid(id).value=(data == null?"":data); else return(gid(id).type=="checkbox"?(gid(id).checked?gid(id).value:""):gid(id).value); }
 function gidvals(idsdata) { for (var i in idsdata) gidval(i,idsdata[i]); }
 function giddel(id) { var d=gid(id); d.parentNode.removeChild(d); }
 function gidmove(id_org, id_dst) { gid(id_dst).innerHTML=gid(id_org).innerHTML; gid(id_org).innerHTML=""; }
-function alter(id) { gid(id).style.display=(gid(id).style.display=="none"?"block":"none"); }
+function alter(id) { gid(id).style.display=(gid(id).style.display == "none"?"block":"none"); }
 function show(id) { gid(id).style.display="block"; }
 function hide(id) { gid(id).style.display="none"; }
 function cell(id) { gid(id).style.display="table-cell"; }
 function visible(id) { gid(id).style.visibility="visible"; }
 function hidden(id) { gid(id).style.visibility="hidden"; }
-function isShow(id) { return(gid(id).style.display=="block"?true:false); }
-function isVisible(id) { return(gid(id).style.display!="none"?true:false); }
-function showSwitch(id) { gid(id).style.display=(gid(id).style.display=="block"?"none":"block"); }
+function isShow(id) { return(gid(id).style.display == "block"?true:false); }
+function isVisible(id) { return(gid(id).style.display != "none"?true:false); }
+function showSwitch(id) { gid(id).style.display=(gid(id).style.display != "none"?"none":""); }
 function gidfocus(id) { if (gid(id)) { try { gid(id).select(); } catch(e) {}; try { gid(id).focus(); } catch(e) {}; } }
 
-// foreach
-function xforeach(a, f) {
-	var c=0;
-	if (typeof(a)=="object" && typeof(f)=="function")
-		for (var i in a)
-			if (f(a[i], i, a))
-				c++;
-	return c;
-}
-
-// establecer habilitado/deshabilitado
+// set element is enabled
 function gidenabled(id, enabled) {
 	var e=gid(id);
 	if (e) {
@@ -52,7 +34,17 @@ function gidenabled(id, enabled) {
 	}
 }
 
-// obtiene una fecha en formato YYYY-MM-DD de tres campos de texto con sufijos _d, _m e _y para dia, mes, año
+// foreach implementation
+function xforeach(a, f) {
+	var c=0;
+	if (typeof(a) == "object" && typeof(f) == "function")
+		for (var i in a)
+			if (f(a[i], i, a))
+				c++;
+	return c;
+}
+
+// ensure valid date in ISO format YYYY-MM-DD (deprecated)
 function gidvalFecha(id) {
 	var d=intval(gidval(id+"_d"));
 	var m=intval(gidval(id+"_m"));
@@ -154,17 +146,18 @@ function newElement(element, o) {
 	return e;
 }
 
-// volcar el árbol de una variable JavaScript
+// dump JavaScript variable tree
+// Thanks to Binny V A (binnyva -at- hotmail -dot- com - binnyva.com) for adump implementation
 function adump(arr, level) {
 	if (!level) level=0;
 	var s="";
-	var t=""; for (var j=0;j<level;j++) t+="\t";
+	var t=""; for (var j=0; j < level; j++) t+="\t";
 	try {
-		if (typeof(arr)=='object') {
+		if (typeof(arr) == 'object') {
 			if (arr.nextSibling) return t+"{*}\n"; // NO devolver elementos internos del navegador
 			for (var item in arr) {
 				var value=arr[item];
-				if (typeof(value)=='object') {
+				if (typeof(value) == 'object') {
 					var size=0; for (var none in value) size++;
 					s+=t+'"' + item + '" = '+typeof(value)+'('+size+'):\n';
 					s+=adump(value,level+1);
