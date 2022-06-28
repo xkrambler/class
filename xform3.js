@@ -218,7 +218,7 @@ function xForm3(o) {
 			case "files":
 			case "image":
 			case "images":
-				return a.filter(field, a.files.value(field));
+				return a.filter(field, a.files.value(field, value));
 			case "html":
 			case "div":
 				if (!gid(id)) return null;
@@ -534,14 +534,14 @@ function xForm3(o) {
 
 	};
 
-	// set custom file uploader
-	a.uploader=function(field, uploader){
-		if (!a.data[field]) a.data[field]={};
-		a.data[field].uploader=uploader;
-	};
-
 	// files actions
 	a.files={
+
+		// set custom file uploader
+		"uploader":function(field, uploader){
+			if (!a.data[field]) a.data[field]={};
+			a.data[field].uploader=uploader;
+		},
 
 		// get all files
 		"get":function(field){
@@ -974,7 +974,8 @@ function xForm3(o) {
 		},
 
 		// get/set files
-		"value":function(field){
+		"value":function(field, value){
+			if (a.data[field] && a.data[field].uploader && a.data[field].uploader.value) return a.data[field].uploader.value(value);
 			var f=a.o.fields[field];
 			if (f.sortable) {
 				var sortedIDs=$(a.data[field].container).sortable("toArray");

@@ -524,21 +524,6 @@ abstract class dbbase {
 		return $sql;
 	}
 
-	// search by words in such fields (partial/total)
-	function sqlwordsearch($search, $fields, $total=false) {
-		$sql="";
-		if ($fields && strlen($search)) {
-			$s=explode(" ", $search);
-			foreach ($s as $i=>$w) {
-				$sql.=($sql?" AND ":"")."(";
-				foreach ($fields as $i=>$f)
-					$sql.=($i?" OR ":"").$this->sqlfield($f).($total?"=":" LIKE ")."'".$this->escape($total?$w:(substr_count($w,"%")?$w:"%".$w."%"))."'";
-				$sql.=")";
-			}
-		}
-		return $sql;
-	}
-
 	// return a list of values escaped or by field key to be used for "IN" clause
 	function sqlin($values, $field=null) {
 		$in="";
@@ -552,6 +537,26 @@ abstract class dbbase {
 			}
 		}
 		return (strlen($in)?$in:"NULL");
+	}
+
+	// return SQL UPDATE or INSERT table sentence
+	function sqlsave($table, $fields, $keys=null) {
+		return ($keys?$this->sqlupdate($table, $fields, $keys):$this->sqlinsert($table, $fields));
+	}
+
+	// search by words in such fields (partial/total)
+	function sqlwordsearch($search, $fields, $total=false) {
+		$sql="";
+		if ($fields && strlen($search)) {
+			$s=explode(" ", $search);
+			foreach ($s as $i=>$w) {
+				$sql.=($sql?" AND ":"")."(";
+				foreach ($fields as $i=>$f)
+					$sql.=($i?" OR ":"").$this->sqlfield($f).($total?"=":" LIKE ")."'".$this->escape($total?$w:(substr_count($w,"%")?$w:"%".$w."%"))."'";
+				$sql.=")";
+			}
+		}
+		return $sql;
 	}
 
 	// get/set error action events
