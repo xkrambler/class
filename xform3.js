@@ -4,8 +4,11 @@ function xForm3(o) {
 	var a=this;
 	a.o=array_merge({
 		"thumbnail":{"w":170, "h":128}
-	}, array_copy(o));
+	}, o);
 	a.data={};
+
+	// xForm3 declaration
+	a.xForm3=true;
 
 	// nocache token
 	a.nocache=function(){ return (new Date().getTime()); };
