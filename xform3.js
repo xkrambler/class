@@ -25,6 +25,9 @@ function xForm3(o) {
 		if (isset(v)) a.o.fields[f][n]=v;
 		return a.o.fields[f][n];
 	};
+	a.del=function(f){
+		delete a.o.fields[f];
+	};
 	a.caption=function(f){ return (a.o.fields[f]?a.o.fields[f].caption:null); };
 	a.id=function(f){ return a.o.name+"_"+f; };
 	a.gid=function(f){ return (a.id(f)?gid(a.id(f)):null); };

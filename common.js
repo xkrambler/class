@@ -520,6 +520,18 @@ function cssAdd(css) {
 	document.getElementsByTagName("head")[0].appendChild(style);
 }
 
+// copia en profundidad de un objeto
+function array_copy(o) {
+	try {
+		eval("return {...o};");
+	} catch(e) {
+		if (typeof o != "object" || o === null || o instanceof HTMLElement) return o;
+		var r = o.constructor == Array ? [] : {};
+		for (var i in o) r[i] = array_copy(o[i]);
+		return r;
+	}
+}
+
 // array_count: cuenta el número de elementos de un array asociativo
 function array_count(a) {
 	var c=0;
@@ -527,22 +539,34 @@ function array_count(a) {
 	return c;
 }
 
-// array_merge: mezcla arrays puros o asociativos
-// es equivalente a la funcion de PHP, y se hace en profundidad
+// array_merge: mezcla arrays puros o asociativos en profundidad
 function array_merge(a1, a2) {
-	var a=array_copy(a1);
-	var b=array_copy(a2);
-	for (var index in b) {
-		var element=b[index];
-		if (typeof a[index] === "object" && typeof element === "object") {
-			a[index]=array_merge(a[index], element);
-		} else if (typeof a[index] === "array" && typeof element === "array") {
-			a[index]=a[index].concat(element);
-		} else {
-			a[index]=element;
+	try {
+		eval("return {...a1, ...a2};");
+	} catch(e) {
+		var a=array_copy(a1);
+		var b=array_copy(a2);
+		for (var i in b) {
+			var e=b[i];
+			if (typeof a[i] === "object" && typeof e === "object") {
+				a[i]=array_merge(a[i], e);
+			} else if (typeof a[i] === "array" && typeof e === "array") {
+				a[i]=a[i].concat(e);
+			} else {
+				a[i]=e;
+			}
 		}
+		return a;
 	}
-	return a;
+}
+
+// elimina un elemento en la posición del indice de un array
+function array_delete(a, index) {
+	var n=Array();
+	for (var i in a)
+		if (i != index)
+			n[n.length]=a[i];
+	return n;
 }
 
 // array_remove: elimina claves de un array asociativo
@@ -552,23 +576,13 @@ function array_remove(a1, a2) {
 	for (var i in a1) {
 		clone=true;
 		for (var j in a2)
-			if (i==a2[j]) {
+			if (i == a2[j]) {
 				clone=false;
 				break;
 			}
-		if (clone)
-		a[i]=a1[i];
+		if (clone) a[i]=a1[i];
 	}
 	return a;
-}
-
-// elimina un elemento en la posición del indice de un array
-function array_delete(a, index) {
-	var n=Array();
-	for (var i in a)
-		if (i!=index)
-			n[n.length]=a[i];
-	return n;
 }
 
 // array_get: devuelve las claves de un array dada una lista de ellas
@@ -586,14 +600,6 @@ function array_save(a1, a2, list) {
 	return a1;
 }
 
-// copia en profundidad de un objeto
-function array_copy(o) {
-	if (typeof o != "object" || o === null || o instanceof HTMLElement) return o;
-	var r = o.constructor == Array ? [] : {};
-	for (var i in o) r[i] = array_copy(o[i]);
-	return r;
-}
-
 // añade un objeto a un array plano
 function array_push(a,o) {
 	a.push(o);
@@ -609,15 +615,15 @@ function array_isclean(a) {
 
 // devuelve si un array es idéntico a otro (se usa ===)
 function array_equals(a, b) {
-	var c=0,d=0;
+	var c=0, d=0;
 	for (var i in a) {
-		if (a[i]!==b[i])
+		if (a[i] !== b[i])
 			return false;
 		c++;
 	}
 	for (var i in b)
 		d++;
-	return (c==d?true:false);
+	return (c == d?true:false);
 }
 
 // devolver un hash siempre, aunque el constructor sea un array
@@ -629,8 +635,7 @@ function array_hash(a) {
 // devuelve las claves de un hash en un nuevo array
 function array_keys(a) {
 	var b=[];
-	for (var i in a)
-		b.push(i);
+	for (var i in a) b.push(i);
 	return b;
 }
 
@@ -645,7 +650,7 @@ function array_values(h) {
 function in_array(e, a) {
 	if (!a) return false;
 	for (var i in a)
-		if (a[i]===e) return true;
+		if (a[i] === e) return true;
 	return false;
 }
 
