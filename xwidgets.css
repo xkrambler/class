@@ -174,10 +174,13 @@
 	opacity: 0.5;
 }
 .checkbox>span, .radio>span {
-	padding: 2px 2px 2px 22px;
+	padding: 0.1em 0.1em 0.1em 1.6em;
 	user-select: none;
 	background: 2px center no-repeat;
 	background-size: 1em;
+}
+.checkbox>span:empty, .radio>span:empty {
+	padding: 0.1em 0.1em 0.1em 1.1em;
 }
 .checkbox>span {}
 .radio>span {}
