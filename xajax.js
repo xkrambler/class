@@ -298,12 +298,13 @@ function xajax(o){
 		var async=(o.sync?false:true);
 		var method=(o.method?o.method:(post || fd?"POST":"GET"));
 		var url=self.alink(get, (o.url?o.url:location.href));
+		var headers=o.headers || {};
+		if (mime) headers['Content-Type']=mime;
 
-		// do AJAX request
-		var r=false;
+		// do request
 		try {
 			http.open(method, url, async, (self.isset(o.user)?o.user:null), (self.isset(o.pass)?o.pass:null));
-			if (mime) http.setRequestHeader('Content-Type', mime);
+			if (headers) for (var k in headers) if (typeof(headers[k]) === "string") http.setRequestHeader(k, headers[k]);
 			if (async) http.onreadystatechange=function(){ self.onreadystatechange(http, o); };
 			if (o.progress) http.onprogress=o.progress;
 			if (o.uploadprogress && http.upload) http.upload.onprogress=o.uploadprogress;
