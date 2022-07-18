@@ -110,17 +110,16 @@ class xError {
 
 			// capture non-critical errors
 			set_error_handler(function($type, $message, $file, $line, $context){
-				if (error_reporting() && in_array($type, $this->warnings)) {
-					$this->err([
-						"type"=>$type,
-						"message"=>$message,
-						"file"=>$file,
-						"type"=>$type,
-						"line"=>$line,
-						"trace"=>$this->trace(),
-						//"context"=>$context,
-					], false);
-				}
+				$this->error=[
+					"type"=>$type,
+					"message"=>$message,
+					"file"=>$file,
+					"type"=>$type,
+					"line"=>$line,
+					"trace"=>$this->trace(),
+					//"context"=>$context,
+				];
+				if (error_reporting() && in_array($type, $this->warnings)) $this->err($this->error, false);
 			});
 
 			// capture critical errors
@@ -135,6 +134,7 @@ class xError {
 						foreach ($a as $l)
 							if (!in_array($l, ["Stack trace:", "  thrown"]))
 								$e["trace"][]=["message"=>$l];
+						$this->error=$e;
 						$this->err($e);
 					}
 				}
