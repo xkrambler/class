@@ -110,16 +110,18 @@ class xError {
 
 			// capture non-critical errors
 			set_error_handler(function($type, $message, $file, $line, $context){
-				$this->error=[
-					"type"=>$type,
-					"message"=>$message,
-					"file"=>$file,
-					"type"=>$type,
-					"line"=>$line,
-					"trace"=>$this->trace(),
-					//"context"=>$context,
-				];
-				if (error_reporting() && in_array($type, $this->warnings)) $this->err($this->error, false);
+				if (in_array($type, $this->warnings)) {
+					$this->error=[
+						"type"=>$type,
+						"message"=>$message,
+						"file"=>$file,
+						"type"=>$type,
+						"line"=>$line,
+						"trace"=>$this->trace(),
+						//"context"=>$context,
+					];
+					if (error_reporting()) $this->err($this->error, false);
+				}
 			});
 
 			// capture critical errors
