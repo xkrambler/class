@@ -30,6 +30,7 @@ var xRegion={
 		
 		a.isie7=function(){ return (navigator.userAgent.indexOf("MSIE 7")!=-1); }
 		a.isie78=function(){ return (navigator.userAgent.indexOf("MSIE 7")!=-1 || navigator.userAgent.indexOf("MSIE 8")!=-1); }
+		a.hasCanvasEvents=function(){ return !a.isie7(); }
 		
 		// centrar mapa
 		a.center=function(){
@@ -657,12 +658,21 @@ var xRegion={
 			return true;
 			
 		};
-		
+
+		a.destroy=function(){
+			window.removeEventListener("resize", a.redraw);
+		};
+
 		// startup
 		a.init=function(){
 			
 			// reset
 			if (!a.reset()) return false;
+
+			// convertir coordenadas, si necesario
+			xforeach(o.regions, function(region, index){
+				if (typeof(region.coords) == "string") o.regions[index].coords=xRegion.coordsFromXYString(region.coords);
+			});
 
 			// computar todos los cálculos/cachés
 			a.computeAll();
@@ -757,7 +767,7 @@ var xRegion={
 				var mouse=a.getCanvasMousePos(e);
 				var x=parseInt(mouse.x-a.dx),y=parseInt(mouse.y-a.dy);
 				// acciones
-				if (e.button==(a.isie78()?1:0)) {
+				if (e.button == (a.isie78()?1:0)) {
 					a.clicked=false;
 					// ver si se ha pulsado encima de una región
 					for (var region in a.tmp.regions) {
@@ -935,7 +945,7 @@ var xRegion={
 						a.redraw(hover_last!=(a.hover?true:false));
 					}
 				};
-				if (a.isie78()) o.canvas.onmousemove=mousemoveEvent;
+				if (a.hasCanvasEvents()) o.canvas.onmousemove=mousemoveEvent;
 				else window.onmousemove=mousemoveEvent;
 			}
 			
@@ -968,22 +978,26 @@ var xRegion={
 				// redibujar si no deshabilitado
 				if (!o.nomouseredraw) a.redraw();
 			};
-			if (a.isie78()) o.canvas.onmouseup=mouseupEvent;
+			if (a.hasCanvasEvents()) o.canvas.onmouseup=mouseupEvent;
 			else window.onmouseup=mouseupEvent;
 			
 			// bloquear scroll en IE7/8 si se está dentro del canvas (bug javascript)
-			if (a.isie78()) {
+			if (a.hasCanvasEvents()) {
 				o.canvas.onmouseover=function(){ document.onmousewheel=function(){ return false; } }
 				o.canvas.onmouseout=function(){ document.onmousewheel=function(){ return true; } }
 			}
 
 			// resize
-			var onresize_last=window.onresize;
-			window.onresize=function(e){
-				try { if (onresize_last) onresize_last(e); } catch(e) {}
-				if (!e) var e=window.event;
-				a.redraw();
-			};
+			if (window.addEventListener) {
+				window.addEventListener("resize", a.redraw(), false);
+			} else {
+				var onresize_last=window.onresize;
+				window.onresize=function(e){
+					try { if (onresize_last) onresize_last(e); } catch(e) {}
+					if (!e) var e=window.event;
+					a.redraw();
+				};
+			}
 			
 			// load map
 			a.img=new Image();
