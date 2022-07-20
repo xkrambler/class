@@ -237,7 +237,7 @@ function ajax(data, realdata, func1, func2) {
 					else alert(alertmsg+"\n\n"+r.text);
 				}
 				if (always) always(r);
-				func(r);
+				if (func) func(r);
 			} else {
 				if (data.events) data.events(r);
 			}
