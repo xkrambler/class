@@ -618,6 +618,7 @@ var xRegion={
 					"color":a.getClass("xregion_point_active",borderTopColor)
 				}
 			};
+			if (o.styles) a.styles=array_merge(a.styles, o.styles);
 
 			// inicializar básicos y crear canvas
 			o.id=gid(o.id);
