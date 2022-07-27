@@ -94,10 +94,28 @@ function xForm3(o) {
 
 	// get/set if a field is enabled
 	a.enabled=function(f, enabled){
+		return (a.attribute(f, "disabled", (enabled?false:(isset(enabled)?"":null))) != "");
+	};
+
+	// get/set if a field is disabled
+	a.disabled=function(f, disabled){
+		return (a.attribute(f, "disabled", (disabled?"":disabled)) == "");
+	};
+
+	// get/set if a field is read only
+	a.readonly=function(f, enabled){
+		return a.attribute(f, "readonly", (enabled?"":enabled));
+	};
+
+	// get/set/del a generic field attribute
+	a.attribute=function(f, attribute, value){
 		var e=gid(a.id(f));
 		if (!e) return null;
-		if (enabled) e.removeAttribute("disabled");
-		else e.setAttribute("disabled", "");
+		if (isset(value) && value !== null) {
+			if (value === false) e.removeAttribute(attribute);
+			else e.setAttribute(attribute, value);
+		}
+		return e.getAttribute(attribute);
 	};
 
 	// get all fields values from a form
