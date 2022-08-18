@@ -25,6 +25,13 @@ class TPVSERMEPA extends TPV {
 		$this->setup($o);
 	}
 
+	function api() {
+		return ($this->test()
+			?'https://sis-t.redsys.es:25443/sis/'
+			:'https://sis.redsys.es/sis/'
+		);
+	}
+
 	// tipo de TPV
 	function type() {
 		return "SERMEPA";
@@ -248,6 +255,73 @@ class TPVSERMEPA extends TPV {
 		$response=$codes[(string)$code];
 		if (!$response && intval($code) < 100) $response="Transacción autorizada para pagos y preautorizaciones";
 		return $response;
+	}
+
+	// cancelar operación
+	function cancelOperation($tpv_id) {
+		if (!function_exists("curl_init")) return $this->error("cancelOperation: CURL no habilitado.");
+		if (!function_exists("simplexml_load_string")) return $this->error("cancelOperation: SimpleXML no habilitado.");
+
+		// obtener operación por identificador
+		if (!($operacion=$this->dbGet($tpv_id))) return $this->error("cancelOperation: operación ".$tpv_id." no encontrada.");
+
+		// obtener operación, solicitud realizada y preparar campos
+		if (!($resultado=json_decode($operacion["resultado"], true))) return $this->error("cancelOperation: no se puede decodificar notificacion.");
+		$fields=array();
+		foreach ($_fields=array(
+			"DS_MERCHANT_AMOUNT"      =>"Ds_Amount",
+			"DS_MERCHANT_CURRENCY"    =>"Ds_Currency",
+			"DS_MERCHANT_MERCHANTCODE"=>"Ds_MerchantCode",
+			"DS_MERCHANT_ORDER"       =>"Ds_Order",
+			"DS_MERCHANT_TERMINAL"    =>"Ds_Terminal",
+		) as $f=>$p)
+			$fields[$f]=$resultado["parameters"][$p];
+
+		// añadir tipo de transacción
+		$fields["DS_MERCHANT_TRANSACTIONTYPE"]="45";
+
+		$fields=array(
+			//"fields"=>$fields,
+			"Ds_SignatureVersion"=>'HMAC_SHA256_V1',
+			"Ds_MerchantParameters"=>base64_encode(json_encode($fields)),
+			"Ds_Signature"=>$this->getSignature($fields),
+		);
+		//debug($fields);exit;
+
+		// preparar y lanzar CURL
+		$ch=curl_init();
+		curl_setopt_array($ch, array(
+			CURLOPT_URL=>$this->api()."rest/trataPeticionREST",
+			CURLOPT_POST=>1,
+			CURLOPT_FRESH_CONNECT=>1,
+			CURLOPT_RETURNTRANSFER=>1,
+			CURLOPT_FORBID_REUSE=>1,
+			CURLOPT_POSTFIELDS=>http_build_query($fields),
+			CURLOPT_HTTPHEADER=>array('Content-Type: application/x-www-form-urlencoded'),
+			CURLINFO_HEADER_OUT=>1,
+		));
+		$this->cancel_result=curl_exec($ch);
+		//echo "<h2>Resultado</h2>".x::entities($this->cancel_result); debug(curl_getinfo($ch));
+		curl_close($ch);
+
+		// decodificar JSON inicial
+		if (!($cr=json_decode($this->cancel_result, true))) return $this->error("cancelOperation: Error desconocido, salida RAW: ".$this->cancel_result);
+
+		// decodificar parámetros
+		if (!($Ds_MerchantParameters=json_decode(base64_decode($cr["Ds_MerchantParameters"]), true))) return $this->error("cancelOperation: No se puede decodificar JSON de Ds_MerchantParameters, salida RAW: ".$this->cancel_result);
+
+		// comprobar respuesta
+		if ($Ds_MerchantParameters["Ds_Response"] != "0400") return $this->error("cancelOperation: Respuesta no válida, parámetros: ".json_encode($Ds_MerchantParameters));
+
+		// update TPV entry
+		if (!$this->db->query($this->db->sqlupdate($this->table(), array(
+			"devolucion"=>$this->db->now(),
+			"estado"=>"RETURN",
+		), array("id"=>$tpv_id)))) return $this->dbErr();
+
+		// OK
+		return true;
+
 	}
 
 	// mensajes de respuestas de TPV consultables por responsecode("codigo")
