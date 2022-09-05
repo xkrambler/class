@@ -81,6 +81,21 @@ class WS {
 		}
 	}
 
+	// return all HTTP headers, no maters if function exists
+	function getAllHeaders() {
+		if (function_exists('getallheaders')) {
+			// direct method
+			return getallheaders();
+		} else {
+			// probably PHP-FPM < 7.3
+			$headers=[];
+			foreach ($_SERVER as $k=>$v)
+				if (substr($k, 0, 5) == 'HTTP_')
+					$headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($k, 5)))))]=$v;
+			return $headers;
+		}
+	}
+
 	// get current key
 	function key() {
 
@@ -89,7 +104,7 @@ class WS {
 
 		// if no key in data, try get it from headers
 		if (!isset($key)) {
-			$headers=getallheaders();
+			$headers=$this->getAllHeaders();
 			foreach ($keyheaders=["Authorization", "X-API-KEY"] as $k)
 				if (isset($headers[$k]))
 					$key=$headers[$k];
