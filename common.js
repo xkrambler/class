@@ -523,12 +523,8 @@ function cssAdd(css) {
 // copia en profundidad de un objeto
 function array_copy(o) {
 	if (typeof o != "object" || o === null || o instanceof HTMLElement) return o;
-	try {
-		eval("var r=(o instanceof Array?[...o]:{...o});");
-	} catch(e) {
-		var r=(o.constructor == Array?[]:{});
-		for (var i in o) r[i]=array_copy(o[i]);
-	}
+	var r=(o instanceof Array?[]:{});
+	for (var i in o) r[i]=array_copy(o[i]);
 	return r;
 }
 
@@ -541,20 +537,16 @@ function array_count(a) {
 
 // array_merge: mezcla arrays puros o asociativos en profundidad
 function array_merge(a1, a2) {
-	try {
-		eval("var a={...a1, ...a2};");
-	} catch(e) {
-		var a=array_copy(a1);
-		var b=array_copy(a2);
-		for (var i in b) {
-			var e=b[i];
-			if (typeof a[i] === "object" && typeof e === "object") {
-				a[i]=array_merge(a[i], e);
-			} else if (typeof a[i] === "array" && typeof e === "array") {
-				a[i]=a[i].concat(e);
-			} else {
-				a[i]=e;
-			}
+	var a=array_copy(a1);
+	var b=array_copy(a2);
+	for (var i in b) {
+		var e=b[i];
+		if (typeof a[i] === "object" && typeof e === "object") {
+			a[i]=array_merge(a[i], e);
+		} else if (typeof a[i] === "array" && typeof e === "array") {
+			a[i]=a[i].concat(e);
+		} else {
+			a[i]=e;
 		}
 	}
 	return a;
