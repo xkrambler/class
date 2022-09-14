@@ -522,14 +522,14 @@ function cssAdd(css) {
 
 // copia en profundidad de un objeto
 function array_copy(o) {
+	if (typeof o != "object" || o === null || o instanceof HTMLElement) return o;
 	try {
-		eval("return {...o};");
+		eval("var r=(o instanceof Array?[...o]:{...o});");
 	} catch(e) {
-		if (typeof o != "object" || o === null || o instanceof HTMLElement) return o;
-		var r = o.constructor == Array ? [] : {};
-		for (var i in o) r[i] = array_copy(o[i]);
-		return r;
+		var r=(o.constructor == Array?[]:{});
+		for (var i in o) r[i]=array_copy(o[i]);
 	}
+	return r;
 }
 
 // array_count: cuenta el número de elementos de un array asociativo
@@ -542,7 +542,7 @@ function array_count(a) {
 // array_merge: mezcla arrays puros o asociativos en profundidad
 function array_merge(a1, a2) {
 	try {
-		eval("return {...a1, ...a2};");
+		eval("var a={...a1, ...a2};");
 	} catch(e) {
 		var a=array_copy(a1);
 		var b=array_copy(a2);
@@ -556,8 +556,8 @@ function array_merge(a1, a2) {
 				a[i]=e;
 			}
 		}
-		return a;
 	}
+	return a;
 }
 
 // elimina un elemento en la posición del indice de un array
