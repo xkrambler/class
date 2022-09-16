@@ -455,70 +455,85 @@ class xForm3 {
 		foreach ($this->fields as $field=>$f) {
 			$prefix=($f["caption"]?$f["caption"].": ":($f["label"]?$f["label"].": ":""));
 			$v=$this->value($field);
-			// required field
-			if ($f["required"] && !trim($v))
-				$this->errors[$field]=array(
-					"id"=>$this->id($field),
-					"field"=>$field,
-					"type"=>"required",
-					"err"=>(is_string($f["required"])?$f["required"]:$prefix."Campo requerido."),
-				);
-			// is e-mail, check
-			if ($f["type"] == "email" && !filter_var($v, FILTER_VALIDATE_EMAIL))
-				$this->errors[$field]=array(
-					"id"=>$this->id($field),
-					"field"=>$field,
-					"type"=>"email",
-					"err"=>$prefix."El e-mail no es válido.",
-				);
-			// check length interval
-			if ($f["minlength"] && $f["maxlength"] && (
-				($f["minlength"] > strlen($v)) || ($f["maxlength"] < strlen($v))
-			)) {
-				$this->errors[$field]=array(
-					"id"=>$this->id($field),
-					"field"=>$field,
-					"type"=>"nlength",
-					"err"=>$prefix."Debe tener ".($f["minlength"] == $f["maxlength"]
-						?($f["minlength"]==1?"1 caracter.":$f["minlength"]." caracteres.")
-						:"entre ".$f["minlength"]." y ".$f["maxlength"]." caracteres."
-						)
-					,
-				);
-			} else {
-				// check minimum length
-				if ($f["minlength"] && $f["minlength"] > strlen($v))
+			$r=null;
+			if (isset($f["verify"])) {
+				if ($f["verify"] === false) {
+					$r=false;
+				} else if (is_callable($f["verify"]) && ($verify=$f["verify"]) && ($r=$verify(array("value"=>$v, "prefix"=>$prefix, "field"=>$f)))) {
+					$this->errors[$field]=array_merge(array(
+						"id"=>$this->id($field),
+						"field"=>$field,
+						"type"=>"verify",
+						"err"=>$prefix."Verificación fallida",
+					), $r);
+				}
+			}
+			if (!isset($f["verify"]) || $r === null) {
+				// required field
+				if ($f["required"] && !trim($v))
 					$this->errors[$field]=array(
 						"id"=>$this->id($field),
 						"field"=>$field,
-						"type"=>"minlength",
-						"err"=>$prefix."Debe tener un mínimo de ".$f["minlength"]." caracteres.",
+						"type"=>"required",
+						"err"=>(is_string($f["required"])?$f["required"]:$prefix."Campo requerido."),
 					);
-				// check maximum length
-				if ($f["maxlength"] && $f["maxlength"] < strlen($v))
+				// is e-mail, check
+				if ($f["type"] == "email" && !filter_var($v, FILTER_VALIDATE_EMAIL))
 					$this->errors[$field]=array(
 						"id"=>$this->id($field),
 						"field"=>$field,
-						"type"=>"maxlength",
-						"err"=>$prefix."Debe tener un máximo de ".$f["maxlength"]." caracteres.",
+						"type"=>"email",
+						"err"=>$prefix."El e-mail no es válido.",
+					);
+				// check length interval
+				if ($f["minlength"] && $f["maxlength"] && (
+					($f["minlength"] > strlen($v)) || ($f["maxlength"] < strlen($v))
+				)) {
+					$this->errors[$field]=array(
+						"id"=>$this->id($field),
+						"field"=>$field,
+						"type"=>"nlength",
+						"err"=>$prefix."Debe tener ".($f["minlength"] == $f["maxlength"]
+							?($f["minlength"]==1?"1 caracter.":$f["minlength"]." caracteres.")
+							:"entre ".$f["minlength"]." y ".$f["maxlength"]." caracteres."
+							)
+						,
+					);
+				} else {
+					// check minimum length
+					if ($f["minlength"] && $f["minlength"] > strlen($v))
+						$this->errors[$field]=array(
+							"id"=>$this->id($field),
+							"field"=>$field,
+							"type"=>"minlength",
+							"err"=>$prefix."Debe tener un mínimo de ".$f["minlength"]." caracteres.",
+						);
+					// check maximum length
+					if ($f["maxlength"] && $f["maxlength"] < strlen($v))
+						$this->errors[$field]=array(
+							"id"=>$this->id($field),
+							"field"=>$field,
+							"type"=>"maxlength",
+							"err"=>$prefix."Debe tener un máximo de ".$f["maxlength"]." caracteres.",
+						);
+				}
+				// check minimum number
+				if ($f["min"] && $f["min"] > doubleval($v))
+					$this->errors[$field]=array(
+						"id"=>$this->id($field),
+						"field"=>$field,
+						"type"=>"min",
+						"err"=>$prefix."Debe ser como mínimo ".$f["min"].".",
+					);
+				// check maximum number
+				if ($f["max"] && $f["max"] < doubleval($v))
+					$this->errors[$field]=array(
+						"id"=>$this->id($field),
+						"field"=>$field,
+						"type"=>"max",
+						"err"=>$prefix."Debe ser como máximo ".$f["max"].".",
 					);
 			}
-			// check minimum number
-			if ($f["min"] && $f["min"] > doubleval($v))
-				$this->errors[$field]=array(
-					"id"=>$this->id($field),
-					"field"=>$field,
-					"type"=>"min",
-					"err"=>$prefix."Debe ser como mínimo ".$f["min"].".",
-				);
-			// check maximum number
-			if ($f["max"] && $f["max"] < doubleval($v))
-				$this->errors[$field]=array(
-					"id"=>$this->id($field),
-					"field"=>$field,
-					"type"=>"max",
-					"err"=>$prefix."Debe ser como máximo ".$f["max"].".",
-				);
 		}
 		return ($this->errors?false:true);
 	}
