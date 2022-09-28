@@ -119,7 +119,6 @@ class xItemsSearch {
 			"max"=>$max,
 			"visible"=>$visible,
 			"data"=>$datos,
-			"extra"=>$extra,
 		));
 
 	}
