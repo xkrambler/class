@@ -549,7 +549,7 @@ function xItemsSearch(o) {
 			for (var i in a.fields) {
 				var n=a.fields[i];
 				if (!n.disabled) {
-					var v=(e[i] === null?"":e[i]);
+					var v=(e[i] === null || typeof(e[i]) === "undefined"?"":e[i]);
 					if (n.filter && typeof(n.filter) == "string") n.filter=eval(n.filter);
 					else if (v && n.limit) v=(v.length >= n.limit?v.substring(0, n.limit-1)+"…":v);
 					var caption=(n.filter?n.filter(e[i],i,e,c-1,n):v);
