@@ -9,7 +9,7 @@ function ifnot(a, b) { return (a?a:b); }
 // little functions to reduce code
 function gid(id) { try { var rid=(typeof(id) == "object"?id:document.getElementById(id)); return rid; } catch(e) { return null; } }
 function gidget(id) { return gid(id).innerHTML; }
-function gidset(id, html) { var e=gid(id); try { e.innerHTML=(typeof(html) == "undefined"?"":html); } catch(e) { console.log("gidset("+id+", html): "+e); } }
+function gidset(id, html) { var e=gid(id); try { e.innerHTML=(typeof(html) == "undefined"?"":html); } catch(e) { console.warn("gidset("+id+", html): "+e); } }
 function gidval(id, data) { if (typeof(data) != "undefined") gid(id).value=(data == null?"":data); else return(gid(id).type=="checkbox"?(gid(id).checked?gid(id).value:""):gid(id).value); }
 function gidvals(idsdata) { for (var i in idsdata) gidval(i,idsdata[i]); }
 function giddel(id) { var d=gid(id); d.parentNode.removeChild(d); }
