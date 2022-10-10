@@ -38,7 +38,10 @@ function xItemsSearch(o) {
 	a.store=function(key, value){
 		if (!a.o.cookie) return null;
 		var values=a.storage(a.o.cookie);
-		if (values) values=JSON.parse(values);
+		if (values) {
+			try { values=JSON.parse(values); } catch(e) {}
+			if (typeof(values) !== "object") values={};
+		}
 		if (typeof(value) !== "undefined") {
 			values=values || {};
 			values[key]=value;
