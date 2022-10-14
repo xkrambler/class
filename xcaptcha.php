@@ -7,10 +7,17 @@
 	License: GPLv3
 	Author: Pablo Rodriguez Rey
 
-	Syntax:
+	Example of instance:
 		$xcaptcha=new xCaptcha(["noise"=>true]);
+
+	Example of generator:
 		$xcaptcha->output();
-		$xcaptcha->get();
+
+	Example of validator:
+		if ($xcaptcha->verify("NUMBER")) {
+			$xcaptcha->destroy();
+			die("Bad security code.");
+		}
 
 */
 class xCaptcha {
