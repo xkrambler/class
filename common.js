@@ -884,9 +884,15 @@ function selectionEnabled(o,enable) {
 	o.style.cursor="default";
 }
 
+// get current decimal separator
+function localeDecimalSeparator() {
+	return (1.1).toLocaleString().substring(1, 2);
+}
+
 // entrada sólo numérica entera
 function gInputInt(id, negatives, floating) {
 	var input=gid(id);
+	var lds=localeDecimalSeparator();
 	input.style.textAlign="right";
 	input.onkeyup=function(e){
 		var c=e.keyCode;
@@ -917,8 +923,8 @@ function gInputInt(id, negatives, floating) {
 			if (c==86) return true; // Ctrl+V
 		}
 		if (floating)
-			if (c==110 || c==190)
-				return (this.value.indexOf(".")==-1?true:false);
+			if ((lds == "," && (c==188)) || (c==110 || c==190))
+				return (this.value.indexOf(lds)==-1 && this.value.indexOf(".")==-1?true:false);
 		if (negatives)
 			if (c==109 || (c==173 && !input.getAttribute("data-key-shift")))
 				return (this.value.indexOf("-")==-1?true:false);
@@ -927,8 +933,9 @@ function gInputInt(id, negatives, floating) {
 		return false;
 	};
 	input.onblur=function(e){
-		var v=parseFloat(this.value);
-		this.value=(isNaN(v)?"":v);
+		var lds=localeDecimalSeparator();
+		var v=parseFloat(this.value.replace(lds, "."));
+		this.value=((isNaN(v)?"":v)+"").replace(".", lds);
 	};
 	input.onblur();
 }
