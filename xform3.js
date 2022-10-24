@@ -203,15 +203,21 @@ function xForm3(o) {
 		return (value === ""?null:value);
 	};
 
-	// filtrer value
+	// locale float parser
+	a.localeParseFloat=function(value){
+		var lds=localeDecimalSeparator();
+		return parseFloat((""+value).replace(lds, "."));
+	};
+
+	// filter value
 	a.filter=function(field, value){
 		var f=a.o.fields[field];
 		if (f) {
 			if (f.nullifempty) value=a.nullifempty(value);
 			if (f.integer)  value=(value?parseInt(value):0);
 			if (f.number)   value=(value?parseInt(value):0);
-			if (f.positive) value=(value?Math.abs(parseFloat(value)):0);
-			if (f.decimal)  value=(value?parseFloat(value):0);
+			if (f.positive) value=(value?Math.abs(a.localeParseFloat(value)):0);
+			if (f.decimal)  value=(value?a.localeParseFloat(value):0);
 		}
 		return value;
 	};
