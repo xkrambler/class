@@ -1862,6 +1862,7 @@ var xwidgets={
 			self.firstselect();
 			// register self
 			xwidgets.widgets[self.o.id]=self;
+			if (o.focus) self.focus();
 		};
 
 		// automatic startup
