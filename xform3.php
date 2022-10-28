@@ -643,7 +643,7 @@ class xForm3 {
 		$styles=$this->styles($field);
 		$datalist="";
 		$autocomplete=(isset($f["autocomplete"])?" autocomplete='".(is_string($f["autocomplete"])?$f["autocomplete"]:($f["autocomplete"]?"on":"off"))."'":"");
-		// types with conversions
+		// types with align/conversions
 		switch ($f["type"]) {
 		case "area":
 		case "tel":
@@ -651,6 +651,7 @@ class xForm3 {
 		case "email":
 		case "number":
 		case "text":
+			if ($f["align"]) $styles.="text-align: ".$f["align"].";";
 			if ($f["lowercase"]) $styles.="text-transform: lowercase;";
 			else if ($f["uppercase"]) $styles.="text-transform: uppercase;";
 			else if ($f["capitalize"]) $styles.="text-transform: capitalize;";
