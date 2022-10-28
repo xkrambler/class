@@ -385,8 +385,8 @@ function xForm3(o) {
 	// upload file using xUploader
 	a.fileUpload=function(o, onok){
 		o.field=a.o.fields[o.f];
-		console.log(o.f);
-		console.log(a.data[o.f]);
+		//console.log(o.f);
+		//console.log(a.data[o.f]);
 		if (a.data[o.f] && a.data[o.f].uploader) {
 			a.data[o.f].uploader.upload(self, o, onok);
 			return true;
