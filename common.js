@@ -90,11 +90,11 @@ function spreids(prefix, ids, values, sufix) {
 		}
 }
 
-// realiza sustituciones de cadenas
+// template substitutions from an array of strings
 function template(s, replaces) {
 	if (replaces)
 		for (var i in replaces)
-			s=s.replace(new RegExp(i.replace(/([.?*+^$[\]\\(){}-])/g, "\\$1"),'g'),replaces[i]);
+			s=s.replace(new RegExp(i.replace(/([.?*+^$[\]\\(){}-])/g, "\\$1"),'g'), replaces[i]);
 	return s;
 }
 
@@ -112,7 +112,7 @@ function gtemplate(id, replaces) {
 	return s;
 }
 
-// creación simplificada de nuevo elemento en documento
+// simplified creation of a new DOM element
 function newElement(element, o) {
 	var e=document.createElement(element);
 	if (o) {
@@ -172,7 +172,7 @@ function adump(arr, level) {
 	return s;
 }
 
-// funciones auxiliares
+// element positioning functions
 function getTop(id) { var o=gid(id); var p=0; do { p+=o.offsetTop; } while (o=o.offsetParent); return(p); }
 function getLeft(id) { var o=gid(id); var p=0; do { p+=o.offsetLeft; } while (o=o.offsetParent); return(p); }
 function getScrollTop(id) { var o=gid(id); var p=0; do { p+=(o.scrollTop?o.scrollTop:0); } while (o=o.parentNode); return(p); }
@@ -180,15 +180,15 @@ function getScrollLeft(id) { var o=gid(id); var p=0; do { p+=(o.scrollLeft?o.scr
 function getWidth(id) { return gid(id).offsetWidth; }
 function getHeight(id) { return gid(id).offsetHeight; }
 
-// cambiar estilos
+// element style change
 function style(id, styles) { var o=gid(id); for (var i in styles) o.style[i]=styles[i]; }
 
-// funciones de manejo de clases CSS
+// element className functions
 function classAdd(id, c) {
 	var a=gid(id); if (!a) return false;
 	a=a.className.split(" ");
 	for (var i in a)
-		if (a[i]==c) return;
+		if (a[i] == c) return;
 	gid(id).className=trim(gid(id).className+" "+c);
 	return true;
 }
@@ -197,7 +197,8 @@ function classDel(id, c) {
 	a=a.className.split(" ");
 	var cs="";
 	for (var i in a)
-		if (a[i]!=c) cs+=" "+a[i];
+		if (a[i] != c)
+			cs+=" "+a[i];
 	gid(id).className=trim(cs);
 	return true;
 } 
@@ -210,29 +211,29 @@ function classSwap(id, c) {
 function hasClass(id, c){
 	if (!gid(id) || !gid(id).className) return;
 	var cs=gid(id).className.split(" ");
-	return (cs.indexOf(c)!=-1);
+	return (cs.indexOf(c) != -1);
 }
 
-// propiedades del documento y ventana
-function ieTrueBody() { return((!ischrome() && document.compatMode && document.compatMode!="BackCompat")?document.documentElement:document.body); }
-function scrollLeft() { return(ieTrueBody().scrollLeft); }
-function scrollTop() { return(ieTrueBody().scrollTop); }
-function windowWidth() { return(document.documentElement.clientWidth?document.documentElement.clientWidth:(window.innerWidth?window.innerWidth:document.body.clientWidth)); }
-function windowHeight() { return(document.documentElement.clientHeight?document.documentElement.clientHeight:(window.innerHeight?window.innerHeight:document.body.clientHeight)); }
-function documentWidth() { return(document.body.clientWidth); }
-function documentHeight() { return(document.body.clientHeight); }
+// document and window properties
+function ieTrueBody() { return((document.compatMode && document.compatMode != "BackCompat")?document.documentElement:document.body); }
+function scrollLeft() { return ieTrueBody().scrollLeft; }
+function scrollTop() { return ieTrueBody().scrollTop; }
+function windowWidth() { return (document.documentElement.clientWidth?document.documentElement.clientWidth:(window.innerWidth?window.innerWidth:document.body.clientWidth)); }
+function windowHeight() { return (document.documentElement.clientHeight?document.documentElement.clientHeight:(window.innerHeight?window.innerHeight:document.body.clientHeight)); }
+function documentWidth() { return document.body.clientWidth; }
+function documentHeight() { return document.body.clientHeight; }
 
-// propiedades naturales de una imagen (tamaño real)
+// natural properties of an image (real size)
 function naturalWidth(idimg) {
-	if (typeof(gid(idimg).naturalWidth)=="number") return gid(idimg).naturalWidth
+	if (typeof(gid(idimg).naturalWidth) == "number") return gid(idimg).naturalWidth;
 	else { var tmp=new Image(); tmp.src=gid(idimg).src; return tmp.width; }
 }
 function naturalHeight(idimg) {
-	if (typeof(gid(idimg).naturalHeight)=="number") return gid(idimg).naturalHeight
+	if (typeof(gid(idimg).naturalHeight) == "number") return gid(idimg).naturalHeight;
 	else { var tmp=new Image(); tmp.src=gid(idimg).src; return tmp.height; }
 }
 
-// indica si un elemento es visible con el scroll actual
+// notify if an element is partial or fully visible in the view
 function isIntoView(id, full) {
 	var e=gid(id);
 	if (!e || !e.getBoundingClientRect) return false;
@@ -261,52 +262,52 @@ function appearIntoView(id, callback, o) {
 	document.addEventListener("scroll", check_appear);
 }
 
-// establecer cursor
+// set cursor
 function setCursor(cursor) { document.body.style.cursor=(cursor?cursor:"auto"); }
 
-// obtiene el ancho del borde (horizontal)
+// get element border width (horizontal)
 function getBorderWidth(id) {
 	var wext=(parseInt(getStyle(id, "border-left-width"))+parseInt(getStyle(id,"border-right-width")));
 	return (!isNaN(wext)?wext:0);
 }
 
-// obtiene el alto del borde (vertical)
+// get element border height (vertical)
 function getBorderHeight(id) {
 	var wext=(parseInt(getStyle(id, "border-top-width"))+parseInt(getStyle(id,"border-bottom-width")));
 	return (!isNaN(wext)?wext:0);
 }
 
-// obtiene el alto del borde superior
+// get element top border height
 function getBorderTopHeight(id) {
 	var wext=parseInt(parseInt(getStyle(id, "border-top-width")));
 	return (!isNaN(wext)?wext:0);
 }
 
-// obtiene el alto del borde inferior
+// get element bottom border height
 function getBorderBottomHeight(id) {
 	var wext=parseInt(parseInt(getStyle(id, "border-bottom-width")));
 	return (!isNaN(wext)?wext:0);
 }
 
-// obtiene el alto del borde izquierdo
-function getBorderLeftHeight(id) {
+// get element left border width
+function getBorderLeftWidth(id) {
 	var wext=parseInt(parseInt(getStyle(id, "border-left-width")));
 	return (!isNaN(wext)?wext:0);
 }
 
-// obtiene el alto del borde derecho
-function getBorderRightHeight(id) {
+// get element right border width
+function getBorderRightWidth(id) {
 	var wext=parseInt(parseInt(getStyle(id, "border-right-width")));
 	return (!isNaN(wext)?wext:0);
 }
 
-// obtiene el ancho del padding (horizontal)
+// get element padding width (horizontal)
 function getPaddingWidth(id) {
 	var wext=(parseInt(getStyle(id, "padding-left"))+parseInt(getStyle(id, "padding-right")));
 	return (!isNaN(wext)?wext:0);
 }
 
-// obtiene el alto del padding (vertical)
+// get element padding height (vertical)
 function getPaddingHeight(id) {
 	var wext=(parseInt(getStyle(id, "padding-top"))+parseInt(getStyle(id, "padding-bottom")));
 	return (!isNaN(wext)?wext:0);
@@ -320,7 +321,7 @@ function getStyle(id, styleprop) {
 	return null;
 }
 
-// ancho interno (sin márgenes/paddings/bordes)
+// element inner width (without margin/padding/border)
 function crossInnerWidth(id) {
 	var element=gid(id);
 	try {
@@ -331,7 +332,7 @@ function crossInnerWidth(id) {
 	}
 }
 
-// alto interno (sin márgenes/paddings/bordes)
+// element inner height (without margin/padding/border)
 function crossInnerHeight(id) {
 	var element=gid(id);
 	try {
@@ -342,7 +343,7 @@ function crossInnerHeight(id) {
 	}
 }
 
-// precarga de imágenes
+// image preloading
 var imagePreloadList={};
 function imagePreload(imageorlist) {
 	var image_list=(typeof(imageorlist) == "string"?[imageorlist]:imageorlist);
@@ -354,7 +355,7 @@ function imagePreload(imageorlist) {
 	}
 }
 
-// ancho del scroll vertical
+// get scrollbar width (horizontal)
 // thanks to Alexandre Gomes (Portugal)
 // http://www.alexandre-gomes.com/?p=115
 function scrollWidth() {
@@ -384,7 +385,7 @@ function scrollWidth() {
 	return(w1-w2);
 }
 
-// obtener cookie
+// get cookie
 function getCookie(name) {
 	var nameEQ=name.replace(/=/gi,"_")+"=";
 	var ca=document.cookie.split(';');
@@ -398,7 +399,7 @@ function getCookie(name) {
 	return "";
 }
 
-// almacenar cookie
+// set cookie
 function setCookie(name, value, o) {
 	var o=(Number.isFinite(o)?{"days":o}:o||{});
 	if (o.days) o.expires=o.days*86400000;
@@ -418,7 +419,7 @@ function setCookie(name, value, o) {
 	;
 }
 
-// borrar cookie
+// delete cookie
 function delCookie(name) {
 	setCookie(name, "", {"expires":-1, "samesite":"Strict"});
 	setCookie(name, "", {"expires":-1, "samesite":"Lax"});
@@ -426,7 +427,7 @@ function delCookie(name) {
 	setCookie(name, "", {"expires":-1, "samesite":"None"});
 }
 
-// borrar todas las cookies accesibles
+// delete all accesible cookies
 function delAllCookies() {
 	var cookies=document.cookie.split(";");
 	for (var i=0; i<cookies.length; i++) {
@@ -437,37 +438,36 @@ function delAllCookies() {
 	}
 }
 
-// comprobación de navegadores
+// check for typical navigators
 function isie() { return (navigator.userAgent.indexOf("MSIE") != -1); }
 function ismoz() { return (navigator.userAgent.indexOf("Firefox") != -1 || navigator.userAgent.indexOf("Iceweasel") != -1); }
 function ischrome() { return (navigator.userAgent.indexOf("Chrome") != -1); }
 
-// oculta todos los selects de la página si es IE
+// hide all selects (only in IE)
 function hideSelects(hidden) {
 	if (!isie()) return;
 	selects=document.getElementsByTagName("select");
-	for (i=0;i<selects.length;i++)
-		selects[i].style.visibility=(hidden?"hidden":"visible");
+	for (i=0; i<selects.length; i++) selects[i].style.visibility=(hidden?"hidden":"");
 }
 
-// buscar y ejecutar tags <script> embebidos
+// search and run embeded <script>
 function getrunjs(data) {
 	runjs(getjs(data));
 }
 
-// buscar tags <script> embebidos
+// search embeded <script>
 function getjs(data) {
 	scode="";
 	while (true) {
 		ss=data.toLowerCase().indexOf("<script>"); if (ss<0) break;
-		es=data.toLowerCase().indexOf("<\/script>",ss+2); if (es<0) break;
-		scode=scode+data.substring(ss+8,es);
-		data=data.substring(0,ss)+data.substring(es+9);
+		es=data.toLowerCase().indexOf("<\/script>", ss+2); if (es<0) break;
+		scode=scode+data.substring(ss+8, es);
+		data=data.substring(0, ss)+data.substring(es+9);
 	}
-	return(scode);
+	return scode;
 }
 
-// ejecutar cadena de javascript (mucho mejor que eval)
+// include javascript from string (faster than eval)
 function runjs(data) {
 	if (!data) return;
 	var escode=document.createElement("script");
@@ -476,7 +476,7 @@ function runjs(data) {
 	document.getElementsByTagName("body").item(0).appendChild(escode);
 }
 
-// cargar fichero javascript
+// include javascript from file
 function includejs(filename, onload) {
 	if (!filename) return;
 	var escode=document.createElement("script");
@@ -486,10 +486,10 @@ function includejs(filename, onload) {
 	document.getElementsByTagName("body").item(0).appendChild(escode);
 }
 
-// convertir retornos de carro en nuevas lineas HTML
+// convert string new lines to HTML <br /> tags
 function nl2br(t) {
-	try { var e=/\n/gi; t=t.replace(e,"<br />"); } catch(e) {}
-	return(t);
+	try { return t.replace(/\n/gi, "<br />"); } catch(e) {}
+	return t;
 }
 
 // id/object merge: de una lista de identificadores separadas por comas,
