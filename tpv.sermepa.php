@@ -202,34 +202,31 @@ class TPVSERMEPA extends TPV {
 		if (!$this->isNotify()) return false;
 		if ($tpv && !$this->checkOperation($tpv)) return false;
 		if ($this->setup["secret_key256"]) {
-			if ($_POST["Ds_SignatureVersion"]!='HMAC_SHA256_V1')
-				return array("err"=>"Ds_SignatureVersion not valid");
-			if (!$_POST["Ds_MerchantParameters"])
-				return array("err"=>"Ds_MerchantParameters not set");
+			if ($_POST["Ds_SignatureVersion"] != 'HMAC_SHA256_V1') return array("err"=>"Ds_SignatureVersion not valid");
+			if (!$_POST["Ds_MerchantParameters"]) return array("err"=>"Ds_MerchantParameters not set");
 			$parameters=$this->getNotifyFields($_POST["Ds_MerchantParameters"]);
 			$signature=$_POST["Ds_Signature"];
 			$signature_calc=$this->getNotifySignature($_POST["Ds_MerchantParameters"]);
 			$response=$parameters["Ds_Response"];
-			/*xob();
-			echo "---".date("Y-m-d H:i:s")."---\n";
-			echo "parameters=\n"; print_r($parameters);
-			echo "signature=".$signature."\n";
-			echo "signature_calc=".$signature_calc."\n";
-			echo "response=".$response."\n";
-			print_r($_GET); print_r($_POST);
-			file_put_contents("___tpv_sermepa_notify.log", xob()."\n", FILE_APPEND);*/
-			if ($signature==$signature_calc) {
+			if ($signature == $signature_calc) {
 				if ($parameters["Ds_ErrorCode"]) return array("err"=>"Ds_ErrorCode present (".strip_tags($parameters["Ds_ErrorCode"]).")","parameters"=>$parameters);
-				if ($response=="0000") return array("ok"=>true, "parameters"=>$parameters);
-				return array("err"=>"Ds_Response not 0000 (".strip_tags($response).")","parameters"=>$parameters);
+				if ($this->isOK($response)) return array("ok"=>true, "parameters"=>$parameters);
+				$err=$this->responsecode($response);
+				return array("err"=>($err?$err:"Ds_Response not 0000 (".strip_tags($response).")"), "parameters"=>$parameters);
 			}
 			return array("err"=>"Ds_Signature verified NOT OK (".strip_tags($signature)."!=".strip_tags($signature_calc).")");
 		} else if ($this->setup["secret_key"]) {
-			if ($_REQUEST["Ds_Response"]=="0000") return array("ok"=>true);
-			return array("err"=>"Ds_Response not valid (".strip_tags($_REQUEST["Ds_Response"]).")");
+			if ($this->isOK($_REQUEST["Ds_Response"])) return array("ok"=>true);
+			$err=$this->responsecode($_REQUEST["Ds_Response"]);
+			return array("err"=>($err?$err:"Ds_Response not valid (".strip_tags($_REQUEST["Ds_Response"]).")"));
 		}
 		$this->lasterr='No secret keys defined.';
 		return null;
+	}
+
+	// comprobar si respuesta es correcta
+	function isOK($ds_response) {
+		return ($ds_response >= "0000" && $ds_response <= "0099");
 	}
 
 	// comprobar estado de la operación de base de datos para evitar sobreescritura de eventos en notify
@@ -252,8 +249,8 @@ class TPVSERMEPA extends TPV {
 	// devolver respuesta por código
 	function responsecode($code) {
 		$codes=$this->responsecodes();
-		$response=$codes[(string)$code];
-		if (!$response && intval($code) < 100) $response="Transacción autorizada para pagos y preautorizaciones";
+		$response=$codes[intval($code)];
+		if (!$response && $this->isOK($code)) $response="Transacción autorizada para pagos y preautorizaciones";
 		return $response;
 	}
 
@@ -280,13 +277,12 @@ class TPVSERMEPA extends TPV {
 		// añadir tipo de transacción
 		$fields["DS_MERCHANT_TRANSACTIONTYPE"]="45";
 
+		// empaquetar y firmar
 		$fields=array(
-			//"fields"=>$fields,
 			"Ds_SignatureVersion"=>'HMAC_SHA256_V1',
 			"Ds_MerchantParameters"=>base64_encode(json_encode($fields)),
 			"Ds_Signature"=>$this->getSignature($fields),
 		);
-		//debug($fields);exit;
 
 		// preparar y lanzar CURL
 		$ch=curl_init();
