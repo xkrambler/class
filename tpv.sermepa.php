@@ -246,6 +246,26 @@ class TPVSERMEPA extends TPV {
 		exit;
 	}
 
+	// firmar respuesta SOAP
+	function getSignatureSOAP($response, $ds_merchant_order) {
+		if ($this->setup["secret_key256"]) {
+			$key=base64_decode($this->setup["secret_key256"]);
+			$key=$this->encrypt3DES($ds_merchant_order, $key); // Se diversifica la clave con el Número de Pedido
+			$res=$this->mac256($response, $key); // MAC256 del parámetro Ds_MerchantParameters
+			//file_put_contents("sermepafirma.txt",$this->setup["secret_key256"]."-".$response."-".$ds_merchant_order."-".base64_encode($res));
+			return base64_encode($res); // Se codifican los datos Base64
+		}
+	}
+
+	// devolver mensaje satisfactorio SOAP
+	function getSuccessSOAP($ds_merchant_order){
+		$cabecera="<?xml version=\"1.0\" encoding=\"UTF-8\"?><SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"><SOAP-ENV:Body><ns1:procesaNotificacionSIS xmlns:ns1=\"InotificacionSIS\" SOAP-ENV:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\"><XML xsi:type=\"xsd:string\"><![CDATA[";
+		$datos="<Response Ds_Version=\"0.0\"><Ds_Response_Merchant>OK</Ds_Response_Merchant></Response>";
+		$firma=$this->getSignatureSOAP("<Response Ds_Version=\"0.0\"><Ds_Response_Merchant>OK</Ds_Response_Merchant></Response>", $ds_merchant_order);
+		$res=$cabecera."<Message>".$datos."<Signature>".$firma."</Signature></Message>]]></XML></ns1:procesaNotificacionSIS></SOAP-ENV:Body></SOAP-ENV:Envelope>";
+		return $res;
+	}
+
 	// devolver respuesta por código
 	function responsecode($code) {
 		$codes=$this->responsecodes();
