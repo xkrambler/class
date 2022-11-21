@@ -377,7 +377,6 @@ var xwidgets={
 
 			// ensure requisites
 			if (!self.o.render) return console.error("hsearch: render method required.");
-			if (!self.o.search) return console.error("hsearch: search method required.");
 
 			classAdd(self.o.id, "hsearch");
 
@@ -1199,7 +1198,7 @@ var xwidgets={
 				for (index in self.o.ajaxdata.data) {
 					var item=self.o.ajaxdata.data[index];
 					var nextindex=self.count();
-					if (self.visibleItem(item, nextindex)) self.add(item, null);
+					self.add(item, null);
 				}
 			}
 			// select keys again
@@ -1282,83 +1281,81 @@ var xwidgets={
 			}
 
 			// search input
-			if (self.o.search) {
-				self.e.cmb_search=newElement("input", {
-					"class":"cmb_search",
-					"attributes":{
-						"type":"text",
-						"placeholder":"search...",
-						"value":""
+			self.e.cmb_search=(self.o.search?newElement("input", {
+				"class":"cmb_search",
+				"attributes":{
+					"type":"text",
+					"placeholder":"search...",
+					"value":""
+				},
+				"events":{
+					"click":function(e){
+						e.preventDefault();
 					},
-					"events":{
-						"click":function(e){
+					"dblclick":function(e){
+						this.value="";
+						self.refreshItems();
+						self.updateTimed();
+					},
+					"focus":function(e){
+						this.select();
+						e.preventDefault();
+					},
+					"input":function(){
+						self.refreshItems();
+						self.updateTimed();
+					},
+					"blur":function(e){
+						//e.open();
+					},
+					"keydown":function(e){
+						switch (e.keyCode) {
+						case 9: // tab
+							self.open();
+							self.focusSelectedItem();
 							e.preventDefault();
-						},
-						"dblclick":function(e){
-							this.value="";
-							self.refreshItems();
-							self.updateTimed();
-						},
-						"focus":function(e){
-							this.select();
-							e.preventDefault();
-						},
-						"input":function(){
-							self.refreshItems();
-							self.updateTimed();
-						},
-						"blur":function(e){
-							//e.open();
-						},
-						"keydown":function(e){
-							switch (e.keyCode) {
-							case 9: // tab
-								self.open();
-								self.focusSelectedItem();
-								e.preventDefault();
-								break;
+							break;
 
-							case 13: // enter
-								if (self.count()) {
-									self.select(self.indexFirst());
-								}
-								// no break
-							case 27: // escape
+						case 13: // enter
+							if (self.count()) {
+								self.select(self.indexFirst());
+							}
+							// no break
+						case 27: // escape
+							self.focus();
+							self.close();
+							break;
+
+						case 33: // page up
+						case 38: // up
+							if (self.o.valignTop) {
+								self.open();
+								if (!self.focusSelectedItem()) self.focusLastItem();
+							} else {
 								self.focus();
 								self.close();
-								break;
-
-							case 33: // page up
-							case 38: // up
-								if (self.o.valignTop) {
-									self.open();
-									if (!self.focusSelectedItem()) self.focusLastItem();
-								} else {
-									self.focus();
-									self.close();
-								}
-								e.stopPropagation();
-								e.preventDefault();
-								break;
-
-							case 34: // page down
-							case 40: // down
-								if (self.o.valignTop) {
-									self.focus();
-									self.close();
-								} else {
-									self.open();
-									if (!self.focusSelectedItem()) self.focusFirstItem();
-								}
-								e.stopPropagation();
-								e.preventDefault();
-								break;
-
 							}
+							e.stopPropagation();
+							e.preventDefault();
+							break;
+
+						case 34: // page down
+						case 40: // down
+							if (self.o.valignTop) {
+								self.focus();
+								self.close();
+							} else {
+								self.open();
+								if (!self.focusSelectedItem()) self.focusFirstItem();
+							}
+							e.stopPropagation();
+							e.preventDefault();
+							break;
+
 						}
 					}
-				});
-			}
+				}
+			}):null);
 
 			// combobox
 			self.e.cmb=newElement("div", {
@@ -1399,7 +1396,7 @@ var xwidgets={
 			self.e.cmb_options=newElement("div", {
 				"class":"cmb_options",
 				"childs":[
-					(self.e.cmb_search?self.e.cmb_search:null),
+					self.e.cmb_search,
 					self.e.cmb_items
 				],
 				"events":{
@@ -1804,7 +1801,7 @@ var xwidgets={
 				var first_request=(self.o.requested?false:true);
 				self.o.requested=true;
 				var r={
-					"search":(self.e.cmb_search?self.e.cmb_search.value:(self.e.cmb_input?self.e.cmb_input.value:(isset(search)?search:""))),
+					"search":(self.e.cmb_search?self.e.cmb_search.value:(self.e.cmb_input?self.e.cmb_input.value:"")),
 					"visible":(self.o.visible?self.o.visible:50)
 				};
 				if (self.o.ajaxrequest) r=self.o.ajaxrequest(self, r);
