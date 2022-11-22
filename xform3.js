@@ -1037,7 +1037,7 @@ function xForm3(o) {
 		// create datalist and render options
 		var datalist=document.createElement("datalist");
 		datalist.id=datalist_id;
-		for (var i in items) {
+		if (items) for (var i in items) {
 			var option=document.createElement("option");
 			option.value=items[i];
 			datalist.appendChild(option);
