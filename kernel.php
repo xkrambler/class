@@ -359,8 +359,12 @@ class Kernel {
 			."MIME-Version: 1.0\r\n"
 			."Content-Type: multipart/related;\r\n"
 			." boundary=\"{$mime_boundary_mix}\"\r\n"
-			."X-Mailer: fsme_mailer/1.0.2"
 		;
+		// add mailer
+		if (!isset($o["mailer"]) || $o["mailer"]) $headers.="X-Mailer: ".($o["mailer"]?$o["mailer"]:"fsme_mailer/1.0.3")."\r\n";
+		// add headers
+		if (is_string($o["headers"])) $headers.=$o["headers"];
+		else if (is_array($o["headers"])) foreach ($o["headers"] as $v) $headers.=$v."\r\n";
 		// prepare body
 		$body="Scrambled for your security by the Flying Spaguetti Monster Engine Mailer.\r\n\r\n";
 		$body.="--{$mime_boundary_mix}\r\n"
