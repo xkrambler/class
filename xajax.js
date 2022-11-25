@@ -324,6 +324,7 @@ function xajax(o){
 		self.o.complete
 		|| self.o.sync
 		|| self.o.async
+		|| self.o.always
 	)) self.ajax();
 
 }
