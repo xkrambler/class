@@ -320,6 +320,7 @@ var xwidgets={
 		};
 
 		self.search=function(){
+			if (typeof(self.o.search) !== "function") return false;
 			var s=self.o.search(self, gid(self._search).value);
 			gidset(self._results, (s?(typeof s == "string"?s:""):(self.o.noresults?self.o.noresults:"<i>Sin resultados</i>")));
 			if (s instanceof Array) {
@@ -1285,7 +1286,7 @@ var xwidgets={
 				"class":"cmb_search",
 				"attributes":{
 					"type":"text",
-					"placeholder":"search...",
+					"placeholder":(typeof(self.o.search) == "object" && self.o.search.placeholder?self.o.search.placeholder:"..."),
 					"value":""
 				},
 				"events":{
@@ -1430,6 +1431,16 @@ var xwidgets={
 			self.e.actions=[];
 			if (!self.o.actions) self.o.actions=[];
 
+			// add action
+			if (self.o.add) self.o.actions.push(array_merge({
+				"class":"cmd cmd_add",
+				"html":"+",
+				"action":function(self, action, index){
+					if (isset(self.o.onadd)) self.o.onadd(self, action, index);
+					else if (typeof(self.o.add) == "function") self.o.add(self, action, index);
+				}
+			}, (typeof(self.o.add) !== "object"?{}:self.o.add)));
+
 			// delete action
 			if (self.o.del) self.o.actions.push(array_merge({
 				"class":"cmd cmd_del",
@@ -1439,8 +1450,9 @@ var xwidgets={
 					self.refreshCaption();
 					self.focus();
 					if (isset(self.o.ondel)) self.o.ondel(self, action, index);
+					else if (typeof(self.o.del) == "function") self.o.del(self, action, index);
 				}
-			}, (self.o.del === true?{}:self.o.del)));
+			}, (typeof(self.o.del) !== "object"?{}:self.o.del)));
 
 			// create actions
 			if (self.o.actions) for (var i in self.o.actions) {
@@ -1741,8 +1753,13 @@ var xwidgets={
 			);
 		};
 
-		// get item
-		self.item=function(){
+		// get/set item
+		self.item=function(item){
+			if (item !== null) {
+				self.o.selecteditem=item;
+				self.o.selected=[item];
+				self.refreshCaption();
+			}
 			return self.o.selecteditem;
 		};
 
