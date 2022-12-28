@@ -935,7 +935,9 @@ function gInputInt(id, negatives, floating) {
 	input.onblur=function(e){
 		var lds=localeDecimalSeparator();
 		var v=parseFloat(this.value.replace(lds, "."));
-		this.value=((isNaN(v)?"":v)+"").replace(".", lds);
+		this.value=(isNaN(v)?"":""+v);
+		if (this.getAttribute("type") != "number") v=v.replace(".", lds);
+		this.value=v;
 	};
 	input.onblur();
 }
