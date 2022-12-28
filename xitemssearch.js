@@ -520,17 +520,16 @@ function xItemsSearch(o) {
 		// preparar tabla
 		h="<table id='xitemssearch_"+a.o.id+"_main' class='xitemsearch_table'>";
 		h+="<thead><tr>";
-		for (var i in a.fields) {
-			if (!a.fields[i].disabled) {
-				h+="<th>"
-					+(a.fields[i].nosort?"":"<a href='javascript:window.xItemsSearchs[\""+a.o.id+"\"].swapsort(\""+i+"\");' title='"+(a.fields[i].title?a.fields[i].title:(a.fields[i].caption?a.fields[i].caption:""))+"'>")
-					+"<span class='"+(a.o.sort && isset(a.o.sort[i])?(a.o.sort[i]?"sortdesc":"sortasc"):"")+(default_sort?"_default":"")+"'>"
-					+(a.fields[i].caption?a.fields[i].caption:"")
-					+"</span>"
-					+(a.fields[i].nosort?"":"</a>")
-					+"</th>"
-				;
-			}
+		for (var i in a.fields) if (!a.fields[i].disabled) {
+			var title=htmlentities(a.fields[i].title?a.fields[i].title:(a.fields[i].caption?a.fields[i].caption:""));
+			h+="<th"+(a.fields[i].nosort?" title='"+title+"'":"")+">"
+				+(a.fields[i].nosort?"":"<a href='javascript:window.xItemsSearchs[\""+a.o.id+"\"].swapsort(\""+i+"\");' title='"+title+"'>")
+				+"<span class='"+(a.o.sort && isset(a.o.sort[i])?(a.o.sort[i]?"sortdesc":"sortasc"):"")+(default_sort?"_default":"")+"'>"
+				+(a.fields[i].caption?a.fields[i].caption:"")
+				+"</span>"
+				+(a.fields[i].nosort?"":"</a>")
+				+"</th>"
+			;
 		}
 		h+="</tr></thead><tbody>";
 		var c=0;
