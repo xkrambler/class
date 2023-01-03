@@ -815,8 +815,9 @@ var xwidgets={
 					if (typeof(self.o.editable) == "function") value=self.o.editable(self, item, value);
 					self.e.cmb_input.value=value;
 				}
-				if (self.o.input) gidval(self.o.input, self.value());
 				if (self.o.onselect) self.o.onselect(self, item, index);
+				if (self.o.onchange) self.o.onchange(self, item, index);
+				if (self.o.input) gidval(self.o.input, self.value());
 			}
 			return item;
 		};
@@ -1755,10 +1756,14 @@ var xwidgets={
 
 		// get/set item
 		self.item=function(item){
-			if (item !== null) {
+			if (isset(item) && item !== null) {
 				self.o.selecteditem=item;
 				self.o.selected=[item];
+				self.o.selectedkeys={};
+				if (self.o.key) self.o.selectedkeys[item[self.o.key]]=item;
 				self.refreshCaption();
+				if (self.o.onchange) self.o.onchange(self, item);
+				if (self.o.input) gidval(self.o.input, self.value());
 			}
 			return self.o.selecteditem;
 		};
