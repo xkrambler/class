@@ -383,6 +383,7 @@ class xForm3 {
 	// parse out values for a field
 	function parseOutValue($f, $value) {
 		$field=$this->fields[$f];
+		if ($field["string"]) return (string)$value;
 		if ($field["nullifempty"] && !strlen($value)) return null;
 		return $value;
 	}
@@ -445,6 +446,8 @@ class xForm3 {
 		$value=strip_tags(str_replace(array("<", ">"), array("&lt;", "&gt;"), $value));
 		// nullables
 		if (($field["nullifempty"] || $field["date"] || $field["datetime"]) && !strlen($value)) $value=null;
+		// force a string
+		if (($field["string"]) $value=(string)$value;
 		// return
 		return $value;
 	}
