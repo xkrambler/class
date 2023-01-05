@@ -447,7 +447,7 @@ class xForm3 {
 		// nullables
 		if (($field["nullifempty"] || $field["date"] || $field["datetime"]) && !strlen($value)) $value=null;
 		// force a string
-		if (($field["string"]) $value=(string)$value;
+		if ($field["string"]) $value=(string)$value;
 		// return
 		return $value;
 	}
