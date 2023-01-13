@@ -16,9 +16,13 @@ class x {
 		return $GLOBALS["page"];
 	}
 
-	// return if we have page variable
-	static public function has($k) {
-		return isset($GLOBALS["page"][$k]);
+	// get/set data information
+	static public function data($k=null, $v=null) {
+		if (!isset($GLOBALS["data"])) $GLOBALS["data"]=array();
+		if ($v !== null) $GLOBALS["data"][$k]=$v;
+		if (is_array($k)) $GLOBALS["data"]=$k;
+		else if ($k !== null) return $GLOBALS["data"][$k];
+		return $GLOBALS["data"];
 	}
 
 	// add include/set includes/return includes
@@ -56,7 +60,7 @@ class x {
 			$v=get_defined_vars();
 			unset($v["_module"]);
 			unset($v["_modulec"]);
-			foreach ($v as $i=>&$d) $GLOBALS[$i]=$d;
+			foreach ($v as $i=>&$d) $GLOBALS[$i]=$d; unset($d);
 		}
 		return $_modulec;
 	}
@@ -290,11 +294,11 @@ $ismobile=x::ismobile();
 $isie=x::isie();
 
 // include all configuration files
-$_f=(x::has("conf")?x::page("conf"):"conf/");
+$_f=(strlen(x::page("conf"))?x::page("conf"):"conf/");
 if ($_f && file_exists($_f)) {
 	$_d=dir($_f);
 	while ($_e=$_d->read())
-		if (substr($_e,-4,4) == ".php")
+		if (substr($_e, -4, 4) == ".php")
 			require_once($_d->path.$_e);
 	$_d->close();
 }
