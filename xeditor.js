@@ -30,7 +30,7 @@ function xEditor(o) {
 		{"cmd":"justifyleft","caption":"Justificar Izquierda"},
 		{"cmd":"justifycenter","caption":"Justificar Centro"},
 		{"cmd":"justifyright","caption":"Justificar Derecha"},
-		//{"cmd":"justifyfull","caption":"Justificación Total"},
+		{"cmd":"justifyfull","caption":"Justificación Completa"},
 		{"cmd":"unorderedlist","caption":"Lista No Ordenada"},
 		{"cmd":"orderedlist","caption":"Lista Ordenada"},
 		{"cmd":"image","caption":"Insertar imagen"},
