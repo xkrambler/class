@@ -155,6 +155,7 @@
 
 /* checkbox & radio */
 .checkbox, .radio {
+	position: relative;
 	display: inline-block;
 	border: 1px dotted transparent;
 }
