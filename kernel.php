@@ -606,8 +606,8 @@ class Kernel {
 			if ($o["filter"]) $row=$o["filter"]($row);
 			$c=0;
 			foreach ($row as $n=>$v) {
-				$rd=(is_numeric($v) && $numeric?"":$d);
-				echo ($c++?$s:"").$d.str_replace($d, "\\".$d, $v).$d;
+				$rd=($numeric && is_numeric($v)?"":$d);
+				echo ($c++?$s:"").$rd.str_replace($d, "\\".$d, $v).$rd;
 			}
 			echo $eol;
 		}
