@@ -573,6 +573,8 @@ class Kernel {
 			"attachment"=>true,
 			"delimiter"=>'"',
 			"separator"=>';',
+			"numeric"=>true,
+			"doexit"=>true,
 			"eol"=>"\n",
 			"mimetype"=>self::getMimetype(".csv"),
 			"filename"=>"export_".time().".csv",
@@ -587,24 +589,29 @@ class Kernel {
 			// - Añadir BOM para que el texto en UTF-8 se vea bien en Excel -
 			echo "\xEF\xBB\xBF";
 		}
-		foreach ($o["data"] as $i=>$row) {
-			$first=true;
-			if ($o["filter"]) $row=$o["filter"]($row);
-			if (!$i) {
-				foreach ($row as $n=>$v) {
-					echo ($first?"":$o["separator"]).$o["delimiter"].str_replace($o["delimiter"],"\\".$o["delimiter"],$n).$o["delimiter"];
-					$first=false;
-				}
-				echo $o["eol"];
-			}
-			$first=true;
+		$d=$o["delimiter"];
+		$s=$o["separator"];
+		$eol=$o["eol"];
+		$numeric=$o["numeric"];
+		if (is_array($o["data"])) foreach ($o["data"] as $i=>$row) {
+			$c=0;
 			foreach ($row as $n=>$v) {
-				echo ($first?"":$o["separator"]).$o["delimiter"].str_replace($o["delimiter"],"\\".$o["delimiter"],$v).$o["delimiter"];
-				$first=false;
+				echo ($c++?$s:"").$d.str_replace($d, "\\".$d, $n).$d;
 			}
-			echo $o["eol"];
+			echo $eol;
+			break;
 		}
-		exit;
+		$filter=$o["filter"];
+		if (is_array($o["data"])) foreach ($o["data"] as $i=>$row) {
+			if ($o["filter"]) $row=$o["filter"]($row);
+			$c=0;
+			foreach ($row as $n=>$v) {
+				$rd=(is_numeric($v) && $numeric?"":$d);
+				echo ($c++?$s:"").$d.str_replace($d, "\\".$d, $v).$d;
+			}
+			echo $eol;
+		}
+		if ($v=$o["doexit"]) exit($v === true?0:$v);
 	}
 
 	// replace template values enclosed between tags characters
