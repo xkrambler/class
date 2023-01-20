@@ -1816,6 +1816,12 @@ var xwidgets={
 			}, 250);
 		};
 
+		// get/set additional AJAX data
+		self.data=function(d){
+			if (d) self.o.data=d;
+			return self.o.data;
+		};
+
 		// update AJAX data
 		self.update=function(){
 			self.updateTimerClear();
@@ -1826,6 +1832,8 @@ var xwidgets={
 					"search":(self.e.cmb_search?self.e.cmb_search.value:(self.e.cmb_input?self.e.cmb_input.value:"")),
 					"visible":(self.o.visible?self.o.visible:50)
 				};
+				var er=self.data();
+				if (er) r=array_merge(r, er);
 				if (self.o.ajaxrequest) r=self.o.ajaxrequest(self, r);
 				ajax(self.o.ajax, r, function(){
 				},function(r){
