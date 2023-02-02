@@ -524,7 +524,7 @@ class Kernel {
 		if (!$o["type"]) $o["type"]=self::getMimetype($f);
 		if (!$f) $f="file";
 		// cabeceras
-		header("Content-Type: ".$o["type"].($o["charset"]?"; charset: ".$o["charset"]:""));
+		header("Content-Type: ".$o["type"].($o["charset"]?"; charset=".$o["charset"]:""));
 		header("Content-Disposition: ".($o["attachment"]?"attachment; ":"inline; ")."filename=\"".str_replace('"', "''", $f).'"');
 		switch ($method) {
 		case "headers":
