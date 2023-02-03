@@ -615,7 +615,7 @@ class xForm3 {
 
 	// get field name
 	function fieldName($field) {
-		return (
+		return (isset($this->o["name"])?$this->o["name"]."_":"").(
 			$this->fields[$field]["name"]
 			?$this->fields[$field]["name"]
 			:$field
