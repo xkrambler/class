@@ -97,7 +97,7 @@ class xForm3 {
 		foreach ($default_class as $f=>$c)
 			if (!isset($o["class"][$f]))
 				$o["class"][$f]=$c;
-		if (!$o["name"]) $o["name"]="xform".self::$sid;
+		if (!isset($o["name"])) $o["name"]="xform".self::$sid;
 		$this->o=$o;
 		$this->fields($o["fields"]); unset($this->o["fields"]);
 		// si no es petición AJAX, se asume limpieza de sesión
@@ -615,7 +615,7 @@ class xForm3 {
 
 	// get field name
 	function fieldName($field) {
-		return (isset($this->o["name"])?$this->o["name"]."_":"").(
+		return (strlen($this->o["name"])?$this->o["name"]."_":"").(
 			$this->fields[$field]["name"]
 			?$this->fields[$field]["name"]
 			:$field
