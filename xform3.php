@@ -480,8 +480,8 @@ class xForm3 {
 						"type"=>"required",
 						"err"=>(is_string($f["required"])?$f["required"]:$prefix."Campo requerido."),
 					);
-				// is e-mail, check
-				if ($f["type"] == "email" && !filter_var($v, FILTER_VALIDATE_EMAIL))
+				// check e-mail
+				if ($f["type"] == "email" && strlen($v) && !filter_var($v, FILTER_VALIDATE_EMAIL))
 					$this->errors[$field]=array(
 						"id"=>$this->id($field),
 						"field"=>$field,
