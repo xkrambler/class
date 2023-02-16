@@ -805,7 +805,7 @@ function xForm3(o) {
 
 			// clear
 			var div=document.createElement("div");
-			div.className="clear";
+			div.className="xform3_clear";
 			gid(a.id(field)).appendChild(div);
 
 			// if sortable, setup
