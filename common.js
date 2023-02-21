@@ -985,25 +985,21 @@ function br2nl(s) {
 
 // mostrar un número en formato X.XXX,XX
 function spf(n, f) {
+	var n=parseFloat(n);
 	if (isNaN(n)) return "";
 	var f=f || 2;
-	var e=Math.pow(10, f || 2);
+	var e=Math.pow(10, f);
 	var n=Math.round(n*e)/e;
-	var d=Math.abs(Math.round((n-parseInt(n))*e));
-	var x=""+parseInt(n);
-	var rgx=/(\d+)(\d{3})/;
-	while (rgx.test(x)) x=x.replace(rgx, '$1'+'.'+'$2');
-	return (n < 0?"-":"")+x+","+"0".repeat(f-d.toString().length)+d;
+	if (Intl && Intl.NumberFormat) return ""+(new Intl.NumberFormat(undefined, {minimumFractionDigits:f}).format(n));
+	return n.toFixed(f).replace(".", localeDecimalSeparator());
 }
 
 // mostrar un número en formato X.XXX
 function spd(n) {
+	var n=parseFloat(n);
 	if (isNaN(n)) return "";
-	var n=Math.round(n*100)/100;
-	var x=""+parseInt(n);
-	var rgx=/(\d+)(\d{3})/;
-	while (rgx.test(x)) x=x.replace(rgx, '$1'+'.'+'$2');
-	return (n < 0?"-":"")+x;
+	if (Intl && Intl.NumberFormat) return ""+(new Intl.NumberFormat(undefined, {maximumFractionDigits:0}).format(n));
+	return n.toFixed(0).replace(".", localeDecimalSeparator());
 }
 
 // mostrar un número en formato X.XXX o X.XXX,XX (solo si tiene decimales)
