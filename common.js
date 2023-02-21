@@ -992,8 +992,8 @@ function spf(n, f) {
 	var d=Math.abs(Math.round((n-parseInt(n))*e));
 	var x=""+parseInt(n);
 	var rgx=/(\d+)(\d{3})/;
-	while (rgx.test(x)) x=x.replace(rgx,'$1'+'.'+'$2');
-	return x+","+"0".repeat(f-d.toString().length)+d;
+	while (rgx.test(x)) x=x.replace(rgx, '$1'+'.'+'$2');
+	return (n < 0?"-":"")+x+","+"0".repeat(f-d.toString().length)+d;
 }
 
 // mostrar un número en formato X.XXX
@@ -1002,9 +1002,8 @@ function spd(n) {
 	var n=Math.round(n*100)/100;
 	var x=""+parseInt(n);
 	var rgx=/(\d+)(\d{3})/;
-	while (rgx.test(x))
-		x=x.replace(rgx,'$1'+'.'+'$2');
-	return x;
+	while (rgx.test(x)) x=x.replace(rgx, '$1'+'.'+'$2');
+	return (n < 0?"-":"")+x;
 }
 
 // mostrar un número en formato X.XXX o X.XXX,XX (solo si tiene decimales)
