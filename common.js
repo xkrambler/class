@@ -990,7 +990,7 @@ function spf(n, f) {
 	var f=f || 2;
 	var e=Math.pow(10, f);
 	var n=Math.round(n*e)/e;
-	if (Intl && Intl.NumberFormat) return ""+(new Intl.NumberFormat(undefined, {minimumFractionDigits:f}).format(n));
+	if (typeof(Intl) == "object" && Intl.NumberFormat) return ""+(new Intl.NumberFormat(undefined, {minimumFractionDigits:f}).format(n));
 	return n.toFixed(f).replace(".", localeDecimalSeparator());
 }
 
@@ -998,7 +998,7 @@ function spf(n, f) {
 function spd(n) {
 	var n=parseFloat(n);
 	if (isNaN(n)) return "";
-	if (Intl && Intl.NumberFormat) return ""+(new Intl.NumberFormat(undefined, {maximumFractionDigits:0}).format(n));
+	if (typeof(Intl) == "object" && Intl.NumberFormat) return ""+(new Intl.NumberFormat(undefined, {maximumFractionDigits:0}).format(n));
 	return n.toFixed(0).replace(".", localeDecimalSeparator());
 }
 
