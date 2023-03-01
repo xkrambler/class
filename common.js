@@ -1400,14 +1400,14 @@ function sizeString(bytes) {
 
 // copiar texto al portapapeles
 function copyToClipboard(text) {
-	var input=document.createElement("input");
-	input.type="text";
-	input.value=text;
-	document.body.appendChild(input);
-	input.select();
-	input.focus();
+	var e=document.createElement("textarea");
+	e.type="text";
+	e.value=text;
+	document.body.appendChild(e);
+	e.select();
+	e.focus();
 	document.execCommand("copy");
-	input.parentNode.removeChild(input);
+	e.parentNode.removeChild(e);
 }
 
 // insertar texto en la posición del cursor o en sustitución de la selección de un input/textarea
