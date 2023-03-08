@@ -141,11 +141,11 @@ function newalert(o) {
 	}
 	newalerts[id].active=true;
 	var b=document.createElement("div");
-	b.setAttribute("class", "newalert_background");
+	b.setAttribute("class", "newalert_background"+(o.class?" "+o.class:""));
 	b.setAttribute("id", _newalert.id+id+"_bg");
 	b.style.display="block";
 	var d=document.createElement("div");
-	d.setAttribute("class", "newalert_container");
+	d.setAttribute("class", "newalert_container"+(o.class?" "+o.class:""));
 	d.setAttribute("id", _newalert.id+id);
 	var hasicon=(o.ico || o.icoclass);
 	var cols=(hasicon?"colspan='2'":"");
