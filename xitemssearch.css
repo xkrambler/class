@@ -9,9 +9,16 @@
 .xitemsearch_buttons {
 	white-space: nowrap;
 }
+.xitemsearch_search_txt {
+	padding-left: 1.9em;
+	background-position: left center;
+	background-repeat: no-repeat;
+	background-size: 2em;
+	background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAYCAYAAACbU/80AAAACXBIWXMAAAsTAAALEwEAmpwYAAAABGdBTUEAALGOfPtRkwAAACBjSFJNAAB6JQAAgIMAAPn/AACA6QAAdTAAAOpgAAA6mAAAF2+SX8VGAAABSElEQVR42uzWPUscURTG8d+atLFIGl8xAQsFCYgQLCwEKxVMkw+QbhsTUexs7FNEos2mS2wsFEHR7GfIuiviBxAbQdLYxHROmrMwSLK6MMM288BwZuaey/PnnHvvTClJEp1Ulw6rACgAnj42sVwuN2978QHzGMAt6viK4/ScSqWSHUBoEjsYiucEzwPkLT5jJa8W9GA3zBt4h1G8CWNYbhegnQosoR+nmMFNaqyGC3zBGrbxK+sKLERcv2fe1CbOoiXTebSgD3c4b5HTiPgyD4A/KOFZi5wXEX/nAdAIgPf/GR9Olb6WB8BWxI9YvDd3NLZnN47yAqhiA09iwZ3gGw7CcCLyBlPnROYH0TKusIrxuJr6EcavA3YutmamAPAJ3zGFV7Hg6vgZAFWM4BBjeQDANfb+8f4Ss9iPb8aDKhW/ZAVApwH+DgCbnD2k6ZgSxAAAAABJRU5ErkJggg==);
+	min-width: 80px;
+}
 .xitemsearch_search_txt,
 .xitemsearch_search_txt:focus {
-	min-width: 80px;
 	flex: 1;
 }
 .xitemsearch_search_wait,
