@@ -1069,6 +1069,12 @@ function xForm3(o) {
 				for (var n in o.set[f])
 					a.set(f, n, o.set[f][n]);
 			switch (field.type) {
+			case "date":
+				if (!a.isInputDateSupported()) {
+					var value=gidval(id);
+					if (value.indexOf("-") !== -1) gidval(id, a.filter(field, sqlDateSP(gidval(id))));
+				}
+				break;
 			case "datetime":
 				(function(id){
 					gid(id+":d").onfocus=function(){
