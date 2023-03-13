@@ -558,6 +558,7 @@ function xItemsSearch(o) {
 					var tdextra=(n.tdextra?n.tdextra(e[i],i,e,c-1,n):"");
 					var tdstyle=(n.tdstyle?n.tdstyle(e[i],i,e,c-1,n):"");
 					var tdtitle=(n.tdtitle?(typeof(n.tdtitle) == "function"?n.tdtitle(e[i],i,e,c-1,n):n.tdtitle):htmlentities(v));
+					var link=(n.link?n.link(e[i], i, e, c-1, n):null);
 					h+="<td"
 							+(n.width?" width='"+n.width+"'":"")
 							+(n.align?" align='"+n.align+"'":"")
@@ -566,8 +567,8 @@ function xItemsSearch(o) {
 						+" title='"+tdtitle+"'"
 						+tdextra+">"
 						+(n.cut?"<div style='position:relative;"+(n.width && n.width.indexOf && n.width.indexOf("px") != -1?"width:"+n.width+";":"")+"overflow:hidden;'><div style='position:absolute;white-space:nowrap;'>":"")
-						+(n.link
-							?"<a href=\""+n.link(e[i], i, e, c-1, n)+"\""+(n.ico?" class='icon' style='background-image:url("+n.ico+")'":"")+">"
+						+(link
+							?"<a href=\""+link+"\""+(n.ico?" class='icon' style='background-image:url("+n.ico+")'":"")+" onclick='window.event.stopPropagation();'>"
 							:"<span"+(n.ico && caption?" class='icon' ":"")+" style='"+(n.nowrap?"white-space:nowrap;":"")+(n.ico?"background-image:url("+n.ico+");":"")+"'>"
 						)
 							+caption
