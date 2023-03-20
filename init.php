@@ -231,6 +231,14 @@ class x {
 		require($file);
 	}
 
+	// start and get + clean buffer
+	static function ob($continueob=true) {
+		$d=(@ob_get_contents());
+		ob_end_clean();
+		if ($continueob) ob_start();
+		return $d;
+	}
+
 }
 
 // dump error
@@ -373,13 +381,10 @@ if (!function_exists("debug")) {
 	}
 }
 
-// start and get + clean buffer
+// start and get + clean buffer (deprecated)
 if (!function_exists("xob")) {
 	function xob($continueob=true) {
-		$d=(@ob_get_contents());
-		ob_end_clean();
-		if ($continueob) ob_start();
-		return $d;
+		return x::ob($continueob);
 	}
 }
 
