@@ -713,7 +713,7 @@ function xItemsSearch(o) {
 			"extra_buttons":true,
 			"extra_html":false
 		},(a.o.helpers?a.o.helpers:{}));
-		a.o.cookie=(isset(a.o.cookie)?a.o.cookie:location.pathname+":xitemssearch:"+a.o.id);
+		a.o.cookie=(isset(a.o.cookie) && a.o.cookie !== true?a.o.cookie:location.pathname+":xitemssearch:"+a.o.id);
 		a.sortfirst=true;
 		a.searchValue=(a.o.searchValue?a.o.searchValue:(a.store("search")?a.store("search"):""));
 		a.defaultsort=(a.o.sort?a.o.sort:{});
