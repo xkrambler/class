@@ -869,6 +869,7 @@ class xForm3 {
 							.$f["extra"]." />"
 							."<span id='".$id."-".$num."_span'>".$v."</span>"
 						."</label>"
+						.($f["br"]?"<br />":"")
 					;
 					$num++;
 				}
