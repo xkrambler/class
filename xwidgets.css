@@ -200,6 +200,7 @@
 
 /* combobox/hsearch */
 .cmb,
+.txt[list],
 .hsearch {
 	padding-right: 1.4em;
 	background-position: right center;

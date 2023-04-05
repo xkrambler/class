@@ -817,7 +817,7 @@ class xForm3 {
 				.($f["title"]?" title='".$this->entities($f["title"])."'":"")
 				.($f["maxlength"]?" maxlength='".intval($f["maxlength"])."'":"")
 				.($f["size"]?" size='".intval($f["size"])."'":"")
-				.($f["datalist"]?" list='".(is_string($f["datalist"])?$f["datalist"]:$id."_datalist")."'":"")
+				.(isset($f["datalist"])?" list='".(is_string($f["datalist"])?$f["datalist"]:$id."_datalist")."'":"")
 				.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
 				.$autocomplete
 				.($styles?" style='".$styles."'":"")
