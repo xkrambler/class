@@ -326,7 +326,7 @@ if ($_x=x::inc()) foreach ($_x as $_c) {
 if (is_string(x::page("sessionname"))) {
 	session_set_cookie_params(0, '/; samesite=Lax', '');
 	if ($_x=x::page("sessionname")) session_name($_x);
-	if ($_REQUEST["sessionid"]) session_id($_REQUEST["sessionid"]);
+	if (preg_match('/^[-,a-zA-Z0-9]{1,128}$/', $_REQUEST["sessionid"])) session_id($_REQUEST["sessionid"]);
 	session_start();
 }
 
