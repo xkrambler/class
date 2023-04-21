@@ -374,10 +374,21 @@ var xwidgets={
 			});
 		};
 
+		self.value=function(){
+			if (self.o.key) {
+				var item=self.item();
+				return (typeof(item) == "object"?item[self.o.key]:null);
+			}
+			return null;
+		};
+
 		self.init=function(){
 
 			// ensure requisites
 			if (!self.o.render) return console.error("hsearch: render method required.");
+
+			// defaults
+			self.o.key=self.o.key||"id";
 
 			classAdd(self.o.id, "hsearch");
 

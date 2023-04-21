@@ -1008,7 +1008,8 @@ function spn(n, f) {
 }
 
 // devuelve fecha y hora en formato ISO YYYY-MM-DD HH:II:SS desde fecha JavaScript (o fecha y hora actual)
-function isoDatetime(f) {
+function isoDatetime(f) { return isoDateTime(f); } // coherencia
+function isoDateTime(f) {
 	var
 		f=f||new Date(),
 		y=f.getFullYear(),
