@@ -2,7 +2,7 @@
 
 // basic setup
 error_reporting(E_ALL & ~E_NOTICE); // all but not notices
-if (!defined("__DIR__")) define("__DIR__", dirname(__FILE__)); // PHP 5.2 compatibility
+if (!defined("__DIR__")) define("__DIR__", dirname(__FILE__)); // PHP 5.2- compatibility
 
 // base class
 class x {
@@ -290,6 +290,9 @@ if (!function_exists("perror")) {
 // check basic setup
 if ((bool)ini_get('register_globals')) perror("Security: register_globals must be disabled to continue.");
 
+// PHP compatibility
+if (intval(x::page("phpc")) < 8 && defined("PHP_VERSION_ID") && PHP_VERSION_ID >= 80000) error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
+
 // forced variables
 $id=$_REQUEST["id"];
 $me=x::self();
@@ -302,7 +305,7 @@ $ismobile=x::ismobile();
 $isie=x::isie();
 
 // include all configuration files
-$_f=(strlen(x::page("conf"))?x::page("conf"):"conf/");
+$_f=(x::page("conf")?x::page("conf"):"conf/");
 if ($_f && file_exists($_f)) {
 	$_d=dir($_f);
 	while ($_e=$_d->read())
@@ -326,7 +329,7 @@ if ($_x=x::inc()) foreach ($_x as $_c) {
 if (is_string(x::page("sessionname"))) {
 	session_set_cookie_params(0, '/; samesite=Lax', '');
 	if ($_x=x::page("sessionname")) session_name($_x);
-	if (preg_match('/^[-,a-zA-Z0-9]{1,128}$/', $_REQUEST["sessionid"])) session_id($_REQUEST["sessionid"]);
+	if (preg_match('/^[-,a-zA-Z0-9]{1,128}$/', (string)$_REQUEST["sessionid"])) session_id($_REQUEST["sessionid"]);
 	session_start();
 }
 
