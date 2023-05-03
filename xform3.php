@@ -86,6 +86,7 @@ class xForm3 {
 			"checkbox"=>"checkbox",
 			"radio"=>"radio",
 			"select"=>"cmb",
+			"color"=>"cmd",
 			"image"=>"image",
 			"images"=>"images",
 			"audio"=>"audio",
@@ -887,10 +888,10 @@ class xForm3 {
 					." type='checkbox'"
 					." value='1'"
 					.($f["title"]?" title='".$this->entities($f["title"])."'":"")
+					.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
 					.(($f["values"]?($f["value"]==$f["values"][1]):$f["value"])?" checked":"")
 					.($f["disabled"]?" disabled":"")
 					.($f["readonly"]?" readonly":"")
-					.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
 					.$autocomplete
 					.($styles?" style='".$styles."'":"")
 					.$f["extra"]." />"
@@ -953,7 +954,27 @@ class xForm3 {
 				.$f["extra"].">".$f["value"]."</div>"
 			;
 
+		case "color":
+			return "<div"
+				." id='".$id."'"
+				." class='".$class."'"
+				.($f["title"]?" title='".$this->entities($f["title"])."'":"")
+				.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
+				." style='background-color:#".$this->colorValue($f["value"]).";".$styles."'"
+				.$f["extra"].">".(isset($f["label"])?$f["label"]:"&nbsp;")."</div>"
+			;
+
 		}
+	} // var colorPicker = new iro.ColorPicker('#picker');
+
+	// ensure valid hex RGB color
+	function colorValue($c) {
+		$d="000000";
+		if (!strlen($c)) return $d;
+		$c=strtoupper(substr("".$c, 0, 6));
+		$c=preg_replace("/[^0-9A-F]/", "", $c);
+		if (strlen($c) == 3) $c=substr($c, 0, 1).substr($c, 0, 1).substr($c, 1, 1).substr($c, 1, 1).substr($c, 2, 1).substr($c, 2, 1);
+		return (strlen($c) == 6?$c:$d);
 	}
 
 	// get/set session name

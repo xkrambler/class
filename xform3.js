@@ -289,6 +289,9 @@ function xForm3(o) {
 				var d=gidval(id+":d"); if (d.length != 10) d="";
 				var t=gidval(id+":t"); if (t.length != 5) t="";
 				return a.nullifempty(a.filter(field, trim(d && t?d+" "+t+":00":"")));
+			case "color":
+				if (isset(value)) if (a.gid(field)) a.gid(field).style.backgroundColor="#"+a.colorValue(value);
+				return a.colorValue(a.gid(field).style.backgroundColor.replace("#", ""));
 			case "time":
 			default:
 				if (!gid(id)) return null;
@@ -297,6 +300,23 @@ function xForm3(o) {
 			return a.filter(field, a.formValue(id));
 		}
 		return null;
+	};
+
+	// filter color value
+	a.colorValue=function(c){
+		var c=c.replace("#", "");
+    if (c.charAt(0) == 'r') {
+			c=c.replace('rgb(','').replace('rgba(','').replace(')','').split(',');
+			var r=parseInt(c[0], 10).toString(16);
+			var g=parseInt(c[1], 10).toString(16);
+			var b=parseInt(c[2], 10).toString(16);
+			r=(r.length == 1?'0'+r:r);
+			g=(g.length == 1?'0'+g:g);
+			b=(b.length == 1?'0'+b:b);
+			c=r+g+b;
+		}
+		if (c.length == 3) c=c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
+		return c.toUpperCase();
 	};
 
 	// get/set field placeholder
@@ -1044,7 +1064,7 @@ function xForm3(o) {
 		}
 		document.body.appendChild(datalist);
 		// assign datalist to input
-		a.gid(f).setAttribute("list", datalist_id);
+		if (a.gid(f)) a.gid(f).setAttribute("list", datalist_id);
 	};
 
 	// is input date supported
@@ -1056,6 +1076,18 @@ function xForm3(o) {
 		return (input.value !== value);
 	};
 
+	// set color
+	a.setColor=function(field, color) {
+		var c=color.replace("#", "").toUpperCase();
+		gidset("xform3_color_picked", c);
+		a.value(field, c);
+	};
+
+	// return icon, if defined
+	a.icon=function(icon){
+		return (typeof(kernel) == "object" && kernel.icon?kernel.icon(icon)+" ":"");
+	};
+
 	// setup
 	a.init=function(o){
 		var o=o||{};
@@ -1065,50 +1097,90 @@ function xForm3(o) {
 			var id=a.id(f);
 			if (!a.data[f]) a.data[f]={};
 			var field=a.o.fields[f];
-			if (o.set && o.set[f])
-				for (var n in o.set[f])
-					a.set(f, n, o.set[f][n]);
-			switch (field.type) {
-			case "date":
-				if (!a.isInputDateSupported()) {
-					var value=gidval(id);
-					if (value.indexOf("-") !== -1) gidval(id, a.filter(field, sqlDateSP(gidval(id))));
+			(function(field, f, id){
+				if (o.set && o.set[f])
+					for (var n in o.set[f])
+						a.set(f, n, o.set[f][n]);
+				switch (field.type) {
+				case "date":
+					if (!a.isInputDateSupported()) {
+						var value=gidval(id);
+						if (value.indexOf("-") !== -1) gidval(id, a.filter(field, sqlDateSP(gidval(id))));
+					}
+					break;
+				case "datetime":
+					(function(id){
+						gid(id+":d").onfocus=function(){
+							this.setAttribute("data-lastvalue", this.value);
+						};
+						gid(id+":d").oninput=function(){
+							if (
+								!this.getAttribute("data-lastvalue")
+								&& gid(id+":t")
+								&& !gid(id+":t").value
+								&& this.value
+							) gid(id+":t").value="00:00";
+						};
+					})(id);
+					break;
+				case "number":
+				case "text":
+					if (gid(id)) {
+						if (field.integer)  gInputInt(id);
+						if (field.number)   gInputInt(id, true);
+						if (field.positive) gInputFloat(id);
+						if (field.decimal)  gInputFloat(id, true);
+					}
+					break;
+				case "audio":
+					a.audio.init(f);
+					break;
+				case "file":
+				case "image":
+				case "files":
+				case "images":
+					a.files.init(f);
+					break;
+				case "color":
+					if (typeof(newalert) == "function" && typeof(iro) == "object" && iro.ColorPicker) {
+						a.gid(f).onclick=function(){
+							var buttons=[];
+							buttons.push({"caption":(typeof(kernel) == "object" && kernel.icon?kernel.icon("check")+" ":"")+"Aceptar","default":true});
+							if (field.colors) for (var i in field.colors) {
+								var c=field.colors[i];
+								(function(c){
+									buttons.push({"caption":"<span style='color:#"+c+";'>◼</span>","action":function(){
+										a.setColor(f, c);
+										newalert_close("xform3_colorpicker");
+									}});
+								})(c);
+							}
+							newalert({
+								"id":"xform3_colorpicker",
+								//"title":"Seleccionar color",
+								"msg":""
+									+"<div class='acenter'>"
+										+"<div class='iblock'>"
+											+"<div id='xform3_colorpicker' style='margin:auto;min-width:300px;'></div>"
+											+"<div class='acenter' id='xform3_color_picked'>&nbsp;</div>"
+										+"</div>"
+									+"</div>"
+								,
+								"buttons":buttons
+							});
+							a.data[f].iro_colorpicker=new iro.ColorPicker("#xform3_colorpicker", {
+								"color":a.value(f)
+								//"width":getWidth("color_picker")
+							}).on("input:change", function(c){
+							//}).on("color:change", function(c){
+								a.setColor(f, c.hexString);
+								return true;
+							});
+						};
+					}
+					break;
 				}
-				break;
-			case "datetime":
-				(function(id){
-					gid(id+":d").onfocus=function(){
-						this.setAttribute("data-lastvalue", this.value);
-					};
-					gid(id+":d").oninput=function(){
-						if (
-							!this.getAttribute("data-lastvalue")
-							&& gid(id+":t")
-							&& !gid(id+":t").value
-							&& this.value
-						) gid(id+":t").value="00:00";
-					};
-				})(id);
-				break;
-			case "number":
-			case "text":
-				if (gid(id)) {
-					if (field.integer)  gInputInt(id);
-					if (field.number)   gInputInt(id, true);
-					if (field.positive) gInputFloat(id);
-					if (field.decimal)  gInputFloat(id, true);
-				}
-				break;
-			case "audio":
-				a.audio.init(f);
-				break;
-			case "file":
-			case "image":
-			case "files":
-			case "images":
-				a.files.init(f);
-				break;
-			}
+			})(field, f, id);
 			if (field.oninit) field.oninit(a, field, a.data[f]);
 		}
 	};
