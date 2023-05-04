@@ -294,8 +294,9 @@ if ((bool)ini_get('register_globals')) perror("Security: register_globals must b
 if (intval(x::page("phpc")) < 8 && defined("PHP_VERSION_ID") && PHP_VERSION_ID >= 80000) error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
 
 // forced variables
-$id=$_REQUEST["id"];
+$id=(isset($_REQUEST["id"])?$_REQUEST["id"]:"");
 $me=x::self();
+if (!isset($data)) $data=[];
 
 // legacy variables (deprecated)
 $server=x::server();
