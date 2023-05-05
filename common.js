@@ -36,12 +36,12 @@ function gidenabled(id, enabled) {
 
 // foreach implementation
 function xforeach(a, f) {
-	var c=0;
-	if (typeof(a) == "object" && typeof(f) == "function")
-		for (var i in a)
-			if (f(a[i], i, a))
-				c++;
-	return c;
+	var r;
+	if (typeof(a) == "object" && typeof(f) == "function") for (var i in a) {
+		r=f(a[i], i, a);
+		if (typeof(r) != "undefined") return r;
+	}
+	return null;
 }
 
 // ensure valid date in ISO format YYYY-MM-DD (deprecated)
