@@ -119,6 +119,7 @@ function newElement(element, o) {
 		if (o.id) e.id=o.id;
 		if (o.class) e.className=o.class;
 		if (o.html) e.innerHTML=o.html;
+		if (o.type) e.type=o.type;
 		if (o.title) e.title=o.title;
 		if (o.style) e.style=o.style;
 		if (o.value) e.value=o.value;
