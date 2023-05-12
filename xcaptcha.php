@@ -314,20 +314,20 @@ class xCaptcha {
 		$k=rand(0, 100);
 		$xp=$this->scale*$this->Xperiod*rand(1,3);
 		for ($i=0; $i < ($this->width*$this->scale); $i++)
-			imagecopy($this->im, $this->im, $i-1, sin($k+$i/$xp) * ($this->scale*$this->Xamplitude), $i, 0, 1, $this->height*$this->scale);
+			imagecopy($this->im, $this->im, $i-1, (int)sin($k+$i/$xp) * ($this->scale*$this->Xamplitude), $i, 0, 1, (int)$this->height*$this->scale);
 
 		// Y-axis wave generation
 		$k=rand(0, 100);
 		$yp=$this->scale*$this->Yperiod*rand(1,2);
 		for ($i=0; $i < ($this->height*$this->scale); $i++)
-			imagecopy($this->im, $this->im, sin($k+$i/$yp) * ($this->scale*$this->Yamplitude), $i-1, 0, $i, $this->width*$this->scale, 1);
+			imagecopy($this->im, $this->im, (int)sin($k+$i/$yp) * ($this->scale*$this->Yamplitude), $i-1, 0, $i, (int)$this->width*$this->scale, 1);
 
 	}
 
 	// reduce the image to the final size
 	protected function reduceImage() {
 		$imResampled=imagecreatetruecolor($this->width, $this->height);
-		imagecopyresampled($imResampled, $this->im, 0, 0, 0, 0, $this->width, $this->height, $this->width*$this->scale, $this->height*$this->scale);
+		imagecopyresampled($imResampled, $this->im, 0, 0, 0, 0, $this->width, $this->height, (int)$this->width*$this->scale, (int)$this->height*$this->scale);
 		imagedestroy($this->im);
 		$this->im=$imResampled;
 	}
