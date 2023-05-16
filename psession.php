@@ -16,8 +16,8 @@ class PSession extends xData {
 		$is_secure=\x::ishttps();
 		$expiration=[
 			"expires"=>time()+$this->expiration,
-			"samesite"=>($this->secure && $is_secure?"Secure":$this->samesite),
-			"secure"=>$is_secure,
+			"samesite"=>$this->samesite,
+			"secure"=>($this->secure?$is_secure:false),
 		];
 		\x::setcookie(session_name(), session_id(), $expiration);
 		return $expiration;
