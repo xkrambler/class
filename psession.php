@@ -8,7 +8,7 @@ class PSession extends xData {
 		"expiration"=>(60*60*24*30), // expiration time (30 day)
 		"revalidate"=>60*15, // revalidation time (15 min)
 		"samesite"=>"Lax", // None, Lax, Secure
-		"secure"=>false, // conditional Secure cookie if over HTTPS
+		"secure"=>true, // conditional Secure cookie if over HTTPS
 	];
 
 	// extended cookie expiration
