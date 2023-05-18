@@ -658,7 +658,7 @@ function xItemsSearch(o) {
 			if (!p[ev] && a.o[ev]) p[ev]=a.o[ev];
 		}
 		// petición AJAX
-		a.o.refreshSearchInputText();
+		a.refreshSearchInputText();
 		if (gid(a.o.id+"_search_txt")) classAdd(a.o.id+"_search_txt", "xitemsearch_search_wait");
 		if (p.onajaxstart) p.onajaxstart(a, p);
 		ajax(a.o.ajax,{
@@ -675,6 +675,7 @@ function xItemsSearch(o) {
 		},function(r){
 			if (r.data.err) newerror(r.data.err);
 			if (r.data.ok) {
+				a.refreshSearchInputText();
 				a.setVisible(r.data.visible);
 				if (p.onsearchok) p.onsearchok(a, r);
 				if ((a.page*a.getVisible()) > r.data.max) {
