@@ -658,6 +658,7 @@ function xItemsSearch(o) {
 			if (!p[ev] && a.o[ev]) p[ev]=a.o[ev];
 		}
 		// petición AJAX
+		a.o.refreshSearchInputText();
 		if (gid(a.o.id+"_search_txt")) classAdd(a.o.id+"_search_txt", "xitemsearch_search_wait");
 		if (p.onajaxstart) p.onajaxstart(a, p);
 		ajax(a.o.ajax,{
