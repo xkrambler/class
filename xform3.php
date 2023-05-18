@@ -386,6 +386,7 @@ class xForm3 {
 		$field=$this->fields[$f];
 		if ($field["string"]) return (string)$value;
 		if ($field["nullifempty"] && !strlen($value)) return null;
+		if ($field["nozero"] && !strlen($value)) return 0;
 		return $value;
 	}
 
