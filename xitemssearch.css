@@ -65,7 +65,7 @@
 	color: #AAA;
 }
 .xitemsearch_page_input {
-	width: 48px;
+	min-width: 2em;
 	text-align: center;
 }
 .xitemsearch_page_filler {
@@ -73,12 +73,12 @@
 	text-align: center;
 	color: #888;
 }
-.xitemsearch_page_input_length_1 { width: 2em; }
-.xitemsearch_page_input_length_2 { width: 2.5em; }
-.xitemsearch_page_input_length_3 { width: 3em; }
-.xitemsearch_page_input_length_4 { width: 3.5em; }
-.xitemsearch_page_input_length_5 { width: 4em; }
-.xitemsearch_page_input_length_6 { width: 4.5em; }
+.xitemsearch_page_input_length_1 {}
+.xitemsearch_page_input_length_2 {}
+.xitemsearch_page_input_length_3 {}
+.xitemsearch_page_input_length_4 {}
+.xitemsearch_page_input_length_5 {}
+.xitemsearch_page_input_length_6 {}
 .xitemsearch_page_input_alone {}
 .xitemsearch_data {
 	position: relative;

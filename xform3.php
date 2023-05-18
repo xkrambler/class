@@ -1032,7 +1032,7 @@ class xForm3 {
 		// fix orientation
 		$xi->fixOrientation();
 		// scale only if dimensions exceeds threshold
-		if ($xi->width() > $w || $xi->height() > $h) $xi->scale($w, $h, false, true);
+		if ($xi->width() > $w || $xi->height() > $h) $xi->scale($w, $h);
 		// return content data image
 		return $xi->toString(($o["f"]?$o["f"]:"jpg"), $q);
 	}
