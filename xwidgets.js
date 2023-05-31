@@ -1624,15 +1624,19 @@ var xwidgets={
 
 		// scroll top relative to parent
 		self.parentScrollTop=function(){
-			return (self.o.parent?gid(self.o.parent).scrollTop:scrollTop());
+			return (self.o.parent && gid(self.o.parent)?gid(self.o.parent).scrollTop:scrollTop());
 		};
 
 		// resize event
 		self.resize=function(){
 
+			// checks
+			if (!gid(self.o.id)) return false;
+			var parent=(self.o.parent && gid(self.o.parent)?self.o.parent:false);
+
 			// initial setup
-			var maxWidth=(self.o.parent?getLeft(self.o.parent)+getWidth(self.o.parent):windowWidth());
-			var maxHeight=(self.o.parent?getTop(self.o.parent)+getHeight(self.o.parent):windowHeight());
+			var maxWidth=(parent?getLeft(parent)+getWidth(parent):windowWidth());
+			var maxHeight=(parent?getTop(parent)+getHeight(parent):windowHeight());
 			if (maxWidth > windowWidth()) maxWidth=windowWidth();
 			if (maxHeight > windowHeight()) maxHeight=windowHeight();
 
@@ -1665,7 +1669,7 @@ var xwidgets={
 			);
 			var resultsHeight=-inputHeight-margin;
 			if (valignTop) {
-				var bigger=(!self.o.parent || self.parentScrollTop() > getTop(self.o.parent)?self.parentScrollTop():getTop(self.o.parent));
+				var bigger=(!parent || self.parentScrollTop() > getTop(parent)?self.parentScrollTop():getTop(parent));
 				resultsHeight+=(getTop(self.e.cmb)-bigger);
 			} else {
 				resultsHeight+=maxHeight-(getTop(self.e.cmb)-self.parentScrollTop());
@@ -1679,6 +1683,9 @@ var xwidgets={
 			// save alignments
 			self.o.alignRight=alignRight;
 			self.o.valignTop=valignTop;
+
+			// ok
+			return true;
 
 		};
 
