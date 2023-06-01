@@ -1008,6 +1008,12 @@ function spn(n, f) {
 	return (parseInt(n) == parseFloat(n)?spd(n):spf(n, f));
 }
 
+// asegurar una fecha en formato ISO
+function isoEnsure(dt)
+	var m=dt.match(/\d{4}-[01]\d-[0-3]\d [0-2]\d:[0-5]\d:[0-5]\d/);
+	return (m?m[0]:false);
+}
+
 // devuelve fecha y hora en formato ISO YYYY-MM-DD HH:II:SS desde fecha JavaScript (o fecha y hora actual)
 function isoDatetime(f) { return isoDateTime(f); } // coherencia
 function isoDateTime(f) {
