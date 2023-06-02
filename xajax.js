@@ -274,20 +274,25 @@ function xajax(o){
 			// if post is object, convert
 			if (fd || post || isset(o.data)) {
 
-				// instance FormData
-				if (!fd && (post || isset(o.data))) fd=new FormData();
+				// if no FormData defined but is an array post or data
+				if (!fd && (typeof(post) == "object" || typeof(o.data) == "object")) {
 
-				// POST fields
-				if (post) for (var k in post) fd.append(k, post[k]);
+					// instance FormData
+					fd=new FormData();
 
-				// data JSON
-				if (isset(o.data)) {
-					// separate Files/Blobs to FormData
-					for (var k in o.data) if (o.data[k] instanceof Blob || o.data[k] instanceof File) {
-						fd.append(k, o.data[k]);
+					// iterate data
+					for (var k in post) fd.append(k, post[k]);
+
+					// data JSON
+					if (isset(o.data)) {
+						// separate Files/Blobs to FormData
+						for (var k in o.data) if (o.data[k] instanceof Blob || o.data[k] instanceof File) {
+							fd.append(k, o.data[k]);
+						}
+						// data as JSON
+						fd.append("data", self.json(o.data));
 					}
-					// data as JSON
-					fd.append("data", self.json(o.data));
+
 				}
 
 			}
@@ -296,7 +301,7 @@ function xajax(o){
 
 		// prepare final parameters
 		var async=(o.sync?false:true);
-		var method=(o.method?o.method:(post || fd?"POST":"GET"));
+		var method=(o.method?o.method:(fd || post?"POST":"GET"));
 		var url=self.alink(get, (o.url?o.url:location.href));
 		var headers=o.headers || {};
 		if (mime) headers['Content-Type']=mime;
@@ -304,6 +309,7 @@ function xajax(o){
 		// do request
 		try {
 			http.open(method, url, async, (self.isset(o.user)?o.user:null), (self.isset(o.pass)?o.pass:null));
+			if (!fd && typeof(post) == "string") http.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
 			if (headers) for (var k in headers) if (typeof(headers[k]) === "string") http.setRequestHeader(k, headers[k]);
 			if (async) http.onreadystatechange=function(){ self.onreadystatechange(http, o); };
 			if (o.progress) http.onprogress=o.progress;
