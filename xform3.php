@@ -436,7 +436,7 @@ class xForm3 {
 		if ($field["readonly"] && isset($field["value"])) $value=$field["value"];
 		// filters
 		if ($field["trim"]) $value=trim($value);
-		if ($field["lowercase"]) $value=strtolower_utf8($value);
+		if ($field["lowercase"] || $field["type"] == "email") $value=strtolower_utf8($value);
 		if ($field["uppercase"]) $value=strtoupper($value);
 		if ($field["capitalize"]) $value=ucwords(strtolower_utf8($value));
 		if ($field["integer"]) $value=intval($value);
@@ -657,7 +657,7 @@ class xForm3 {
 		case "number":
 		case "text":
 			if ($f["align"]) $styles.="text-align: ".$f["align"].";";
-			if ($f["lowercase"]) $styles.="text-transform: lowercase;";
+			if ($f["lowercase"] || $f["type"] == "email") $styles.="text-transform: lowercase;";
 			else if ($f["uppercase"]) $styles.="text-transform: uppercase;";
 			else if ($f["capitalize"]) $styles.="text-transform: capitalize;";
 			break;
