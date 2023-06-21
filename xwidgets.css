@@ -332,6 +332,11 @@
 .group {
 	display: flex;
 }
+.cmd_light,
+.cmd_light:active,
+.cmd_light:hover,
+.cmd_light:focus,
+.cmd_light:link,
 .cmd_input,
 .cmd_input:active,
 .cmd_input:hover,
@@ -346,6 +351,8 @@
 	background: #DDD;
 	color: #444;
 }
+.cmd_light:hover,
+.cmd_light:focus,
 .cmd_input:hover,
 .cmd_input:focus,
 .group .cmd:focus,  .group a.cmd:focus,
