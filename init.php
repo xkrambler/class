@@ -182,6 +182,11 @@ class x {
 		if (!self::ishttps() && isset($_SERVER["HTTP_HOST"])) self::redir("https://".$_SERVER["HTTP_HOST"].self::request());
 	}
 
+	// efective remote address
+	static function remoteaddr() {
+		return ($_SERVER["HTTP_X_FORWARDED_FOR"]?$_SERVER["HTTP_X_FORWARDED_FOR"]:$_SERVER["REMOTE_ADDR"]);
+	}
+
 	// return current page charset
 	static public function charset($charset=null) {
 		if ($charset !== null) self::page("charset", $charset);

@@ -33,16 +33,28 @@ class WS {
 		}
 		if (!isset($this->action)) $this->action=$this->data["action"];
 
+		// ask for key
+		if (!($key=$this->key()) && isset($_REQUEST["askkey"])) {
+			header("Content-Type: text/html; charset=UTF-8");
+			?><!doctype html>
+			<html lang='en'>
+			<head>
+				<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+			</head>
+			<body>
+				<form method='POST'>
+					Key: <input name='key' type='text' size='40' /> <input type='submit' value='Enter' />
+				</form>
+			</body>
+			</html><?php
+			exit;
+		}
+
 		// common non authenticated actions
 		switch ($this->action) {
-		case "timestamp":
-			$this->out(["timestamp"=>time()]);
-		case "microtime":
-			$this->out(["microtime"=>microtime(true)]);
-		case "ping":
-			$this->out(["pong"=>substr($this->data["ping"], 0, 256)]);
+		case "microtime": $this->out(["microtime"=>microtime(true)]);
+		case "ping": $this->out(["pong"=>substr($this->data["ping"], 0, 256)]);
 		case "status":
-			$key=$this->key();
 			$iskeyok=(
 				(isset($this->key) && $key == $this->key)
 				|| (is_array($this->keys) && $this->keys[$key])
@@ -53,12 +65,9 @@ class WS {
 				"actions"=>$actions,
 				"ok"=>true,
 			]);
-		case "void":
-			$this->out();
-		case null:
-		case false:
-		case "":
-			$this->out(["err"=>"action not defined."]);
+		case "time": $this->out(["time"=>time()]);
+		case "void": $this->out();
+		default: if (!$this->action) $this->out(["err"=>"action not defined."]);
 		}
 
 	}
@@ -120,23 +129,6 @@ class WS {
 
 		// get current key
 		$key=$this->key();
-
-		// ask for key
-		if (!is_string($key) && isset($_REQUEST["askkey"])) {
-			header("Content-Type: text/html; charset=UTF-8");
-			?><!doctype html>
-			<html lang='en'>
-			<head>
-				<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-			</head>
-			<body>
-				<form method='POST'>
-					Key: <input name='key' type='text' size='40' /> <input type='submit' value='Enter' />
-				</form>
-			</body>
-			</html><?php
-			exit;
-		}
 
 		// key/keys authentication
 		if (is_string($key)) {
