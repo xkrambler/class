@@ -475,7 +475,7 @@ class xForm3 {
 			}
 			if (!isset($f["verify"]) || $r === null) {
 				// required field
-				if ($f["required"] && !trim($v))
+				if ($f["required"] && !strlen(trim($v)))
 					$this->errors[$field]=array(
 						"id"=>$this->id($field),
 						"field"=>$field,
