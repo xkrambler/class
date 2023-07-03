@@ -30,9 +30,9 @@
 		"nolinks":true, // no render previous and next links
 	
 	Events:
-		"onstartslide":function(xslider, index) // at the start of the slide transition
-		"onslide":function(xslider, index) // at the end of the slide transition
-		"onclick":function(xslider, index) // slide click
+		"onstartslide":function(xslider, index, xslide) // at the start of the slide transition
+		"onslide":function(xslider, index, xslide) // at the end of the slide transition
+		"onclick":function(xslider, index) // slider click
 
 */
 
@@ -179,7 +179,7 @@ function xslider(o) {
 		}
 		options.start=false;
 		if (!a.timer) {
-			if (a.o.onstartslide) a.o.onstartslide(a, next);
+			if (a.o.onstartslide) a.o.onstartslide(a, next, a.slide(next));
 			a.timer=new Date().getTime();
 			if (o.cookie) setCookie(o.cookie+"_start",next);
 			var effects="";
@@ -197,7 +197,7 @@ function xslider(o) {
 		else {
 			a.timer=0;
 			a.o.start=next;
-			if (a.o.onslide) a.o.onslide(a, next);
+			if (a.o.onslide) a.o.onslide(a, next, a.slide(next));
 			if (a.o.duration && !options.end) a.startTimer();
 		}
 	};
@@ -321,6 +321,7 @@ function xslider(o) {
 			if (a.o.slides[i] && a.o.slides[i].img)
 				style(a.d[i],{"backgroundImage":"url("+a.o.base+a.o.slides[i].img+")"});
 			if (i >= divs.length) a.o.id.appendChild(a.d[i]);
+			if (a.o.onadd) a.o.onadd(a, i, divs[i]);
 		}
 		if (!a.o.nolinks && a.o.slides.length>1) {
 			var links={
