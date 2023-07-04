@@ -221,8 +221,8 @@ function scrollLeft() { return ieTrueBody().scrollLeft; }
 function scrollTop() { return ieTrueBody().scrollTop; }
 function windowWidth() { return (document.documentElement.clientWidth?document.documentElement.clientWidth:(window.innerWidth?window.innerWidth:document.body.clientWidth)); }
 function windowHeight() { return (document.documentElement.clientHeight?document.documentElement.clientHeight:(window.innerHeight?window.innerHeight:document.body.clientHeight)); }
-function documentWidth() { return document.body.clientWidth; }
-function documentHeight() { return document.body.clientHeight; }
+function documentWidth() { return Math.max(document.body.scrollWidth, document.body.offsetWidth, document.documentElement.clientWidth, document.documentElement.scrollWidth, document.documentElement.offsetWidth); }
+function documentHeight() { return Math.max(document.body.scrollHeight, document.body.offsetHeight, document.documentElement.clientHeight, document.documentElement.scrollHeight, document.documentElement.offsetHeight); }
 
 // natural properties of an image (real size)
 function naturalWidth(idimg) {
