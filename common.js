@@ -254,13 +254,14 @@ function appearIntoView(id, callback, o) {
 		o.id=id;
 		o.event=e;
 		o.intoview=isIntoView(id, o.full);
-		if ((!intoview && o.intoview) || (intoview && !o.intoview)) {
+		if ((e && e._forced) || (!intoview && o.intoview) || (intoview && !o.intoview)) {
 			callback(o);
 			if (!o.always) document.removeEventListener("scroll", check_appear);
 		}
 		intoview=o.intoview;
 	};
 	document.addEventListener("scroll", check_appear);
+	if (o.always) check_appear({"_forced":true});
 }
 
 // set cursor
