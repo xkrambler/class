@@ -204,9 +204,9 @@ class x {
 	static public function setcookie(string $name, string $value, array $o=[]) {
 		if (!$o["path"]) $o["path"]="/";
 		if (strnatcmp(phpversion(), '7.3.0') >= 0) {
-			setcookie($name, $value, $o);
+			setrawcookie($name, $value, $o);
 		} else {
-			setcookie($name, $value, (is_numeric($o['expires'])?$o['expires']:0),
+			setrawcookie($name, $value, (is_numeric($o['expires'])?$o['expires']:0),
 				(isset($o["path"])?(string)$o["path"]:"").(($v=$o['samesite'])?';samesite='.$v:''),
 				(isset($o["domain"])?(string)$o["domain"]:""),
 				(bool)$o["secure"],
