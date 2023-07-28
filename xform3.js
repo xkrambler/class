@@ -194,6 +194,12 @@ function xForm3(o) {
 				}
 			}
 			return a.o.fields[field].options;
+		},
+
+		// option text
+		text:function(field){
+			var combo=gid(a.id(field));
+			return (combo && combo.selectedIndex >=0?combo.options[combo.selectedIndex].text:null);
 		}
 
 	};
