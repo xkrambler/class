@@ -202,8 +202,12 @@ class x {
 
 	// generic set cookie
 	static public function setcookie(string $name, string $value, array $o=[]) {
-		$n=rawurlencode($name);
-		$v=rawurlencode($value);
+		$c=[
+			"\x00"=>"", "\x1F"=>"", "\x7F"=>"", "\n"=>"%0A", "\r"=>"%0D",
+			" "=>"%20", ","=>"%2C", "/"=>"%2F", ";"=>"%3B", "="=>"%3D", "\\"=>"%5C"
+		];
+		$n=str_replace(array_keys($c), array_values($c), $name);
+		$v=str_replace(array_keys($c), array_values($c), $value);
 		if (!$o["path"]) $o["path"]="/";
 		if (strnatcmp(phpversion(), '7.3.0') >= 0) {
 			setrawcookie($n, $v, $o);
