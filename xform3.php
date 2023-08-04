@@ -116,6 +116,10 @@ class xForm3 {
 		return array_keys($var) !== range(0,sizeof($var)-1);
 	}
 
+	private function _strtolower($s) {
+		return (function_exists("mb_strtolower")?mb_strtolower($s):strtolower_utf8($s));
+	}
+
 	// return AJAX action
 	function isajax() { return $GLOBALS["ajax"]; }
 
@@ -436,9 +440,9 @@ class xForm3 {
 		if ($field["readonly"] && isset($field["value"])) $value=$field["value"];
 		// filters
 		if ($field["trim"]) $value=trim($value);
-		if ($field["lowercase"] || $field["type"] == "email") $value=strtolower_utf8($value);
+		if ($field["lowercase"] || $field["type"] == "email") $value=$this->_strtolower($value);
 		if ($field["uppercase"]) $value=strtoupper($value);
-		if ($field["capitalize"]) $value=ucwords(strtolower_utf8($value));
+		if ($field["capitalize"]) $value=ucwords($this->_strtolower($value));
 		if ($field["integer"]) $value=intval($value);
 		if ($field["number"]) $value=doubleval($value);
 		if ($field["decimal"]) $value=doubleval($value);
