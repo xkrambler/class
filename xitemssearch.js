@@ -526,7 +526,7 @@ function xItemsSearch(o) {
 		h+="<thead><tr>";
 		for (var i in a.fields) if (!a.fields[i].disabled) {
 			var title=htmlentities(a.fields[i].title?a.fields[i].title:(a.fields[i].caption?a.fields[i].caption:""));
-			h+="<th"+(a.fields[i].nosort?" title='"+title+"'":"")+">"
+			h+="<th"+(a.fields[i].class?" class='"+a.fields[i].class+"'":"")+(a.fields[i].nosort?" title='"+title+"'":"")+">"
 				+(a.fields[i].nosort?"":"<a href='javascript:window.xItemsSearchs[\""+a.o.id+"\"].swapsort(\""+i+"\");' title='"+title+"'>")
 				+"<span class='"+(a.o.sort && isset(a.o.sort[i])?(a.o.sort[i]?"sortdesc":"sortasc"):"")+(default_sort?"_default":"")+"'>"
 				+(a.fields[i].caption?a.fields[i].caption:"")
@@ -559,11 +559,13 @@ function xItemsSearch(o) {
 					if (n.filter && typeof(n.filter) == "string") n.filter=eval(n.filter);
 					else if (v && n.limit) v=(v.length >= n.limit?v.substring(0, n.limit-1)+"…":v);
 					var caption=(n.filter?n.filter(e[i],i,e,c-1,n):v);
+					var tdclass=(n.tdclass?n.tdclass(e[i],i,e,c-1,n):"");
 					var tdextra=(n.tdextra?n.tdextra(e[i],i,e,c-1,n):"");
 					var tdstyle=(n.tdstyle?n.tdstyle(e[i],i,e,c-1,n):"");
 					var tdtitle=(n.tdtitle?(typeof(n.tdtitle) == "function"?n.tdtitle(e[i],i,e,c-1,n):n.tdtitle):htmlentities(v));
 					var link=(n.link?n.link(e[i], i, e, c-1, n):null);
 					h+="<td"
+							+(tdclass || n.class?" class='"+(n.class?n.class:"")+(tdclass?" "+tdclass:"")+"'":"")
 							+(n.width?" width='"+n.width+"'":"")
 							+(n.align?" align='"+n.align+"'":"")
 							+(n.valign?" valign='"+n.valign+"'":"")
