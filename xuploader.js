@@ -365,21 +365,88 @@ function xUploader(o) {
 
 	// event: input
 	self.inputEvent=function(event){
-		self.filesAdd(self.o.input.files);
-		if (self.o.onselect) self.o.onselect(self, {"selected":self.o.input.files, "files":self.files()});
-		if (self.o.submit) self.submit();
+		self.filesAdd(self.o.input.files, function(){
+			if (self.o.onselect) self.o.onselect(self, {"selected":self.o.input.files, "files":self.files()});
+			if (self.o.submit) self.submit();
+		});
 	};
 
 	// add files
-	self.filesAdd=function(files){
+	self.filesAdd=function(files, callback){
 		var names={};
+		var scaling=(self.o.scale && window.ImageResizer);
+		var async_scaling=false;
 		if (!self.o.repeat)
 			for (var i=0; i < self.o.files.length; i++)
 				names[self.o.files[i].name]=true;
 		for (var i=0; i < files.length; i++)
 			if (!names[files[i].name])
-				self.o.files.push(files[i]);
-		if (self.o.onfiles) self.o.onfiles(self, {"added":files, "files":self.o.files});
+				names[files[i].name]=false;
+		for (var i=0; i < files.length; i++) {
+			if (!names[files[i].name]) {
+				if (scaling) {
+					if (self.o.onscale && !async_scaling) {
+						async_scaling=true;
+						self.o.onscale(self);
+					}
+					(function(self, file, file_index){
+						// resize image with ImageResizer
+						ImageResizer.resizeImage(file, {
+							debug:            true,
+							//resize:           false,
+							//convertToJpg:     true,
+							//convertToJpgBgColor: "#FFFFFF"
+							renameFile:       false,
+							upscale:          false,
+							pngToJpg:         false,
+							sharpen:          (self.o.scale.s || 0.15),
+							maxWidth:         (self.o.scale.w || null),
+							maxHeight:        (self.o.scale.h || null),
+							jpgQuality:       (self.o.scale.q || 0.95),
+							returnFileObject: false
+						}, function(result){
+
+							//console.log(result);
+							result.name=file.name;
+							var result_file=new File([result], file.name, {type: result.type}); // return as file object
+
+							//console.log(result_file);
+							names[result_file.name]=true;
+							files[file_index]=result_file;
+							self.o.files.push(result_file);
+
+							var all_processed=true;
+							for (var n in names)
+								if (!names[n])
+									all_processed=false;
+
+							if (all_processed) {
+								if (self.o.onfiles) self.o.onfiles(self, {"added":files, "files":self.o.files});
+								if (self.o.onscaled) self.o.onscaled(self);
+								if (callback) callback();
+							}
+
+							/*
+							var image=new Image();
+							image.src=URL.createObjectURL(result_file);
+							//image.download=result_file.name;
+							image.style.maxWidth="100%";
+							gid('result').innerHTML="";
+							gid('result').appendChild(image);
+							*/
+
+						});
+					})(self, files[i], i);
+
+				} else {
+					self.o.files.push(files[i]);
+				}
+			}
+		}
+		if (!async_scaling) {
+			if (self.o.onfiles) self.o.onfiles(self, {"added":files, "files":self.o.files});
+			if (callback) callback();
+		}
 	};
 
 	// delete file by index
@@ -486,11 +553,12 @@ function xUploader(o) {
 		var files=event.dataTransfer.files;
 		if (self.o.ondragleave) self.o.ondragleave(self, {"zone":this, "id":this.id, "event":event});
 		if (self.o.ondrop) self.o.ondrop(self, {"zone":this, "id":this.id, "event":event, "files":files});
-		// prepare upload
-		self.filesAdd(files);
-		if (self.o.submit) self.submit();
 		// prevent default
-		event.preventDefault();
+		event.preventDefault();			
+		// prepare upload
+		self.filesAdd(files, function(){
+			if (self.o.submit) self.submit();
+		});
 	};
 
 	// setup drag

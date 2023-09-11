@@ -426,6 +426,13 @@ function xForm3(o) {
 			"name":"xform3_upload",
 			"chunked":(isset(a.o.chunksize)?a.o.chunksize:false), // default not chunked
 			"multiple":false,
+			"scale":o.field.scale,
+			"onscale":function(uploader, files){
+				newwait("<div class='xform3_upload_scaling' id='xform3_upload_scaling'>Escalando...</div>");
+			},
+			"onscaled":function(uploader, files){
+				newwait_close();
+			},
 			"onstart":function(uploader, files){
 				newwait("<div class='xform3_upload_progress' id='xform3_upload_progress'>Subiendo...</div>");
 			},
