@@ -717,6 +717,10 @@ var xwidgets={
 				Get/Set selected keys by index or key, if defined.
 				Return: items by index or key, if defined..
 
+			.search([search:string])
+				Get/set search value
+				Return: search value.
+
 			.destroy()
 				Frees resources.
 
@@ -1877,6 +1881,16 @@ var xwidgets={
 		self.data=function(d){
 			if (d) self.o.data=d;
 			return self.o.data;
+		};
+
+		// get/set search value
+		self.search=function(s){
+			var search_input=(self.e.cmb_search?self.e.cmb_search:(self.e.cmb_input?self.e.cmb_input:false));
+			if (isset(s)) {
+				search_input.value=s;
+				self.refreshItems();
+			}
+			return search_input.value;
 		};
 
 		// update AJAX data
