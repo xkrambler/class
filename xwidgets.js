@@ -1889,6 +1889,7 @@ var xwidgets={
 			if (isset(s)) {
 				search_input.value=s;
 				self.refreshItems();
+				self.update();
 			}
 			return search_input.value;
 		};
