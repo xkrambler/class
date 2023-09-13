@@ -266,13 +266,13 @@ function xajax(o){
 		var fd=(o.formdata?o.formdata:false);
 
 		// JSON post/custom
-		if (isset(o.json)) {
+		if (self.isset(o.json)) {
 			mime="application/json; charset=UTF-8";
 			post=self.json(o.json);
 		} else {
 
 			// if post is object, convert
-			if (fd || post || isset(o.data)) {
+			if (fd || post || self.isset(o.data)) {
 
 				// if no FormData defined but is an array post or data
 				if (!fd && (typeof(post) == "object" || typeof(o.data) == "object")) {
@@ -284,7 +284,7 @@ function xajax(o){
 					for (var k in post) fd.append(k, post[k]);
 
 					// data JSON
-					if (isset(o.data)) {
+					if (self.isset(o.data)) {
 						// separate Files/Blobs to FormData
 						for (var k in o.data) if (o.data[k] instanceof Blob || o.data[k] instanceof File) {
 							fd.append(k, o.data[k]);
