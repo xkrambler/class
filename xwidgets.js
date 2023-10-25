@@ -546,6 +546,9 @@ var xwidgets={
 			caption:function(item, index) (optional)
 				Renderer caption. Returns HTML.
 
+			disabled:boolean (opcional)
+				Set disabled field.
+
 			readonly:boolean (opcional)
 				Set read-only field.
 
@@ -789,7 +792,7 @@ var xwidgets={
 
 		// open combobox
 		self.open=function(){
-			if (self.o.readonly) return false;
+			if (self.o.disabled || self.o.readonly) return false;
 			var first_time=(self.openedtimes?false:true);
 			if (!self.openedtimes) self.openedtimes=0;
 			self.openedtimes++;
