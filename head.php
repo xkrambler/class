@@ -97,7 +97,7 @@ if ($page["favicon"]) {
 	echo "\t".'<link rel="shortcut icon" href="'.x::entities($page["favicon"]).'" />'."\n";
 }
 if ($data) echo "\t".'<script type="text/javascript">var data='.json_encode($data).';</script>'."\n";
-if ($page["js"]) foreach ($page["js"] as $_n=>$_v) echo "\t".'<script type="text/javascript" src="'.x::entities($_n).'"></script>'."\n";
+if ($page["js"]) foreach ($page["js"] as $_n=>$_v) echo "\t".'<script type="text/javascript" src="'.x::entities($_n).'"'.(is_array($_v) && $_v["async"]?" async":"").'></script>'."\n";
 if ($page["css"]) foreach ($page["css"] as $_n=>$_v) echo "\t".'<link rel="stylesheet" media="all" href="'.x::entities($_n).'"'.(is_string($_v)?' title="'.x::entities($_v).'"':'').' />'."\n";
 if ($page["head"]) echo "\t".$page["head"]."\n";
 echo "\t".'<!-- <all your="base" are="belong/to.us" /> -->'."\n";
