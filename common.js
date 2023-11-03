@@ -896,6 +896,11 @@ function localeNumber(n) {
 	return parseFloat((""+n).replace(localeDecimalSeparator(), '.'));
 }
 
+// number to locale string
+function numberLocale(n) {
+	return (""+localeNumber(n)).replace('.', localeDecimalSeparator());
+}
+
 // entrada sólo numérica entera
 function gInputInt(id, negatives, floating) {
 	var input=gid(id);
