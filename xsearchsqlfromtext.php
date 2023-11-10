@@ -107,7 +107,7 @@ class xSearchSQLfromText {
 		foreach ($busqueda as $i=>$w) {
 			$sql.=($sql?" AND ":"")."(";
 			foreach ($this->fields as $i=>$f)
-				$sql.=($i?" OR ":"").$this->fieldsql($f)." LIKE '".$this->valuesql((substr_count($w,"%")?$w:"%".str_replace("_", "\\_", $w)."%"), $f)."'";
+				$sql.=($i?" OR ":"").$this->fieldsql($f)." LIKE '".$this->valuesql((substr_count($w, "%")?$w:"%".str_replace("_", "\\_", $w)."%"), $f)."'";
 			$sql.=")";
 		}
 		return $sql;
@@ -117,7 +117,7 @@ class xSearchSQLfromText {
 		$texto="";
 		$busqueda=explode(" ", $this->search);
 		foreach ($busqueda as $i=>$w) {
-			$s=strpos($w,"=");
+			$s=strpos($w, "=");
 			if ($s) {
 				$f=substr($w, 0, $s);
 				$w=substr($w, $s+1);
@@ -130,7 +130,7 @@ class xSearchSQLfromText {
 				$w=(substr($w, -1, 1)=="%"?substr($w, 0, strlen($w)-1):$w);
 				$texto.="<".$html_enhancer.">".$w."</".$html_enhancer.">";
 			} else {
-				$s=strpos($w,"!");
+				$s=strpos($w, "!");
 				if ($s) {
 					$f=substr($w, 0, $s);
 					$w=substr($w, $s+1);
