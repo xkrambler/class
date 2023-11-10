@@ -209,18 +209,23 @@ function xForm3(o) {
 		return (value === ""?null:value);
 	};
 
+	// return null if zero value
+	a.nullifzero=function(value){
+		return (parseFloat(value) === 0 || parseFloat(value) === NaN?null:value);
+	};
+
 	// filter value
 	a.filter=function(field, value, set){
 		var set=set||false;
 		var f=a.o.fields[field];
 		if (f) {
 			if (f.maxlength)   value=(""+value).substring(0, f.maxlength);
-			if (f.nullifempty) value=a.nullifempty(value);
 			if (f.integer)     value=(value?parseInt(value):0);
 			if (f.number)      value=(value?parseInt(value):0);
 			if (f.positive)    value=(value?Math.abs(localeNumber(value)):0);
 			if (f.decimal)     value=(value?localeNumber(value):0);
-			if ((f.number || f.positivo || f.decimal || f.integer) && set) value=numberLocale(value);
+			if (f.nullifempty) value=a.nullifempty(value);
+			if (f.nullifzero)  value=a.nullifzero(value);
 		}
 		return value;
 	};
