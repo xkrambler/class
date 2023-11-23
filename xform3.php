@@ -113,11 +113,22 @@ class xForm3 {
 	// check if a variable is a hashmap
 	private function _is_hash($var) {
 		if (!is_array($var)) return false;
-		return array_keys($var) !== range(0,sizeof($var)-1);
+		return array_keys($var) !== range(0, sizeof($var)-1);
 	}
 
-	private function _strtolower($s) {
-		return (function_exists("mb_strtolower")?mb_strtolower($s):strtolower_utf8($s));
+	// strtolower w/o multibyte
+	function strtolower($s) {
+		return (function_exists("mb_strtolower")?mb_strtolower($s):(function_exists("strtolower_utf8")?strtolower_utf8($s):strtolower($s)));
+	}
+
+	// strtoupper w/o multibyte
+	function strtoupper($s) {
+		return (function_exists("mb_strtoupper")?mb_strtoupper($s):strtoupper($s));
+	}
+
+	// ucwords w/o multibyte
+	function ucwords($s) {
+		return (function_exists("mb_convert_case")?mb_convert_case($s, MB_CASE_TITLE):ucwords($s));
 	}
 
 	// return AJAX action
@@ -440,9 +451,9 @@ class xForm3 {
 		if ($field["readonly"] && isset($field["value"])) $value=$field["value"];
 		// filters
 		if ($field["trim"]) $value=trim($value);
-		if ($field["lowercase"] || $field["type"] == "email") $value=$this->_strtolower($value);
-		if ($field["uppercase"]) $value=strtoupper($value);
-		if ($field["capitalize"]) $value=ucwords($this->_strtolower($value));
+		if ($field["lowercase"] || $field["type"] == "email") $value=$this->strtolower($value);
+		if ($field["uppercase"]) $value=$this->strtoupper($value);
+		if ($field["capitalize"]) $value=$this->ucwords($this->strtolower($value));
 		if ($field["integer"]) $value=intval($value);
 		if ($field["number"]) $value=doubleval($value);
 		if ($field["decimal"]) $value=doubleval($value);
