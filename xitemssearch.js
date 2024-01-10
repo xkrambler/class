@@ -663,6 +663,7 @@ function xItemsSearch(o) {
 		a.refreshSearchInputText();
 		if (gid(a.o.id+"_search_txt")) classAdd(a.o.id+"_search_txt", "xitemsearch_search_wait");
 		if (p.onajaxstart) p.onajaxstart(a, p);
+		if (a.autoupdateTimer) clearTimeout(a.autoupdateTimer);
 		ajax(a.o.ajax,{
 			"search":a.getSearchValue(),
 			"page":(a.o.paged?a.page:0),
@@ -675,6 +676,11 @@ function xItemsSearch(o) {
 			if (gid(a.o.id+"_search_txt")) classDel(a.o.id+"_search_txt", "xitemsearch_search_wait");
 			a.searching=false;
 		},function(r){
+			if (a.o.autoupdate > 0) {
+				a.autoupdateTimer=setTimeout(function(){
+					a.search();
+				}, a.o.autoupdate);
+			}
 			if (r.data.err) newerror(r.data.err);
 			if (r.data.ok) {
 				a.refreshSearchInputText();
