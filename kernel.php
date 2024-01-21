@@ -593,7 +593,9 @@ class Kernel {
 		$s=$o["separator"];
 		$eol=$o["eol"];
 		$numeric=$o["numeric"];
+		$filter=$o["filter"];
 		if (is_array($o["data"])) foreach ($o["data"] as $i=>$row) {
+			if ($o["filter"]) $row=$o["filter"]($row);
 			$c=0;
 			foreach ($row as $n=>$v) {
 				echo ($c++?$s:"").$d.str_replace($d, "\\".$d, $n).$d;
@@ -601,7 +603,6 @@ class Kernel {
 			echo $eol;
 			break;
 		}
-		$filter=$o["filter"];
 		if (is_array($o["data"])) foreach ($o["data"] as $i=>$row) {
 			if ($o["filter"]) $row=$o["filter"]($row);
 			$c=0;
