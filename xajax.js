@@ -306,6 +306,15 @@ function xajax(o){
 		var headers=o.headers || {};
 		if (mime) headers['Content-Type']=mime;
 
+		// timeout event
+		http.ontimeout=function(e){
+			if (data.timeout) {
+				var d={"timeout":e};
+				if (always) always(d);
+				data.error(d);
+			}
+		};
+
 		// do request
 		try {
 			http.open(method, url, async, (self.isset(o.user)?o.user:null), (self.isset(o.pass)?o.pass:null));
@@ -313,6 +322,7 @@ function xajax(o){
 			if (headers) for (var k in headers) if (typeof(headers[k]) === "string") http.setRequestHeader(k, headers[k]);
 			if (async) http.onreadystatechange=function(){ self.onreadystatechange(http, o); };
 			if (o.progress) http.onprogress=o.progress;
+			if (o.timeout) http.timeout=o.timeout;
 			if (o.uploadprogress && http.upload) http.upload.onprogress=o.uploadprogress;
 			http.send(fd?fd:(post?post:null));
 			if (!async) return self.onreadystatechange(http, o);
