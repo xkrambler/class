@@ -133,6 +133,12 @@ class xImage {
 		return $s;
 	}
 
+	// return image as URI encoded
+	function uri($format="jpg", $quality=75) {
+		$s=$this->toString($format, $quality);
+		return "data:".$this->getMimeByMagic($s).";base64,".base64_encode($s);
+	}
+
 	// load image from file
 	function load($filename) {
 		$im=false;
