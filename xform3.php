@@ -538,7 +538,7 @@ class xForm3 {
 						);
 				}
 				// check minimum number
-				if ($f["min"] && $f["min"] > doubleval($v))
+				if (isset($f["min"]) && $f["min"] > doubleval($v))
 					$this->errors[$field]=array(
 						"id"=>$this->id($field),
 						"field"=>$field,
@@ -546,7 +546,7 @@ class xForm3 {
 						"err"=>$prefix."Debe ser como mínimo ".$f["min"].".",
 					);
 				// check maximum number
-				if ($f["max"] && $f["max"] < doubleval($v))
+				if (isset($f["max"]) && $f["max"] < doubleval($v))
 					$this->errors[$field]=array(
 						"id"=>$this->id($field),
 						"field"=>$field,
