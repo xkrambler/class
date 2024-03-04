@@ -95,6 +95,7 @@ if ($page["base"]) echo "\t".'<base href="'.$page["base"].'" />'."\n";
 if ($page["favicon"]) {
 	echo "\t".'<link rel="icon" type="image/x-icon" href="'.x::entities($page["favicon"]).'" />'."\n";
 	echo "\t".'<link rel="shortcut icon" href="'.x::entities($page["favicon"]).'" />'."\n";
+	echo "\t".'<link rel="apple-touch-icon" href="'.x::entities(($_v=$page["apple-touch-icon"])?$_v:$page["favicon"]).'" />'."\n";
 }
 if ($data) echo "\t".'<script type="text/javascript">var data='.json_encode($data).';</script>'."\n";
 if ($page["js"]) foreach ($page["js"] as $_n=>$_v) echo "\t".'<script type="text/javascript" src="'.x::entities($_n).'"'.(is_array($_v) && $_v["async"]?" async":"").'></script>'."\n";
