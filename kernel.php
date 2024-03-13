@@ -617,7 +617,7 @@ class Kernel {
 
 	// replace template values enclosed between tags characters
 	static function template($template, $fields, $o=array()) {
-		if (!$o["tags"]) $o["tags"]="%%";
+		if (!isset($o["tags"])) $o["tags"]="%%";
 		$j=0;
 		while ($j < strlen($template)) {
 			$i=strpos($template, substr($o["tags"], 0, 1), $j);   if ($i === false) break;
@@ -723,14 +723,14 @@ class Kernel {
 				2=>array('pipe', 'w'),
 			),
 			$pipes,
-			($o["cwd"]?$o["cwd"]:null),
-			($o["env"]?$o["env"]:null),
-			($o["options"]?$o["options"]:null)
+			(isset($o["cwd"])?$o["cwd"]:null),
+			(isset($o["env"])?$o["env"]:null),
+			(isset($o["options"])?$o["options"]:null)
 		);
 		if (is_resource($proc)) {
 
 			// write data to input pipe
-			if ($in=$o["in"]) {
+			if (isset($o["in"]) && ($in=$o["in"])) {
 				if (is_callable($in)) $in($o, $pipes, $proc);
 				else fwrite($pipes[0], $in);
 				fclose($pipes[0]);
@@ -738,9 +738,9 @@ class Kernel {
 
 			// read output and call back if requested
 			while (!feof($pipes[1]) || !feof($pipes[2])) {
-				if (!feof($pipes[1])) $data=fread($pipes[1], ($o["buffer"]?$o["buffer"]:4096));
-				if (!feof($pipes[2])) $error=fread($pipes[2], ($o["buffer"]?$o["buffer"]:4096));
-				if (strlen($error) && $redir=$o["redir"]) {
+				if (!feof($pipes[1])) $data=fread($pipes[1], (isset($o["buffer"])?$o["buffer"]:4096));
+				if (!feof($pipes[2])) $error=fread($pipes[2], (isset($o["buffer"])?$o["buffer"]:4096));
+				if (strlen($error) && isset($o["redir"]) && ($redir=$o["redir"])) {
 					if (is_callable($redir)) $error=$redir($error, $pipes, $proc);
 					if (is_string($error)) $data.=$error;
 				}
@@ -754,7 +754,7 @@ class Kernel {
 			}
 
 			// close pipes
-			if ($in) @fclose($pipes[0]);
+			if (!isset($o["in"]) && !$in) @fclose($pipes[0]);
 			@fclose($pipes[1]);
 			@fclose($pipes[2]);
 

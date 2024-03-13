@@ -12,8 +12,8 @@ class x {
 		if (!isset($GLOBALS["page"])) $GLOBALS["page"]=array();
 		if ($v !== null) $GLOBALS["page"][$k]=$v;
 		if (is_array($k)) $GLOBALS["page"]=$k;
-		else if ($k !== null) return $GLOBALS["page"][$k];
-		return $GLOBALS["page"];
+		else if ($k !== null) return (isset($GLOBALS["page"]) && isset($GLOBALS["page"][$k])?$GLOBALS["page"][$k]:null);
+		return (isset($GLOBALS["page"])?$GLOBALS["page"]:null);
 	}
 
 	// get/set data information
@@ -68,26 +68,26 @@ class x {
 	// is HTTPS?
 	static public function ishttps() {
 		return (
-			($_SERVER['HTTPS'] && strtolower($_SERVER['HTTPS']) !== 'off')
-			|| (strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https')
-			|| (strtolower($_SERVER['HTTP_FRONT_END_HTTPS']) === 'on')
-			|| (strtolower($_SERVER['HTTP_PROXY_SSL']) === 'true')
+			((string)$_SERVER['HTTPS'] && strtolower((string)$_SERVER['HTTPS']) !== 'off')
+			|| (strtolower((string)$_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https')
+			|| (strtolower((string)$_SERVER['HTTP_FRONT_END_HTTPS']) === 'on')
+			|| (strtolower((string)$_SERVER['HTTP_PROXY_SSL']) === 'true')
 		);
 	}
 
 	// is mobile?
 	static public function ismobile() {
 		return (
-			strpos($_SERVER["HTTP_USER_AGENT"], "Android;")
-			|| strpos($_SERVER["HTTP_USER_AGENT"], "iPhone;")
-			|| strpos($_SERVER["HTTP_USER_AGENT"], "iPod;")
-			|| strpos($_SERVER["HTTP_USER_AGENT"], "iPad;")
+			strpos((string)$_SERVER["HTTP_USER_AGENT"], "Android;")
+			|| strpos((string)$_SERVER["HTTP_USER_AGENT"], "iPhone;")
+			|| strpos((string)$_SERVER["HTTP_USER_AGENT"], "iPod;")
+			|| strpos((string)$_SERVER["HTTP_USER_AGENT"], "iPad;")
 		);
 	}
 
 	// is IE?
 	static public function isie() {
-		return (strpos($_SERVER["HTTP_USER_AGENT"], "MSIE")!==false);
+		return (strpos((string)$_SERVER["HTTP_USER_AGENT"], "MSIE")!==false);
 	}
 
 	// get my script
@@ -341,12 +341,12 @@ if ($_x=x::inc()) foreach ($_x as $_c) {
 if (is_string(x::page("sessionname"))) {
 	session_set_cookie_params(0, '/; samesite=Lax', '');
 	if ($_x=x::page("sessionname")) session_name($_x);
-	if (preg_match('/^[-,a-zA-Z0-9]{1,128}$/', (string)$_REQUEST["sessionid"])) session_id($_REQUEST["sessionid"]);
+	if (isset($_REQUEST["sessionid"]) && preg_match('/^[-,a-zA-Z0-9]{1,128}$/', (string)$_REQUEST["sessionid"])) session_id($_REQUEST["sessionid"]);
 	session_start();
 }
 
 // user in session
-$user=$_SESSION["user"];
+$user=(isset($_SESSION["user"])?$_SESSION["user"]:null);
 
 // legacy volatile variables
 if (isset($_SESSION["ok"]))  { $ok =$_SESSION["ok"];  unset($_SESSION["ok"]); }
@@ -354,10 +354,10 @@ if (isset($_SESSION["err"])) { $err=$_SESSION["err"]; unset($_SESSION["err"]); }
 
 // automatic instances
 if (class_exists("Kernel")) {
-	$kernel=($db?new Kernel($db):new Kernel());
-	if (class_exists("View")) $view=new View($kernel, $base, $skin); // deprecated
+	$kernel=(isset($db) && $db?new Kernel($db):new Kernel());
+	if (class_exists("View")) $view=new View($kernel, (isset($base)?$base:null), (isset($skin)?$skin:null)); // deprecated
 }
-if (class_exists("Conf") && $db) $conf=new Conf(array("db"=>$db));
+if (class_exists("Conf") && isset($db) && $db) $conf=new Conf(array("db"=>$db));
 
 // dump variables for debug
 if (!function_exists("debug")) {
@@ -411,7 +411,7 @@ if (!function_exists("module")) {
 }
 
 // pack CSS and JS files specified
-if ($_GET["css"] || $_GET["js"]) {
+if (isset($_GET["css"]) || isset($_GET["js"])) {
 
 	// crypt autoloading
 	if ($page["crypt"]) {
@@ -421,8 +421,8 @@ if ($_GET["css"] || $_GET["js"]) {
 
 	// get includes
 	$_x=false;
-	if ($_GET["css"]) { $_x="css"; $_m="text/css"; }
-	else if ($_GET["js"])  { $_x="js";  $_m="text/javascript"; }
+	if (isset($_GET["css"])) { $_x="css"; $_m="text/css"; }
+	else if (isset($_GET["js"]))  { $_x="js";  $_m="text/javascript"; }
 	if (!$_x) perror("/* BOOM: No ext! */"); // allowed extension
 	if ($page["crypt"]) $_GET[$_x]=$_pc->decrypt($_GET[$_x]); // cypher
 	if (strpos($_GET[$_x], "\0") !== false) die("/* BOOM: 0x00 Headshot! */"); // null character detected
