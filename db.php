@@ -721,13 +721,13 @@ class dbVoid extends dbbase {
 }
 
 // DEPRECATED: if db_setup defined, fill values
-if (@$db_setup) foreach ($db_setup as $db_name=>&$db_config) {
+if (isset($db_setup) && is_array($db_setup)) foreach ($db_setup as $db_name=>&$db_config) {
 	$db_config["class"]=dbbase::dbclass($db_config["type"]);
 	$db_config["lib"]=dbbase::lib($db_config["type"]);
 } unset($db_config);
 
 // if any database setup defined...
-if ((!defined("DB_SETUP") || DB_SETUP) && @$db_setup) {
+if ((!defined("DB_SETUP") || DB_SETUP) && (isset($db_setup) && is_array($db_setup))) {
 
 	// ...create all defined databases
 	foreach ($db_setup as $db_name=>&$db_config) if ($db_config) {
