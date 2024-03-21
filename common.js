@@ -59,9 +59,19 @@ function gidvalFecha(id) {
 function gpreids(prefix, ids, sufix) {
 	var ids=ids.split(" ");
 	var a={};
-	for (var i in ids)
-		if (gid((prefix?prefix+"_":"")+ids[i]+(sufix?"_"+sufix:"")))
-			a[ids[i]]=gidval((prefix?prefix+"_":"")+ids[i]+(sufix?"_"+sufix:""));
+	for (var i in ids) {
+		var id=(prefix?prefix+"_":"")+ids[i]+(sufix?"_"+sufix:"");
+		var e=gid(id);
+		if (e) {
+			var v=gidval(id);
+			switch (e.type) {
+			case "checkbox":
+			case "radio":
+				if (!e.checked) v="";
+			}
+			a[ids[i]]=v;
+		}
+	}
 	return a;
 }
 
@@ -74,18 +84,19 @@ function spreids(prefix, ids, values, sufix) {
 			var v=values[ids[i]];
 			switch (o.type) {
 			case "checkbox":
+			case "radio":
 				if (parseInt(v) || (v.length>0 && v!="0")) o.checked=true;
 				break;
 			case "select-one":
 			case "select-multiple":
-				for (var j=0;j<o.options.length;j++)
-					if (o.options[j].value==v) {
-						gidval(o,v);
+				for (var j=0; j<o.options.length; j++)
+					if (o.options[j].value == v) {
+						gidval(o, v);
 						break;
 					}
 				break;
 			default:
-				gidval(o,v);
+				gidval(o, v);
 			}
 		}
 }
