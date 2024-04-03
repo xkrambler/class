@@ -15,7 +15,7 @@ class Conf {
 
 	// devolver una opción
 	function __get($n) {
-		return $this->o[$n];
+		return (isset($this->o[$n])?$this->o[$n]:null);
 	}
 
 	// establecer una opción

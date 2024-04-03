@@ -60,12 +60,12 @@ class dbMySQLi extends dbbase {
 	// constructor
 	function __construct($setup=Array()) {
 		$this->setup($setup);
-		if ($this->setup["resource"]) $this->rconnect();
+		if (isset($this->setup["resource"])) $this->rconnect();
 	}
 
 	// virtual connect (can be a dummy connect if connection is marked as delayed)
 	function connect() {
-		return ($this->setup["delayed"]?true:$this->rconnect());
+		return (isset($this->setup["delayed"]) && $this->setup["delayed"]?true:$this->rconnect());
 	}
 
 	// real connect
@@ -75,7 +75,7 @@ class dbMySQLi extends dbbase {
 			$this->real_error="ERROR: MySQL improved library not installed, mysqli() class does not exist.";
 			return false;
 		}
-		if (is_object($this->setup["resource"])) {
+		if (isset($this->setup["resource"]) && is_object($this->setup["resource"])) {
 			$this->idcon=$this->setup["resource"];
 			$this->setup["db"]=$this->database();
 		} else {
@@ -84,14 +84,14 @@ class dbMySQLi extends dbbase {
 				($this->setup["persistent"] || !isset($this->setup["persistent"])?"p:":"").$this->setup["host"],
 				$this->setup["user"],
 				$this->setup["pass"],
-				($this->setup["db"]?$this->setup["db"]:""),
-				($this->setup["port"]?$this->setup["port"]:ini_get("mysqli.default_port"))
+				(isset($this->setup["db"])?$this->setup["db"]:""),
+				(isset($this->setup["port"])?$this->setup["port"]:ini_get("mysqli.default_port"))
 			);
 		}
 		if ($this->connected=($this->idcon && !$this->idcon->connect_errno?true:false)) {
-			if ($this->setup["encoding"]) $this->idcon->query("SET NAMES ".$this->setup["encoding"]);
+			if (isset($this->setup["encoding"])) $this->idcon->query("SET NAMES ".$this->setup["encoding"]);
 			if (isset($this->setup["autocommit"])) $this->idcon->query("SET autocommit=".($this->setup["autocommit"]?1:0));
-			if ($this->setup["db"]) $this->select();
+			if (isset($this->setup["db"])) $this->select();
 		}
 		$this->real_errnum=($this->connected?0:$this->idcon->connect_errno);
 		$this->real_error=($this->connected?"":$this->idcon->connect_error);
@@ -115,7 +115,7 @@ class dbMySQLi extends dbbase {
 
 	// check if connection is ready
 	function ready() {
-		return ($this->setup["delayed"] || ($this->idcon && $this->ping())?true:false);
+		return ((isset($this->setup["delayed"]) && $this->setup["delayed"]) || ($this->idcon && $this->ping())?true:false);
 	}
 
 	// get current database selection

@@ -814,7 +814,7 @@ class Kernel {
 	 */
 	static function autoload($base=null) {
 		spl_autoload_register(function($c){
-			if ($base === null) $base=getcwd();
+			if (!isset($base) || $base === null) $base=getcwd();
 			$f=$base.(substr($base, -1, 1) != "/"?"/":"").strtolower(str_replace('\\', '/', $c)).".php";
 			if (file_exists($f)) require_once($f);
 		});

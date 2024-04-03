@@ -248,8 +248,8 @@ abstract class dbbase {
 			.$this->setup["user"]
 			.($this->setup["pass"]?":".($hide_password?"*":$this->setup["pass"]):"")
 			."@".$this->setup["host"]
-			.($this->setup["port"]?":".$this->setup["port"]:"")
-			.($this->setup["db"]?"/".$this->setup["db"]:"")."/"
+			.(isset($this->setup["port"])?":".$this->setup["port"]:"")
+			.(isset($this->setup["db"])?"/".$this->setup["db"]:"")."/"
 		;
 	}
 
@@ -746,7 +746,7 @@ if ((!defined("DB_SETUP") || DB_SETUP) && (isset($db_setup) && is_array($db_setu
 	} unset($db_config);
 
 	// if any error occurred, display errors and stop process (if display_errors or DB_ERRORS enabled)
-	if ((!defined("DB_ERRORS") || DB_ERRORS || (!defined("DB_ERRORS") && ini_get("display_errors"))) && $db_errors) {
+	if ((!defined("DB_ERRORS") || DB_ERRORS || (!defined("DB_ERRORS") && ini_get("display_errors"))) && isset($db_errors) && $db_errors) {
 		$_ishtml=true;
 		foreach (headers_list() as $_h)
 			if (strtolower(substr($_h, 0, 24)) == "content-type: text/plain") {
