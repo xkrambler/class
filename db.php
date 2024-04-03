@@ -87,7 +87,7 @@ abstract class dbbase {
 	abstract function info();
 
 	// get/set/isset
-	function __get($n) { return $this->setup[$n]; }
+	function __get($n) { return (isset($this->setup[$n])?$this->setup[$n]:null); }
 	function __set($n, $v) { $this->setup[$n]=$v; }
 	function __isset($n) { return isset($this->setup[$n]); }
 

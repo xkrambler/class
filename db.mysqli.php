@@ -60,12 +60,12 @@ class dbMySQLi extends dbbase {
 	// constructor
 	function __construct($setup=Array()) {
 		$this->setup($setup);
-		if (isset($this->setup["resource"])) $this->rconnect();
+		if ($this->resource) $this->rconnect();
 	}
 
 	// virtual connect (can be a dummy connect if connection is marked as delayed)
 	function connect() {
-		return (isset($this->setup["delayed"]) && $this->setup["delayed"]?true:$this->rconnect());
+		return ($this->delayed?true:$this->rconnect());
 	}
 
 	// real connect
@@ -75,23 +75,23 @@ class dbMySQLi extends dbbase {
 			$this->real_error="ERROR: MySQL improved library not installed, mysqli() class does not exist.";
 			return false;
 		}
-		if (isset($this->setup["resource"]) && is_object($this->setup["resource"])) {
-			$this->idcon=$this->setup["resource"];
-			$this->setup["db"]=$this->database();
+		if ($this->resource && is_object($this->resource)) {
+			$this->idcon=$this->resource;
+			$this->db=$this->database();
 		} else {
 			$this->clear();
 			$this->idcon=@new mysqli(
-				($this->setup["persistent"] || !isset($this->setup["persistent"])?"p:":"").$this->setup["host"],
-				$this->setup["user"],
-				$this->setup["pass"],
-				(isset($this->setup["db"])?$this->setup["db"]:""),
-				(isset($this->setup["port"])?$this->setup["port"]:ini_get("mysqli.default_port"))
+				($this->persistent || !isset($this->persistent)?"p:":"").$this->host,
+				$this->user,
+				$this->pass,
+				($this->db?$this->db:""),
+				($this->port?$this->port:ini_get("mysqli.default_port"))
 			);
 		}
 		if ($this->connected=($this->idcon && !$this->idcon->connect_errno?true:false)) {
-			if (isset($this->setup["encoding"])) $this->idcon->query("SET NAMES ".$this->setup["encoding"]);
-			if (isset($this->setup["autocommit"])) $this->idcon->query("SET autocommit=".($this->setup["autocommit"]?1:0));
-			if (isset($this->setup["db"])) $this->select();
+			if ($this->encoding) $this->idcon->query("SET NAMES ".$this->encoding);
+			if ($this->autocommit) $this->idcon->query("SET autocommit=".($this->autocommit?1:0));
+			if ($this->db) $this->select();
 		}
 		$this->real_errnum=($this->connected?0:$this->idcon->connect_errno);
 		$this->real_error=($this->connected?"":$this->idcon->connect_error);
@@ -115,7 +115,7 @@ class dbMySQLi extends dbbase {
 
 	// check if connection is ready
 	function ready() {
-		return ((isset($this->setup["delayed"]) && $this->setup["delayed"]) || ($this->idcon && $this->ping())?true:false);
+		return (($this->delayed) || ($this->idcon && $this->ping())?true:false);
 	}
 
 	// get current database selection
@@ -143,18 +143,18 @@ class dbMySQLi extends dbbase {
 	// select current working database
 	function select($db=null) {
 		$this->clear();
-		if ($db) $this->setup["db"]=$db;
-		if (!$this->setup["db"]) return true;
+		if ($db) $this->db=$db;
+		if (!$this->db) return true;
 		$this->dbselected=false;
 		return true;
 	}
 
 	// check if there is a database selected, and try to select it
 	function selectedcheck() {
-		if (!$this->dbselected && $this->setup["db"]) {
+		if (!$this->dbselected && $this->db) {
 			$retries=0;
 			do {
-				if ($this->dbselected=(@$this->idcon->select_db($this->setup["db"])?true:false)) break;
+				if ($this->dbselected=(@$this->idcon->select_db($this->db)?true:false)) break;
 				if (!in_array($this->idcon->errno, $this->reconnect_errnums)) break;
 				else if (!$this->reconnect()) return false;
 			} while (++$retries < 3);
@@ -199,7 +199,7 @@ class dbMySQLi extends dbbase {
 
 	// query with reconnection/timeout
 	protected function pquery($sql) {
-		if ($this->setup["delayed"] && !($this->idcon > 0) && !$this->rconnect()) return false;
+		if ($this->delayed && !($this->idcon > 0) && !$this->rconnect()) return false;
 		if (!$this->idcon) return false;
 		// start query
 		$retries=0;
@@ -304,7 +304,7 @@ class dbMySQLi extends dbbase {
 
 	// perform multiple query
 	function multi($sql, $querynum=null) {
-		if ($this->setup["delayed"] && !($this->idcon > 0) && !$this->rconnect()) return false;
+		if ($this->delayed && !($this->idcon > 0) && !$this->rconnect()) return false;
 		$querynum=$this->querynum($querynum, true);
 		$st=microtime(true);
 		$retries=0;
@@ -405,7 +405,7 @@ class dbMySQLi extends dbbase {
 
 	// escape string to be used in query
 	function escape($s) {
-		if ($this->setup["delayed"] && !($this->idcon > 0) && !$this->rconnect()) return false;
+		if ($this->delayed && !($this->idcon > 0) && !$this->rconnect()) return false;
 		return $this->idcon->real_escape_string($s);
 	}
 
