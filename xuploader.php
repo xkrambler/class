@@ -135,7 +135,7 @@ class xUploader {
 	function __set($n, $v) { $this->o[$n]=$v; }
 
 	// store file (default: file 0660 rw-rw---- directory 0770 rwxrwx---)
-	function store($upload, $dst=null, $permissions=0660, $dpermissions=0770) {
+	function store($upload, $dst=null, $permissions=0664, $dpermissions=0775) {
 		if (!$dst) $dst=(is_callable($this->o["store"])?$this->o["store"]($this, $upload, $this->o):$this->o["store"].$upload["name"]);
 		if (strpos($dst, "/")!==false && !file_exists(dirname($dst))) {
 			mkdir(dirname($dst), $dpermissions, true);
