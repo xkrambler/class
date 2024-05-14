@@ -54,6 +54,7 @@ class Conf {
 			return null;
 		}
 		if (is_array($ids)) {
+			$a=array();
 			foreach ($ids as $n)
 				if (isset($this->cache[$n]))
 					$a[$n]=$this->cache[$n];

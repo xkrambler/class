@@ -111,6 +111,7 @@ class xError {
 			// capture non-critical errors
 			set_error_handler(function($type, $message, $file, $line, $context=[]){
 				if (in_array($type, $this->warnings)) {
+					if (strpos($message, "Undefined array key") !== false) return; // ignore undefined array keys for PHP 8+
 					$this->error=[
 						"type"=>$type,
 						"message"=>$message,
