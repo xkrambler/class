@@ -64,8 +64,7 @@ class xError {
 		$this->setup($setup);
 
 		// access log
-		if (($f=$this->access) && $_SERVER["HTTP_HOST"])
-			file_put_contents($f, $this->accessEntry(), FILE_APPEND);
+		if ($_SERVER["HTTP_HOST"]) $this->log($this->accessEntry());
 
 		// disable critical errors
 		$e=error_reporting();
@@ -179,6 +178,11 @@ class xError {
 			." ".\x::request()."\n"
 			.($_POST?" POST ".substr(serialize($_POST), 0, 64*1024)."]\n":"")
 		;
+	}
+
+	// log
+	function log($m) {
+		if ($f=$this->access) file_put_contents($f, (string)$m, FILE_APPEND);
 	}
 
 	// convert first trace to file/line
@@ -446,6 +450,6 @@ class xError {
 }
 
 // instance, if setup defined
-if ($error_setup)
-	foreach ($error_setup as $_n=>$_s)
-		$$_n=new xError($_s);
+if ($error_setup) foreach ($error_setup as $_n=>$_s) {
+	$$_n=new xError($_s);
+} unset($_n); unset($_s);
