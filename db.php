@@ -724,7 +724,7 @@ class dbVoid extends dbbase {
 if (isset($db_setup) && is_array($db_setup)) foreach ($db_setup as $db_name=>&$db_config) {
 	$db_config["class"]=dbbase::dbclass($db_config["type"]);
 	$db_config["lib"]=dbbase::lib($db_config["type"]);
-} unset($db_config);
+} unset($db_name); unset($db_config);
 
 // if any database setup defined...
 if ((!defined("DB_SETUP") || DB_SETUP) && (isset($db_setup) && is_array($db_setup))) {
@@ -743,7 +743,7 @@ if ((!defined("DB_SETUP") || DB_SETUP) && (isset($db_setup) && is_array($db_setu
 			}
 		}
 		if ($db_config["err"]) $db_errors=true;
-	} unset($db_config);
+	} unset($db_name); unset($db_config);
 
 	// if any error occurred, display errors and stop process (if display_errors or DB_ERRORS enabled)
 	if ((!defined("DB_ERRORS") || DB_ERRORS || (!defined("DB_ERRORS") && ini_get("display_errors"))) && isset($db_errors) && $db_errors) {
@@ -760,7 +760,7 @@ if ((!defined("DB_SETUP") || DB_SETUP) && (isset($db_setup) && is_array($db_setu
 			if (function_exists("perror")) perror($_err);
 			else echo $_err.($_ishtml?"<br />":"\n");
 			exit;
-		}
+		} unset($db_name); unset($db_config);
 	}
 
 }
