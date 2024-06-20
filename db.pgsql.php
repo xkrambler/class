@@ -19,8 +19,13 @@ class dbPgSQL extends dbbase {
 	// constructor
 	function __construct($setup=array()) { $this->setup($setup); }
 
-	// inicia la conexión con el servidor
+	// virtual connect (can be a dummy connect if connection is marked as delayed)
 	function connect() {
+		return ($this->delayed?true:$this->rconnect());
+	}
+
+	// inicia la conexión con el servidor
+	function rconnect() {
 		global $db_pgsql_captured_errstr;
 		$pg_connect=(!isset($this->setup["persistent"]) || $this->setup["persistent"]?"pg_pconnect":"pg_connect");
 		if (!function_exists("db_pgsql_error_capture")) {
@@ -57,14 +62,16 @@ class dbPgSQL extends dbbase {
 
 	// información de conexión
 	function ready() {
-		if (!$this->idcon>0) return false;
+		if ($this->delayed) return true;
+		if (!$this->idcon > 0) return false;
 		return (pg_connection_status($this->idcon) == PGSQL_CONNECTION_OK);
 	}
 
 	// selecciona la base de datos con la que trabajará la clase
 	function select($database) {
-		if (!$this->idcon>0) return false;
-		return $this->connect($this->server,$this->user,$this->password,$database);
+		if (!$this->idcon > 0) return false;
+		$this->setup["db"]=$database;
+		return $this->rconnect();
 	}
 
 	// efectua un checkeo (ping) del servidor
@@ -78,6 +85,7 @@ class dbPgSQL extends dbbase {
 
 	// ejecuta una consulta (select)
 	function query($sqlquery, $querynum=null) {
+		if ($this->delayed && !($this->idcon > 0) && !$this->rconnect()) return false;
 		if (!$this->idcon>0) return false;
 		if (!$querynum) {
 			$this->lastquerynum++;
@@ -96,7 +104,7 @@ class dbPgSQL extends dbbase {
 
 	// alias de query
 	function exec($sqlquery, $querynum=null) {
-		return $this->query($sqlquery,$querynum);
+		return $this->query($sqlquery, $querynum);
 	}
 
 	// limpia la consulta
