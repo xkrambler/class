@@ -17,18 +17,18 @@
 			"onclose"=>function($ws, $client, $ip){
 				echo $ip.":".$client." close\n";
 			},
-			"onrecv"=>function($ws, $client, $ip, $data){
-				echo $ip.":".$client." recv url=".$ws->url." data: ".$data."\n";
+			"onrecv"=>function($ws, $client, $ip, $raw){
+				echo $ip.":".$client." recv raw(".strlen($raw).")=".$raw."\n";
 				if ($data == "TEST") $ws->send($client, "TESTED!");
 			},
-			"ondata"=>function($ws, $client, $ip, $data){
-				//$ws->senddata($client, ["key"=>"value: ".$data["key"]]);
+			"ondata"=>function($ws, $client, $ip, $data, $raw){
+				if ($data["ping"]) $ws->data($client, ["pong"=>$data["ping"]]);
 			},
 			"onstatuscode"=>function($ws, $client, $ip, $statuscode, $statuscodetext){
 				echo $ip.":".$client." statuscode: statuscode=".$statuscode.($statuscodetext?":".$statuscodetext:"")."\n";
 			},
-			"onopcode"=>function($ws, $client, $ip, $opcode, $data){
-				echo $ip.":".$client." opcode: opcode=".$opcode." data(".strlen($data).")=".$data."\n";
+			"onopcode"=>function($ws, $client, $ip, $opcode, $raw){
+				echo $ip.":".$client." opcode: opcode=".$opcode." raw(".strlen($raw).")=".$raw."\n";
 			},
 		]);
 
