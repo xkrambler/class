@@ -331,6 +331,16 @@ abstract class dbbase {
 		return $a;
 	}
 
+	// get date in ISO format
+	function date($timestamp) {
+		return date("Y-m-d", $timestamp);
+	}
+
+	// get date and time in ISO format
+	function datetime($timestamp) {
+		return date("Y-m-d H:i:s", $timestamp);
+	}
+
 	// return complete or partial ISO date/date-time as an Spanish notation dd/mm/yyyy [hh:mm:ss]
 	static function spdate($sqldate) {
 		if (strlen($sqldate) == 19) return substr($sqldate, 8, 2)."/".substr($sqldate, 5, 2)."/".substr($sqldate, 0, 4)." ".substr($sqldate, 11);

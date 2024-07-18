@@ -1,15 +1,14 @@
 <?php if (!class_exists("dbbase")) die();
 
 /*
-
-	PHP Access Class to MySQL Improved v0.2, by Pablo Rodríguez Rey
-	http://mr.xkr.es ~ mr-at-xkr-d0t-es
+	PHP database class for MySQL-Improved v0.3, by Pablo Rodríguez Rey
+	https://mr.xkr.es ~ mr-at-xkr-d0t-es
 	Under GPL license (http://www.gnu.org/copyleft/gpl.html)
-
 */
 class dbMySQLi extends dbbase {
 
 	protected $queryflags=0;
+	protected $last_exception=false;
 	protected $reconnect_errnums=array(
 		2006, // MySQL server has gone away
 		2013, // Lost connection to MySQL server during query
@@ -54,7 +53,7 @@ class dbMySQLi extends dbbase {
 
 	// definition
 	function driver() { return "MySQLi"; }
-	function version() { return 0.2; }
+	function version() { return 0.3; }
 	function protocol() { return "mysql"; }
 
 	// constructor
@@ -154,7 +153,12 @@ class dbMySQLi extends dbbase {
 		if (!$this->dbselected && $this->db) {
 			$retries=0;
 			do {
-				if ($this->dbselected=(@$this->idcon->select_db($this->db)?true:false)) break;
+				try {
+					$this->last_exception=false;
+					if ($this->dbselected=(@$this->idcon->select_db($this->db)?true:false)) break;
+				} catch (Exception $e) {
+					$this->last_exception=$e;
+				}
 				if (!in_array($this->idcon->errno, $this->reconnect_errnums)) break;
 				else if (!$this->reconnect()) return false;
 			} while (++$retries < 3);
@@ -206,24 +210,28 @@ class dbMySQLi extends dbbase {
 		do {
 			if (!$this->idcon) return false;
 			unset($this->atimedout);
-			if ($this->atimeout) {
-				// async with timeout query
+			try {
 				if (!$this->selectedcheck()) return false;
-				$result=(@$this->idcon->query($sql, MYSQLI_ASYNC | $this->queryflags));
-				$errors=$reject=array();
-				$links=array($this->idcon);
-				$sec =(int)$this->atimeout;
-				$msec=(int)(($this->atimeout-$sec)*1000000);
-				if (mysqli_poll($links, $errors, $reject, $sec, $msec) > 0) {
-					$result=$this->idcon->reap_async_query();
-					$this->atimedout=false;
+				$this->last_exception=false;
+				if ($this->atimeout) {
+					// async with timeout query
+					$result=(@$this->idcon->query($sql, MYSQLI_ASYNC | $this->queryflags));
+					$errors=$reject=array();
+					$links=array($this->idcon);
+					$sec =(int)$this->atimeout;
+					$msec=(int)(($this->atimeout-$sec)*1000000);
+					if (mysqli_poll($links, $errors, $reject, $sec, $msec) > 0) {
+						$result=$this->idcon->reap_async_query();
+						$this->atimedout=false;
+					} else {
+						$this->atimedout=true;
+					}
 				} else {
-					$this->atimedout=true;
+					// sync query
+					$result=(@$this->idcon->query($sql, $this->queryflags));
 				}
-			} else {
-				// sync query
-				if (!$this->selectedcheck()) return false;
-				$result=(@$this->idcon->query($sql, $this->queryflags));
+			} catch (Exception $e) {
+				$this->last_exception=$e;
 			}
 			if ($result || !in_array($this->idcon->errno, $this->reconnect_errnums)) break;
 			else if (!$this->reconnect()) return false;
@@ -235,7 +243,12 @@ class dbMySQLi extends dbbase {
 	// set debug mode
 	function debug($enabled=null) {
 		parent::debug($enabled);
-		$this->pquery("SET SESSION query_cache_type=OFF");
+		$this->cache($enabled);
+	}
+
+	// enable/disable cache
+	function cache($enabled) {
+		$this->pquery("SET SESSION query_cache_type=".($enabled?"ON":"OFF"));
 	}
 
 	// begin transaction
@@ -256,16 +269,6 @@ class dbMySQLi extends dbbase {
 	// return current date/time field
 	function now($precission=null) {
 		return new dbrawvalue("NOW(".($precission?intval($precission):"").")");
-	}
-
-	// get date in ISO format
-	function date($timestamp) {
-		return date("Y-m-d", $timestamp);
-	}
-
-	// get date and time in ISO format
-	function datetime($timestamp) {
-		return date("Y-m-d H:i:s", $timestamp);
 	}
 
 	// generate/return always a query number and clear errors
@@ -435,6 +438,11 @@ class dbMySQLi extends dbbase {
 		if (!$q=$this->idcon->query("SELECT VERSION()")) return false;
 		$irow=$q->fetch_array();
 		return $irow[0];
+	}
+
+	// return last exception
+	function exception() {
+		return $this->last_exception;
 	}
 
 	// return last error code
