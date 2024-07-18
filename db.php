@@ -332,12 +332,14 @@ abstract class dbbase {
 	}
 
 	// get date in ISO format
-	function date($timestamp) {
+	static function date($timestamp=null) {
+		if ($timestamp === null) $timestamp=time();
 		return date("Y-m-d", $timestamp);
 	}
 
 	// get date and time in ISO format
-	function datetime($timestamp) {
+	static function datetime($timestamp=null) {
+		if ($timestamp === null) $timestamp=time();
 		return date("Y-m-d H:i:s", $timestamp);
 	}
 
