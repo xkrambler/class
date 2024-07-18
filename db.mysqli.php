@@ -102,7 +102,7 @@ class dbMySQLi extends dbbase {
 		$this->clear();
 		if (!$this->idcon) return false;
 		$this->dbselected=false;
-		$this->idcon->close();
+		if (!$this->idcon->connect_errno) $this->idcon->close();
 		return true;
 	}
 
@@ -155,11 +155,11 @@ class dbMySQLi extends dbbase {
 			do {
 				try {
 					$this->last_exception=false;
-					if ($this->dbselected=(@$this->idcon->select_db($this->db)?true:false)) break;
+					if (!$this->idcon->connect_errno && ($this->dbselected=(@$this->idcon->select_db($this->db)?true:false))) break;
 				} catch (Exception $e) {
 					$this->last_exception=$e;
 				}
-				if (!in_array($this->idcon->errno, $this->reconnect_errnums)) break;
+				if (!$this->idcon->connect_errno && !in_array($this->idcon->errno, $this->reconnect_errnums)) break;
 				else if (!$this->reconnect()) return false;
 			} while (++$retries < 3);
 			if (!$this->dbselected) return false;
@@ -169,7 +169,7 @@ class dbMySQLi extends dbbase {
 
 	// do a ping check
 	function ping() {
-		if (!$this->idcon) return false;
+		if (!$this->idcon || $this->idcon->connect_errno) return false;
 		return @$this->idcon->ping();
 	}
 
@@ -234,7 +234,7 @@ class dbMySQLi extends dbbase {
 			} catch (Exception $e) {
 				$this->last_exception=$e;
 			}
-			if ($result || !in_array($this->idcon->errno, $this->reconnect_errnums)) break;
+			if ($result || (!$this->idcon->connect_errno && !in_array($this->idcon->errno, $this->reconnect_errnums))) break;
 			else if (!$this->reconnect()) return false;
 		} while (++$retries < 3);
 		if ($this->idcon->errno) return false;
@@ -409,7 +409,7 @@ class dbMySQLi extends dbbase {
 
 	// escape string to be used in query
 	function escape($s) {
-		if ($this->delayed && !($this->idcon > 0) && !$this->rconnect()) return false;
+		if ($this->delayed && !($this->idcon > 0) && !$this->rconnect() || $this->idcon->connect_errno) return false;
 		return $this->idcon->real_escape_string($s);
 	}
 
