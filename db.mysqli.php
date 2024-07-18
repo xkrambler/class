@@ -211,6 +211,7 @@ class dbMySQLi extends dbbase {
 			if (!$this->idcon) return false;
 			unset($this->atimedout);
 			try {
+				$result=false;
 				if (!$this->selectedcheck()) return false;
 				$this->last_exception=false;
 				if ($this->atimeout) {
