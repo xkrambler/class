@@ -17,6 +17,9 @@
 			"onclose"=>function($ws, $client, $ip){
 				echo $ip.":".$client." close\n";
 			},
+			"onsend"=>function($ws, $client, $ip, $raw, $sent){
+				echo $ip.":".$client." send raw(".$sent.")=".$raw."\n";
+			},
 			"onrecv"=>function($ws, $client, $ip, $raw){
 				echo $ip.":".$client." recv raw(".strlen($raw).")=".$raw."\n";
 				if ($data == "TEST") $ws->send($client, "TESTED!");
@@ -217,7 +220,12 @@ class WebSocketServer {
 	function send($client, $msg) {
 		if ($socket=$this->clients[$client]) {
 			$data=$this->mask($msg);
-			return socket_write($socket, $data, strlen($data));
+			$sent=socket_write($socket, $data, strlen($data));
+			if ($event=$this->onsend) {
+				@socket_getpeername($socket, $ip);
+				$event($this, $client, $ip, $msg, $sent);
+			}
+			return $sent;
 		}
 		return null;
 	}
