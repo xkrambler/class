@@ -239,7 +239,8 @@
 }
 .cmb_caption {
 	position: absolute;
-	min-width: 100%;
+	left: 0;
+	right: 0;
 }
 .cmb_input {
 	width: 100%;
