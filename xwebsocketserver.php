@@ -311,8 +311,6 @@ class WebSocketServer {
 					if ($event=$this->onready) $event($this, $client, $ip);
 				} else {
 					$this->close($client);
-					//unset($this->clients[$client]);
-					//socket_close($socket_new);
 				}
 
 			}
