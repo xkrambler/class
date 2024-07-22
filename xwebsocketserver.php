@@ -14,6 +14,9 @@
 			"onconnect"=>function($ws, $client, $ip){
 				echo $ip.":".$client." connect\n";
 			},
+			"onready"=>function($ws, $client, $ip){
+				echo $ip.":".$client." ready\n";
+			},
 			"onclose"=>function($ws, $client, $ip){
 				echo $ip.":".$client." close\n";
 			},
@@ -284,6 +287,10 @@ class WebSocketServer {
 				// accept new socket and add to our client list
 				$socket_new=socket_accept($this->socket);
 
+				// add socket to our clients
+				$client=++$this->ncid;
+				$this->clients[$client]=$socket_new;
+
 				// get remote IP address
 				@socket_getpeername($socket_new, $ip);
 
@@ -291,17 +298,17 @@ class WebSocketServer {
 				$found_socket=array_search($this->socket, $changed);
 				unset($changed[$found_socket]);
 
+				// connection event
+				if ($event=$this->onconnect) $event($this, $client, $ip);
+
 				// read header
 				$buf=@socket_read($socket_new, $this->headersize);
 				if ($p=strpos($buf, "\r\n\r\n")) {
 					// perform websocket handshake
 					$this->handshaking($socket_new, substr($buf, 0, $p+4));
 					$buf=substr($buf, $p+4);
-					// add socket to our clients
-					$client=++$this->ncid;
-					$this->clients[$client]=$socket_new;
 					// connection event
-					if ($event=$this->onconnect) $event($this, $client, $ip);
+					if ($event=$this->onready) $event($this, $client, $ip);
 				} else {
 					socket_close($socket_new);
 				}
