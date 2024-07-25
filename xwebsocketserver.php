@@ -14,7 +14,7 @@
 			"onconnect"=>function($ws, $client, $ip){
 				echo $ip.":".$client." connect\n";
 			},
-			"onready"=>function($ws, $client, $ip){
+			"onready"=>function($ws, $client, $ip, $headers){
 				echo $ip.":".$client." ready\n";
 			},
 			"onclose"=>function($ws, $client, $ip){
@@ -308,7 +308,7 @@ class WebSocketServer {
 					$this->handshaking($socket_new, substr($buf, 0, $p+4));
 					$buf=substr($buf, $p+4);
 					// connection event
-					if ($event=$this->onready) $event($this, $client, $ip);
+					if ($event=$this->onready) $event($this, $client, $ip, $this->headers);
 				} else {
 					$this->close($client);
 				}
