@@ -107,14 +107,28 @@ class WebSocketServer {
 
 	// start server
 	function start() {
+		$e=error_reporting();
+		error_reporting(0);
 		// create TCP/IP sream socket
-		if (!$this->socket=socket_create(AF_INET, SOCK_STREAM, SOL_TCP)) return false;
+		if (!$this->socket=socket_create(AF_INET, SOCK_STREAM, SOL_TCP)) {
+			error_reporting($e);
+			return $this->errorSocket();
+		}
 		// reuseable port
-		if (!socket_set_option($this->socket, SOL_SOCKET, SO_REUSEADDR, 1)) return false;
+		if (!socket_set_option($this->socket, SOL_SOCKET, SO_REUSEADDR, 1)) {
+			error_reporting($e);
+			return $this->errorSocket($this->socket);
+		}
 		// bind socket to specified port
-		if (!socket_bind($this->socket, 0, $this->port)) return false;
+		if (!(@socket_bind($this->socket, 0, $this->port))) {
+			error_reporting($e);
+			return $this->errorSocket($this->socket);
+		}
 		// listen to port
-		if (!socket_listen($this->socket)) return false;
+		if (!socket_listen($this->socket)) {
+			error_reporting($e);
+			return $this->errorSocket($this->socket);
+		}
 		// create & add listening socket to the list
 		$this->clients=[$this->socket];
 		// on start event
@@ -398,6 +412,26 @@ class WebSocketServer {
 		// returns the number of active iterations
 		return $iterations;
 
+	}
+
+	// set socket error
+	function errorSocket($socket=null) {
+		$n=socket_last_error($socket);
+		return $this->error("Error #".$n.": ".socket_strerror($n));
+	}
+
+	// get/set last error
+	function error($error=null) {
+		if ($error !== null) {
+			$this->error=$error;
+			return false;
+		}
+		return $this->error;
+	}
+
+	// dump error
+	function err($doexit=1) {
+		perror($this->error, $doexit);
 	}
 
 	// return as string
