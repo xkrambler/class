@@ -356,7 +356,10 @@ class WebSocketServer {
 								$packet=$info["packet"];
 
 								// check opcodes
-								if ($info["opcode"] == 1) {
+								if (
+									   $info["opcode"] == 1 // text
+									|| $info["opcode"] == 2 // binary
+								) {
 
 									// call recv/data events (RAW/JSON)
 									if ($event=$this->onrecv) $event($this, $client, $ip, $info["data"]);
