@@ -76,7 +76,9 @@ class TPVSERMEPA extends TPV {
 			);
 			if ($v=$this->setup["comercio"]) $fields["DS_MERCHANT_MERCHANTNAME"]=$v;
 			if (($v=$this->setup["titular"]) || ($v=$this->setup["cliente"])) $fields["DS_MERCHANT_TITULAR"]=$v;
-			if ($this->setup["bizum"]) {
+			if ($this->setup["xpay"]) {
+				$fields["DS_MERCHANT_PAYMETHODS"]="xpay"; // Apple/Google Pay
+			} else if ($this->setup["bizum"]) {
 				$fields["DS_MERCHANT_PAYMETHODS"]="z"; // BIZUM
 			} else if (
 				($pan=$this->setup["pan"])
