@@ -74,7 +74,7 @@ class WebSocketClient {
 
 		// prepare data and parameters
 		$url["host"]=(($v=$url["host"])?$v:"127.0.0.1");
-		if ($url["port"] < 1) $url["port"]=($url["ssl"]?443:80);
+		if ($url["port"] < 1) $url["port"]=($url["scheme"] == "https"?443:80);
 		if ($this->timeout??0 < 1) $this->timeout=10;
 		if ($this->maxheader??0 < 1) $this->maxheader=4096;
 		$ssl=in_array($url["scheme"], ["https", "ssl"]);
