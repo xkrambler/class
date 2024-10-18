@@ -199,12 +199,10 @@ function xajax(o){
 		// set requested options
 		r.request=o;
 
-		// if completed, parse data
+		// parse data
 		r.data=self.data(http.responseText); // from JSON to JS
-		if (r.complete) {
-			r.text=http.responseText; // plain text
-			r.xml=http.responseXML; // XML response
-		}
+		r.text=http.responseText; // plain text
+		r.xml=http.responseXML; // XML response
 
 		// set HTTP and self objects
 		r.http=http;
