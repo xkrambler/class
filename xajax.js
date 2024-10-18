@@ -200,8 +200,8 @@ function xajax(o){
 		r.request=o;
 
 		// if completed, parse data
+		r.data=self.data(http.responseText); // from JSON to JS
 		if (r.complete) {
-			r.data=self.data(http.responseText); // from JSON to JS
 			r.text=http.responseText; // plain text
 			r.xml=http.responseXML; // XML response
 		}
