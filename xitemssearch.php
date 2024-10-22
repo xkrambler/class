@@ -19,8 +19,8 @@ class xItemsSearch {
 		$db_protocol=$db->protocol();
 
 		// inicialización
-		$page=intval(isset($o["page"])?$o["page"]:$adata["page"]); if (!$page || $page<0) $page=0;
-		$visible=intval(isset($o["visible"])?$o["visible"]:$adata["visible"]); if ($visible<1 || $visible>1000) $visible=0;
+		$page=intval(isset($o["page"])?$o["page"]:$adata["page"]); if (!$page || $page < 0) $page=0;
+		$visible=intval(isset($o["visible"])?$o["visible"]:$adata["visible"]); if ($visible < 1 || $visible > 1000) $visible=100;
 
 		// ordenación
 		$sqlsort="";
@@ -63,7 +63,6 @@ class xItemsSearch {
 		// limitar (sqlsrv)
 		if (!$o["nolimit"] && $db_protocol=="sqlsrv") {
 			switch ($o["querytype"]) {
-			//case "2000": break;
 			default: $sqlquery="SELECT TOP ".$visible." * FROM (".$sqlquery.") xis_table";
 			}
 		}
@@ -93,7 +92,7 @@ class xItemsSearch {
 		} else {
 			if (isset($o["count"])) {
 				// el conteo se realizará por consulta SQL autogenerada o específica
-				$sqlcount=($o["count"]===true
+				$sqlcount=($o["count"] === true
 					?"SELECT COUNT(*) FROM (".str_replace("%sqlsearch%", ($adata["search"]?$search:"1=1").$sqlfilters, $o["sql"]).") xis_tcount"
 					:str_replace("%sqlsearch%", ($adata["search"]?$search:"1=1").$sqlfilters, $o["count"])
 				);
