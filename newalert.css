@@ -27,10 +27,10 @@
 	opacity: 0.5;
 	transform: scale(0.95);
 	transition: all 0.5s;
-	left: 0px;
-	top: 0px;
-	right: 0px;
-	bottom: 0px;
+	left: 20px;
+	top: 20px;
+	right: 20px;
+	bottom: 20px;
 }
 .newalert_container_transition_none,
 .newalert_container_transition_in {
@@ -49,6 +49,12 @@
 /* body properties */
 .newalert_window_body_mobile {
 	overflow: hidden !important;
+}
+.newalert_window_body_mobile .newalert_container {
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
 }
 
 /* newalert */
