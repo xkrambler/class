@@ -153,7 +153,7 @@ class x {
 			$i=strpos($url, '?');
 			if ($i !== false) $url=substr($url, 0, $i);
 			$geturl=array();
-			parse_str($p['query'], $geturl);
+			parse_str((string)$p['query'], $geturl);
 			if ($geturl) $get=array_replace($geturl, $get);
 		}
 		// build query
