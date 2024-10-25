@@ -1357,6 +1357,12 @@ function get_html_translation_table(table, quote_style) {
 	return hash_map;
 }
 
+// replace HTML special chars
+function htmlspecialchars(s) {
+	var map={'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&#34;', "'":'&#39;'};
+	return s.replace(/[&<>'"]/g, function(c){ return map[c]; });
+}
+
 // phpjs: convierte un texto a entidades HTML
 function htmlentities(string, quote_style, charset, double_encode) {
 
