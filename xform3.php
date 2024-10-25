@@ -662,7 +662,10 @@ class xForm3 {
 		$class=$this->className($field);
 		$styles=$this->styles($field);
 		$datalist="";
-		$autocomplete=(isset($f["autocomplete"])?" autocomplete='".(is_string($f["autocomplete"])?$f["autocomplete"]:($f["autocomplete"]?"on":"off"))."'":"");
+		$common=""
+			.(isset($f["autocomplete"])?" autocomplete='".(is_string($f["autocomplete"])?$f["autocomplete"]:($f["autocomplete"]?"on":"off"))."'":"")
+			.($f["required"]?" required":"")
+		;
 		// types with align/conversions
 		switch ($f["type"]) {
 		case "area":
@@ -710,7 +713,7 @@ class xForm3 {
 				.($f["cols"]?" cols='".intval($f["cols"])."'":"")
 				.($f["placeholder"]?" placeholder='".$this->entities($f["placeholder"])."'":"")
 				.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
-				.$autocomplete
+				.$common
 				.($styles?" style='".$styles."'":"")
 				.$f["extra"].">".$this->entities($f["value"])."</textarea>"
 			;
@@ -735,7 +738,7 @@ class xForm3 {
 				.($f["title"]?" title='".$this->entities($f["title"])."'":"")
 				.($f["placeholder"]?" placeholder='".$this->entities($f["placeholder"])."'":" placeholder='dd/mm/yyyy'")
 				.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
-				.$autocomplete
+				.$common
 				.($styles || $styles_date?" style='".$styles.$styles_date."'":"")
 				.$f["extra"]
 				." />"
@@ -754,7 +757,7 @@ class xForm3 {
 				.($f["title"]?" title='".$this->entities($f["title"])."'":"")
 				.($f["placeholder"]?" placeholder='".$this->entities($f["placeholder"])."'":" placeholder='hh:mm".($f["precise"]?":ss":"")."'")
 				.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
-				.$autocomplete
+				.$common
 				.($styles || $styles_time?" style='".$styles.$styles_time."'":"")
 				.$f["extra"]
 				." />"
@@ -778,7 +781,7 @@ class xForm3 {
 				.($f["title"]?" title='".$this->entities($f["title"])."'":"")
 				.($f["placeholder"]?" placeholder='".$this->entities($f["placeholder"])."'":" placeholder='dd/mm/yyyy'")
 				.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
-				.$autocomplete
+				.$common
 				.($styles?" style='".$styles."'":"")
 				.$f["extra"]
 				." />"
@@ -801,7 +804,7 @@ class xForm3 {
 				.($f["title"]?" title='".$this->entities($f["title"])."'":"")
 				.($f["placeholder"]?" placeholder='".$this->entities($f["placeholder"])."'":" placeholder='hh:mm'")
 				.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
-				.$autocomplete
+				.$common
 				.($styles?" style='".$styles."'":"")
 				.$f["extra"]
 				." />"
@@ -836,7 +839,7 @@ class xForm3 {
 				.($f["size"]?" size='".intval($f["size"])."'":"")
 				.(isset($f["datalist"])?" list='".(is_string($f["datalist"])?$f["datalist"]:$id."_datalist")."'":"")
 				.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
-				.$autocomplete
+				.$common
 				.($styles?" style='".$styles."'":"")
 				.$f["extra"]
 				." />".$datalist
@@ -855,7 +858,7 @@ class xForm3 {
 				.($f["disabled"]?" disabled":"")
 				.($f["readonly"]?" readonly":"")
 				.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
-				.$autocomplete
+				.$common
 				.($styles?" style='".$styles."'":"")
 				.$f["extra"].">"
 					.$opciones
@@ -881,7 +884,7 @@ class xForm3 {
 							.($f["disabled"]?" disabled":"")
 							.($f["readonly"]?" readonly":"")
 							.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
-							.$autocomplete
+							.$common
 							.($styles?" style='".$styles."'":"")
 							.$f["extra"]." />"
 							."<span id='".$id."-".$num."_span'>".$v."</span>"
@@ -908,7 +911,7 @@ class xForm3 {
 					.(($f["values"]?($f["value"]==$f["values"][1]):$f["value"])?" checked":"")
 					.($f["disabled"]?" disabled":"")
 					.($f["readonly"]?" readonly":"")
-					.$autocomplete
+					.$common
 					.($styles?" style='".$styles."'":"")
 					.$f["extra"]." />"
 					.(isset($f["label"])?"<span id='".$id."_label'>".$f["label"]."</span>":"")
