@@ -269,9 +269,8 @@ class Kernel {
 	function arrayFromQueryString($qs=null) {
 		if ($qs === null) $qs=$_SERVER["QUERY_STRING"];
 		$a=[];
-		if (substr($qs, 0, 1)=="?") $qs=substr($qs, 1);
+		if (substr($qs, 0, 1) == "?") $qs=substr($qs, 1);
 		parse_str($qs, $a);
-		//debug($a);
 		return $a;
 	}
 
@@ -320,11 +319,21 @@ class Kernel {
 		$ctime_called=$t;
 	}
 
+	// encode e-mail destination
+	static function mailDestination($s) {
+		if ($i=strrpos($s, " ")) {
+			if (substr($s, 0, 1) != "=") {
+				return '=?'.\x::charset().'?B?'.base64_encode(substr($s, 0, $i)).'?='.substr($s, $i);
+			}
+		}
+		return $s;
+	}
+
 	// e-mail sending helper
 	/*
 		Kernel::mailto([
 			"from"=>"sender@domain",
-			"to"=>"recipient1@domain,recipient2@domain",
+			"to"=>"Name <recipient1@domain>,recipient2@domain",
 			"cc"=>"recipient3@domain,recipient4@domain",
 			"subject"=>"Subject",
 			"html"=>"Message with <b>HTML</b> <img src='cid:testid' />",
@@ -343,16 +352,16 @@ class Kernel {
 		$cc="";
 		if ($o["cc"])
 			foreach ($ccs=explode(",", $o["cc"]) as $e)
-				$cc.="Cc: ".$e."\r\n";
+				$cc.="Cc: ".self::mailDestination($e)."\r\n";
 		// prepare BCC
 		$bcc="";
 		if ($o["bcc"])
 			foreach ($bccs=explode(",", $o["bcc"]) as $e)
-				$bcc.="Bcc: ".$e."\r\n";
+				$bcc.="Bcc: ".self::mailDestination($e)."\r\n";
 		// prepare headers
 		$headers
-			=($o["from"]?"From: ".$o["from"]."\r\n":"")
-			.($o["reply"]?"Reply-To: ".$o["reply"]."\r\n":"")
+			=(($e=$o["from"])?"From: ".self::mailDestination($e)."\r\n":"")
+			.(($e=$o["reply"])?"Reply-To: ".self::mailDestination($e)."\r\n":"")
 			.$cc
 			.$bcc
 			."Date: ".date("r")."\r\n"
@@ -361,12 +370,12 @@ class Kernel {
 			." boundary=\"{$mime_boundary_mix}\"\r\n"
 		;
 		// add mailer
-		if (!isset($o["mailer"]) || $o["mailer"]) $headers.="X-Mailer: ".($o["mailer"]?$o["mailer"]:"fsme_mailer/1.0.3")."\r\n";
+		if (!isset($o["mailer"]) || $o["mailer"]) $headers.="X-Mailer: ".(($v=$o["mailer"])?$v:"fsme_mailer/1.0.4")."\r\n";
 		// add headers
 		if (is_string($o["headers"])) $headers.=$o["headers"];
 		else if (is_array($o["headers"])) foreach ($o["headers"] as $v) $headers.=$v."\r\n";
 		// prepare body
-		$body="Scrambled for your security by the Flying Spaguetti Monster Engine Mailer.\r\n\r\n";
+		$body="Scrambled for your security by the Flying Spaghetti Monster Engine Mailer.\r\n\r\n";
 		$body.="--{$mime_boundary_mix}\r\n"
 			."Content-Type: multipart/alternative;\r\n"
 			." boundary=\"{$mime_boundary_alt}\"\r\n"
@@ -413,9 +422,9 @@ class Kernel {
 		if ($o["to"]) {
 			$tos=explode(",", $o["to"]);
 			foreach ($tos as $e) {
-				if ($i=strpos($e, "<")) $e=substr($e, $i+1);
-				if ($i=strpos($e, ">")) $e=substr($e, 0, $i);
-				$to.=($to?",":"").$e;
+				//if ($i=strpos($e, "<")) $e=substr($e, $i+1);
+				//if ($i=strpos($e, ">")) $e=substr($e, 0, $i);
+				$to.=($to?",":"").self::mailDestination($e);
 			}
 		} else {
 			if ($o["bcc"]) $to="undisclosed-recipients:;";
@@ -429,7 +438,7 @@ class Kernel {
 	}
 
 	// dir filename sorting
-	static function name_sort($a,$b) {
+	static function name_sort($a, $b) {
 		return (strtolower($a["name"]) > strtolower($b["name"])?1:(strtolower($a["name"]) < strtolower($b["name"])?-1:0));
 	}
 
@@ -440,7 +449,7 @@ class Kernel {
 		$fa=array();
 		$d=dir($p);
 		while ($e=$d->read()) {
-			if ($e=="." || $e=="..") continue;
+			if ($e == "." || $e == "..") continue;
 			if (is_dir($p.$e)) {
 				$fd[]=array(
 					"dir"=>true,
@@ -472,9 +481,9 @@ class Kernel {
 		$a=array();
 		$d=dir($root);
 		while ($e=$d->read()) {
-			if ($e=="." || $e=="..") continue;
+			if ($e == "." || $e == "..") continue;
 			if (is_dir($root.$e)) {
-				$res=$this->dir_recursive($root.$e."/",$paths);
+				$res=$this->dir_recursive($root.$e."/", $paths);
 				if ($res)
 					foreach ($res as $f)
 						$a[]=$f;
@@ -494,7 +503,7 @@ class Kernel {
 		if (!file_exists($base)) return false;
 		foreach ($this->dir_recursive($base) as $f)
 			@unlink($f);
-		$rutas=$this->dir_recursive($base,true);
+		$rutas=$this->dir_recursive($base, true);
 		rsort($rutas);
 		foreach ($rutas as $f)
 			@rmdir($f);
