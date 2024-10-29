@@ -393,6 +393,7 @@ class xForm3 {
 		case "decimal": return doubleval($value);
 		case "positive": return abs(doubleval($value));
 		}
+		if ($field["base64"]) $value=base64_decode($value);
 		return $value;
 	}
 
@@ -402,6 +403,7 @@ class xForm3 {
 		if ($field["string"]) return (string)$value;
 		if ($field["nullifempty"] && !strlen($value)) return null;
 		if ($field["nozero"] && !strlen($value)) return 0;
+		if ($field["base64"]) $value=base64_encode($value);
 		return $value;
 	}
 
