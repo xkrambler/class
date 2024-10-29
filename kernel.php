@@ -319,13 +319,28 @@ class Kernel {
 		$ctime_called=$t;
 	}
 
+	// encode mail string
+	static function mailEncode($s) {
+		return '=?'.\x::charset().'?B?'.base64_encode($s).'?=';
+	}
+
 	// encode e-mail destination
 	static function mailDestination($s) {
+		$s=trim($s);
 		if ($i=strrpos($s, " ")) {
 			if (substr($s, 0, 1) != "=") {
-				return '=?'.\x::charset().'?B?'.base64_encode(substr($s, 0, $i)).'?='.substr($s, $i);
+				return self::mailEncode(substr($s, 0, $i)).substr($s, $i);
 			}
 		}
+		return $s;
+	}
+
+	// prepare e-mail destinations
+	static function headerMailDestinations($header, $emails) {
+		$s="";
+		if ($emails)
+			foreach ($a=(is_array($emails)?$emails:explode(",", $emails)) as $e)
+				$s.=$header.": ".self::mailDestination($e)."\r\n";
 		return $s;
 	}
 
@@ -333,7 +348,7 @@ class Kernel {
 	/*
 		Kernel::mailto([
 			"from"=>"sender@domain",
-			"to"=>"Name <recipient1@domain>,recipient2@domain",
+			"to"=>["Name <recipient1@domain>","recipient2@domain"],
 			"cc"=>"recipient3@domain,recipient4@domain",
 			"subject"=>"Subject",
 			"html"=>"Message with <b>HTML</b> <img src='cid:testid' />",
@@ -348,22 +363,12 @@ class Kernel {
 		// prepare boundaries
 		$mime_boundary_alt="==awesome_ALT".strtoupper(sha1(uniqid()))."_";
 		$mime_boundary_mix="==awesome_MIX".strtoupper(sha1(uniqid()))."_";
-		// prepare CC
-		$cc="";
-		if ($o["cc"])
-			foreach ($ccs=explode(",", $o["cc"]) as $e)
-				$cc.="Cc: ".self::mailDestination($e)."\r\n";
-		// prepare BCC
-		$bcc="";
-		if ($o["bcc"])
-			foreach ($bccs=explode(",", $o["bcc"]) as $e)
-				$bcc.="Bcc: ".self::mailDestination($e)."\r\n";
 		// prepare headers
 		$headers
 			=(($e=$o["from"])?"From: ".self::mailDestination($e)."\r\n":"")
 			.(($e=$o["reply"])?"Reply-To: ".self::mailDestination($e)."\r\n":"")
-			.$cc
-			.$bcc
+			.self::headerMailDestinations("Cc", $o["cc"])
+			.self::headerMailDestinations("Bcc", $o["bcc"])
 			."Date: ".date("r")."\r\n"
 			."MIME-Version: 1.0\r\n"
 			."Content-Type: multipart/related;\r\n"
@@ -375,7 +380,7 @@ class Kernel {
 		if (is_string($o["headers"])) $headers.=$o["headers"];
 		else if (is_array($o["headers"])) foreach ($o["headers"] as $v) $headers.=$v."\r\n";
 		// prepare body
-		$body="Scrambled for your security by the Flying Spaghetti Monster Engine Mailer.\r\n\r\n";
+		$body="Scrambled by the Flying Spaghetti Monster Engine Mailer.\r\n\r\n";
 		$body.="--{$mime_boundary_mix}\r\n"
 			."Content-Type: multipart/alternative;\r\n"
 			." boundary=\"{$mime_boundary_alt}\"\r\n"
@@ -420,19 +425,17 @@ class Kernel {
 		// prepare destinations
 		$to="";
 		if ($o["to"]) {
-			$tos=explode(",", $o["to"]);
-			foreach ($tos as $e) {
-				//if ($i=strpos($e, "<")) $e=substr($e, $i+1);
-				//if ($i=strpos($e, ">")) $e=substr($e, 0, $i);
-				$to.=($to?",":"").self::mailDestination($e);
+			if (is_array($o["to"])) {
+				foreach ($o["to"] as $e) $to.=($to?",":"").self::mailDestination($e);
+			} else {
+				$to=(strpos($o["to"], ",")?$o["to"]:self::mailDestination($o["to"]));
 			}
 		} else {
 			if ($o["bcc"]) $to="undisclosed-recipients:;";
 		}
-		// prepare subject: if not 7-bit, base64_encode(UTF-8)
+		// prepare subject: if not 7-bit, encode
 		$subject=$o["subject"];
-		if (!preg_match("/^[\\040-\\176]+$/", $subject))
-			$subject="=?UTF-8?B?".base64_encode($o["subject"])."?=";
+		if (!preg_match("/^[\\040-\\176]+$/", $subject)) $subject=self::mailEncode($o["subject"]);
 		// send it!
 		return @mail($to, $subject, $body, $headers);
 	}
