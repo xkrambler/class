@@ -496,6 +496,14 @@ function xForm3(o) {
 		return true;
 	};
 
+	// icon renderer
+	a.icon=function(o){
+		if (a.o.icon) return a.o.icon(o);
+		if (window.kernel && window.kernel.icon) return window.kernel.icon(o);
+		if (typeof(o) == "string") var o={"icon":o};
+		return "<span class='fa fa-"+o.icon+"'"+(o.color?" style='color:"+o.color+";'":"")+""+(o.title?" title='"+htmlentities(o.title)+"'":"")+"></span>";
+	};
+
 	// audio related actions
 	a.audio={
 
@@ -534,8 +542,8 @@ function xForm3(o) {
 			var field=a.o.fields[f];
 			var d=a.data[f];
 			gidset(d.file, (d.uploaded && !d.deleted
-				?"<span class='fa fa-file-audio-o'></span> "+d.name+" ("+bytesToString(d.size)+")"
-				:"<span class='fa fa-file-o'></span> Sin audio"
+				?a.icon("file-audio-o")+" "+d.name+" ("+bytesToString(d.size)+")"
+				:a.icon("file-o")+" Sin audio"
 			));
 			gidset(d.audio_div, "");
 			var audio=document.createElement("audio");
@@ -666,31 +674,31 @@ function xForm3(o) {
 			if (o.href) e.href=o.href;
 			e.setAttribute("data-id", o.id);
 			e.setAttribute("data-index", o.index);
+			e.innerHTML=a.icon(o.type);
 			e.onclick=function(event){
-				// obtener campo por identificador
 				var index=parseInt(this.getAttribute("data-index"));
 				var field=a.fieldById(this.getAttribute("data-id"));
 				event.stopPropagation();
 				return o.action(field, index);
 			};
-			if (o.caption) e.innerHTML=o.caption;
+			if (o.caption) e.innerHTML+=" "+o.caption;
 			return e;
 		},
 
 		// return file button element
 		"htmlFileButton":function(o){
-			var span=document.createElement("span");
-			span.className="xform3_files_file_button xform3_files_item_button_"+o.type;
-			span.setAttribute("data-id", o.id);
-			span.setAttribute("data-index", o.index);
-			span.onclick=function(){
-				// obtener campo por identificador
+			var e=document.createElement("span");
+			e.className="xform3_files_file_button xform3_files_item_button_"+o.type;
+			e.setAttribute("data-id", o.id);
+			e.setAttribute("data-index", o.index);
+			e.innerHTML=a.icon(o.type);
+			e.onclick=function(){
 				var index=parseInt(this.getAttribute("data-index"));
 				var field=a.fieldById(this.getAttribute("data-id"));
 				o.action(field, index);
 			};
-			span.title="Borrar";
-			return span;
+			if (o.title) e.title=o.title;
+			return e;
 		},
 
 		// add file element
@@ -711,8 +719,8 @@ function xForm3(o) {
 				div.setAttribute("data-index", o.index);
 				var buttons=document.createElement("div");
 				buttons.className="xform3_files_item_buttons";
-				buttons.appendChild(a.files.htmlImageButton({"type":"delete", "id":a.id(o.field), "index":o.index, "action":a.files.del}));
-				//buttons.appendChild(a.files.htmlImageButton({"type":"zoom", "id":a.id(o.field), "index":o.index, "action":a.files.zoom, "href":a.files.fileURL(o.field, o.index)}));
+				buttons.appendChild(a.files.htmlImageButton({"type":"trash", "id":a.id(o.field), "index":o.index, "action":a.files.del}));
+				//buttons.appendChild(a.files.htmlImageButton({"type":"search", "id":a.id(o.field), "index":o.index, "action":a.files.zoom, "href":a.files.fileURL(o.field, o.index)}));
 				div.onclick=function(){
 					var index=parseInt(this.getAttribute("data-index"));
 					var field=a.fieldById(this.getAttribute("data-id"));
@@ -754,8 +762,8 @@ function xForm3(o) {
 			case "files":
 				// name=file.psd type=image/vnd.adobe.photoshop error=0 size=999 caption=file.psd
 				div.className="xform3_files_file";
-				div.innerHTML="<span class='xform3_files_file_icon xform3_files_file_icon_file'></span><a class='xform3_files_file_name' href='"+a.files.fileURL(o.field, o.index)+"' target='_blank'>"+o.item.name+"</a> <span class='xform3_files_file_size'>("+bytesToString(o.item.size)+")</span>";
-				div.appendChild(a.files.htmlFileButton({"type":"delete", "id":a.id(o.field), "index":o.index, "action":a.files.del}));
+				div.innerHTML=a.icon("file-o")+" <a class='xform3_files_file_name' href='"+a.files.fileURL(o.field, o.index)+"' target='_blank'>"+o.item.name+"</a> <span class='xform3_files_file_size'>("+bytesToString(o.item.size)+")</span>";
+				div.appendChild(a.files.htmlFileButton({"type":"trash", "id":a.id(o.field), "index":o.index, "action":a.files.del, "title":"Borrar"}));
 				a.data[o.field].container.appendChild(div);
 				break;
 
@@ -824,13 +832,13 @@ function xForm3(o) {
 				case "file": limit=1; // no break
 				case "files":
 				default:
-					div.className="xform3_files_file xform3_files_file_upload";
+					div.className="xform3_files_file xform3_files_file_upload xform3_files_file_upload_link";
 					var span=document.createElement("span");
 					span.className="a xform3_files_file_upload_caption";
 					span.setAttribute("data-id", a.id(field));
 					span.onclick=action_upload;
 					span.title=(limit == 1?"Subir archivo":"Subir archivos");
-					span.innerHTML="<span class='xform3_files_file_icon xform3_files_file_icon_upload'></span>"+span.title;
+					span.innerHTML=a.icon("upload")+" "+span.title;
 					div.appendChild(span);
 					gid(a.id(field)).appendChild(div);
 					break;
@@ -898,11 +906,11 @@ function xForm3(o) {
 					"title":"Confirme borrado",
 					"msg":"¿Está seguro de querer eliminar este elemento?",
 					"buttons":[
-						{"caption":"Borrar","action":function(id){
+						{"caption":a.icon("trash")+" Borrar","action":function(id){
 							newalert_close(id);
 							a.files.del(field, index, true);
 						}},
-						{"caption":"Cancelar"}
+						{"caption":a.icon("times")+" Cancelar"}
 					]
 				});
 				return;
@@ -1098,11 +1106,6 @@ function xForm3(o) {
 		a.value(field, c);
 	};
 
-	// return icon, if defined
-	a.icon=function(icon){
-		return (typeof(kernel) == "object" && kernel.icon?kernel.icon(icon)+" ":"");
-	};
-
 	// setup
 	a.init=function(o){
 		var o=o||{};
@@ -1160,7 +1163,7 @@ function xForm3(o) {
 					if (typeof(newalert) == "function" && typeof(iro) == "object" && iro.ColorPicker) {
 						a.gid(f).onclick=function(){
 							var buttons=[];
-							buttons.push({"caption":(typeof(kernel) == "object" && kernel.icon?kernel.icon("check")+" ":"")+"Aceptar","default":true});
+							buttons.push({"caption":a.icon("check")+" Aceptar","default":true});
 							if (field.colors) for (var i in field.colors) {
 								var c=field.colors[i];
 								(function(c){
