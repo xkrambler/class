@@ -478,6 +478,18 @@
 }
 
 /* images */
+.xicon {
+	position: relative;
+	display: inline-block;
+	background-repeat: no-repeat;
+	background-position: center center;
+	background-size: contain;
+	padding-left: 0.6em;
+	line-height: 1em;
+}
+.xicon:before {
+	content: "\00a0";
+}
 .cmb_search,
 .txt_search,
 .hsearch_input { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAYCAYAAACbU/80AAAACXBIWXMAAAsTAAALEwEAmpwYAAAABGdBTUEAALGOfPtRkwAAACBjSFJNAAB6JQAAgIMAAPn/AACA6QAAdTAAAOpgAAA6mAAAF2+SX8VGAAABSElEQVR42uzWPUscURTG8d+atLFIGl8xAQsFCYgQLCwEKxVMkw+QbhsTUexs7FNEos2mS2wsFEHR7GfIuiviBxAbQdLYxHROmrMwSLK6MMM288BwZuaey/PnnHvvTClJEp1Ulw6rACgAnj42sVwuN2978QHzGMAt6viK4/ScSqWSHUBoEjsYiucEzwPkLT5jJa8W9GA3zBt4h1G8CWNYbhegnQosoR+nmMFNaqyGC3zBGrbxK+sKLERcv2fe1CbOoiXTebSgD3c4b5HTiPgyD4A/KOFZi5wXEX/nAdAIgPf/GR9Olb6WB8BWxI9YvDd3NLZnN47yAqhiA09iwZ3gGw7CcCLyBlPnROYH0TKusIrxuJr6EcavA3YutmamAPAJ3zGFV7Hg6vgZAFWM4BBjeQDANfb+8f4Ss9iPb8aDKhW/ZAVApwH+DgCbnD2k6ZgSxAAAAABJRU5ErkJggg==); }
