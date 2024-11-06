@@ -193,7 +193,11 @@ function getWidth(id) { return gid(id).offsetWidth; }
 function getHeight(id) { return gid(id).offsetHeight; }
 
 // element style change
-function style(id, styles) { var o=gid(id); for (var i in styles) o.style[i]=styles[i]; }
+function style(id, styles) {
+	var e=gid(id);
+	if (typeof(styles) == "string") e.style=styles;
+	else xforeach(styles, function(style, i){ e.style[i]=style; });
+}
 
 // element className functions
 function classAdd(id, c) {
