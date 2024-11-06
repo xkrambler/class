@@ -19,7 +19,7 @@ function xForm3(o) {
 		return (a.o.name?a.o.name:null);
 	};
 	a.class=function(f){ return (a.o.class?(f?a.o.class[f]:a.o.class):null); };
-	a.field=function(f){ return a.o.fields[f]; };
+	a.field=function(f){ return (f?a.o.fields[f]:null); };
 	a.fields=function(){ return a.o.fields; };
 	a.get=function(f,n,v){
 		return a.o.fields[f][n];
@@ -67,15 +67,37 @@ function xForm3(o) {
 
 	// select and set focus to correct a field
 	a.correct=function(f){
-		a.focus(f);
-		a.select(f);
+		if (a.field(f)) {
+			a.focus(f);
+			a.select(f);
+			return true;
+		}
+		return false;
+	};
+
+	// get/set first field
+	a.first=function(f){
+		if (typeof(f) != "undefined") {
+			xforeach(a.o.fields, function(field, field_id){
+				if (field_id == f) a.o.fields[field_id].first=true;
+				else delete a.o.fields[field_id].first;
+			});
+		}
+		var f=xforeach(a.o.fields, function(field, field_id){
+			if (field.first) return field_id;
+		});
+		if (f !== null) return f;
+		return xforeach(a.o.fields, function(field, field_id){
+			return field_id;
+		});
 	};
 
 	// set focus to first field
 	a.focusfirst=a.focusFirst=function(){
-		for (var field in a.o.fields) {
-			a.focus(field);
-			a.select(field);
+		var f=a.first();
+		if (f) {
+			a.focus(f);
+			a.select(f);
 			return true;
 		}
 		return false;
