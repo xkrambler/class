@@ -360,6 +360,17 @@
 .group .cmd:hover,  .group a.cmd:hover {
 	opacity: 0.9;
 }
+.cmd_light[disabled],
+.cmd_light[disabled]:hover,
+.cmd_light[disabled]:focus,
+.cmd_input[disabled]:hover,
+.cmd_input[disabled]:focus,
+.group .cmd[disabled],  .group a.cmd[disabled],
+.group .cmd[disabled]:focus,  .group a.cmd[disabled]:focus,
+.group .cmd[disabled]:hover,  .group a.cmd[disabled]:hover {
+	cursor: default;
+	opacity: 0.4;
+}
 
 /* combobox checkboxes & radios */
 .cmb_checkboxes .cmb_item,
