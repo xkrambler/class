@@ -1,5 +1,6 @@
 /*
-	xpop v0.2b by mr.xkr
+
+	xpop v0.2c by mr.xkr
 
 	Examples:
 		xpop({"class":"xxxxxx","background":"#CFC","ico":"images/ico16/ok.png","msg":"User saved!"});
@@ -7,18 +8,20 @@
 		xpopok("Saved ok!");
 		xpopwarn("This is a warning!");
 		xpoperr("This is an error!");
+
 */
 
 var xpops={};
 
 // crea un mensaje popup centrado en la parte superior de la página
 function xpop(o) {
-	if (typeof(o)=="string") var o={"msg":o};
+	if (typeof(o) == "string") var o={"msg":o};
+	if (typeof(o.msg) == "object") o=array_merge(o, o.msg);
 	if (!this.c) this.c=0;
 	this.c++;
 	o.c=this.c;
 	if (!o.id) o.id="";
-	if (!isset(o.timeout) || o.timeout<1) o.timeout=2500;
+	if (!isset(o.timeout) || o.timeout < 1) o.timeout=2500;
 	xpop_destroy(o.id);
 	o.e=document.createElement("div");
 	o.e.className="xpop noselect"+(o.class?" "+o.class:"");
@@ -26,19 +29,6 @@ function xpop(o) {
 		if (o.onclick) o.onclick(o.id, o);
 		else xpop_close(o.id);
 	};
-	/*o.e.innerHTML
-		="<table class='xpop_table'>"
-		+"<tr><td><div class='xpop_dialog'"
-			+" style='"
-				+(o.color?"color:"+o.color+";":"")
-				+(o.background?"background:"+o.background+";":"")
-			+"'>"
-				+"<span class='xpop_caption"+(o.ico?" xpop_icon":"")+"' "+(o.ico!==true?" style='background-image:url("+o.ico+");'":"")+">"
-					+o.msg
-				+"</span>"
-			+"</div></td></tr>"
-		+"</table>"
-	;*/
 	o.e.innerHTML=""
 		+"<div class='xpop_dialog'"
 			+" style='"
