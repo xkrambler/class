@@ -418,39 +418,57 @@ function getCookie(name) {
 
 // set cookie
 function setCookie(name, value, o) {
-	var o=(Number.isFinite(o)?{"days":o}:o||{});
-	if (o.days) o.expires=o.days*86400000;
-	var expires="";
-	if (o.expires) {
-		var date=new Date();
-		date.setTime(date.getTime()+o.expires);
-		expires="; expires="+date.toGMTString();
+	try {
+		var o=(Number.isFinite(o)?{"days":o}:o||{});
+		if (o.days) o.expires=o.days*86400000;
+		var expires="";
+		if (o.expires) {
+			var date=new Date();
+			date.setTime(date.getTime()+o.expires);
+			expires="; expires="+date.toGMTString();
+		}
+		document.cookie
+			=name.replace(/=/gi,"").replace(/;/gi,"")
+			+"="+(""+value).replace(/\\/gi,"\\\\").replace(/\n/gi,"\\n").replace(/;/gi,"\\,").replace(/;/gi,"_")
+			+expires
+			+"; path="+(o.path||"/")
+			+"; sameSite="+(o.samesite||"Lax")
+			+(o.domain?"; domain="+o.domain:"")
+			+(o.secure?"; Secure":"")
+		;
+	} catch(e) {
+		return false;
 	}
-	document.cookie
-		=name.replace(/=/gi,"").replace(/;/gi,"")
-		+"="+(""+value).replace(/\\/gi,"\\\\").replace(/\n/gi,"\\n").replace(/;/gi,"\\,").replace(/;/gi,"_")
-		+expires
-		+"; path="+(o.path||"/")
-		+"; sameSite="+(o.samesite||"Lax")
-		+(o.secure?"; Secure":"")
-	;
+	return true;
 }
 
 // delete cookie
 function delCookie(name) {
-	setCookie(name, "", {"expires":-1, "samesite":"Strict"});
-	setCookie(name, "", {"expires":-1, "samesite":"Lax"});
-	setCookie(name, "", {"expires":-1, "samesite":"None", "secure":true});
-	setCookie(name, "", {"expires":-1, "samesite":"None"});
+	var secures=[false];
+	var domain=document.domain;
+	var domains=[null, domain];
+	var p=domain.lastIndexOf(".");
+	if (p > 0) {
+		p=domain.lastIndexOf(".", p-1);
+		if (p > 0) domains.push(domain.substr(p));
+	}
+	if (location.protocol === 'https:') secures.push(true);
+	xforeach(secures, function(secure){
+		xforeach(domains, function(domain){
+			xforeach(["None", "Lax", "Strict"], function(samesite){
+				setCookie(name, "", {"expires":-1, "domain":domain, "samesite":samesite, "secure":secure});
+			});
+		});
+	});
 }
 
 // delete all accesible cookies
 function delAllCookies() {
 	var cookies=document.cookie.split(";");
-	for (var i=0; i<cookies.length; i++) {
+	for (var i=0; i < cookies.length; i++) {
 		var cookie=cookies[i];
-		var eqPos=cookie.indexOf("=");
-		var name=(eqPos>-1?cookie.substr(0, eqPos):cookie);
+		var p=cookie.indexOf("=");
+		var name=(p > -1?cookie.substr(0, p):cookie);
 		delCookie(name);
 	}
 }
