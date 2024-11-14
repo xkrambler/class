@@ -65,8 +65,9 @@ class xOTP {
 	function secret($secret=null) {
 		if ($secret !== null) {
 			$secret=$this->trim($secret);
-			if ($this->base32dec($secret) === false) return false;
-			unset($this->o["key"]);
+			$key=$this->base32dec($secret);
+			if ($key === false) return false;
+			$this->o["key"]=$key;
 			$this->o["secret"]=$secret;
 		}
 		return $this->secret;
