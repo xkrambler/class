@@ -402,13 +402,39 @@
 	background: #DDD;
 	color: #444;
 }
+.widget_inverse .cmd_light,
+.widget_inverse .cmd_light:active,
+.widget_inverse .cmd_light:hover,
+.widget_inverse .cmd_light:focus,
+.widget_inverse .cmd_light:link,
+.widget_inverse .cmd_input,
+.widget_inverse .cmd_input:active,
+.widget_inverse .cmd_input:hover,
+.widget_inverse .cmd_input:focus,
+.widget_inverse .cmd_input:link,
+.widget_inverse .group .cmd,        .widget_inverse .group a.cmd,
+.widget_inverse .group .cmd:active, .widget_inverse .group a.cmd:active,
+.widget_inverse .group .cmd:hover,  .widget_inverse .group a.cmd:hover,
+.widget_inverse .group .cmd:focus,  .widget_inverse .group a.cmd:focus,
+.widget_inverse .group .cmd:link,   .widget_inverse .group a.cmd:link,
+.widget_inverse .group .label {
+	background: #000;
+	color: #EEE;
+	border-style: solid;
+	border-color: #000;
+}
 .cmd_light:hover,
 .cmd_light:focus,
 .cmd_input:hover,
 .cmd_input:focus,
-.group .cmd:focus,  .group a.cmd:focus,
-.group .cmd:hover,  .group a.cmd:hover {
-	opacity: 0.9;
+.group .cmd:focus, .group a.cmd:focus,
+.group .cmd:hover, .group a.cmd:hover {
+	opacity: 0.8;
+}
+.cmd_light:active,
+.cmd_input:active,
+.group .cmd:active, .group a.cmd:active {
+	opacity: 0.6;
 }
 .cmd_light[disabled],
 .cmd_light[disabled]:hover,
