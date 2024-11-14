@@ -1820,14 +1820,14 @@ var xwidgets={
 		};
 
 		// get/set item
-		self.item=function(item){
-			if (isset(item) && item !== null) {
+		self.item=function(item, _noevents){
+			if (isset(item)) { //  && item !== null
 				self.o.selecteditem=item;
 				self.o.selected=[item];
 				self.o.selectedkeys={};
-				if (self.o.key) self.o.selectedkeys[item[self.o.key]]=item;
+				if (self.o.key && item !== null) self.o.selectedkeys[item[self.o.key]]=item;
 				self.refreshCaption();
-				if (self.o.onchange) self.o.onchange(self, item);
+				if (self.o.onchange && !_noevents) self.o.onchange(self, item);
 				if (self.o.input) gidval(self.o.input, self.value());
 			}
 			return self.o.selecteditem;
@@ -1906,7 +1906,7 @@ var xwidgets={
 				self.o.requested=true;
 				var r={
 					"search":(self.e.cmb_search?self.e.cmb_search.value:(self.e.cmb_input?self.e.cmb_input.value:"")),
-					"visible":(self.o.visible?self.o.visible:50)
+					"visible":(self.o.visible?self.o.visible:null)
 				};
 				var er=self.data();
 				if (er) r=array_merge(r, er);
@@ -1939,9 +1939,8 @@ var xwidgets={
 		// aux: first item/index/key/value selection (called twice, on refresh and on update)
 		self.firstselect=function(){
 			if (self.o.item) {
-				self.o.selecteditem=self.o.item;
-				if (self.o.key) self.o.selectedkeys[self.o.item[self.o.key]]=self.o.item;
-				if (self.e.cmb_caption) gidset(self.e.cmb_caption, self.renderItem(self.o.item));
+				self.item(self.o.item, true);
+				//if (self.e.cmb_caption) gidset(self.e.cmb_caption, self.renderItem(self.o.item));
 			} else {
 				if (isset(self.o.index)) self.index(self.o.index); else if (!self.o.editable && !self.o.multiple) self.index(0);
 				if (isset(self.o.keys)) self.keys(self.o.keys);
