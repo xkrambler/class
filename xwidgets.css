@@ -79,6 +79,15 @@
 	background-color: #FFF;
 	border: 1px solid #DDD;
 }
+.widget_inverse .area,
+.widget_inverse .cmb,
+.widget_inverse .txt,
+.widget_inverse .hsearch,
+.widget_inverse .widget {
+	color: #FFF;
+	background-color: #222;
+	border: 1px solid #000;
+}
 .area,
 .cmb,
 .txt,
@@ -113,7 +122,7 @@
 .widget_disabled {
 	color: #555;
 	background: #E4E4E4;
-	border-color: #BBB;
+	/*border-color: #BBB;*/
 }
 .area[readonly],
 .cmb[readonly],
@@ -121,6 +130,25 @@
 .area[readonly],
 .hsearch[readonly] {
 	background: #F4F4F4;
+}
+.widget_inverse .area[readonly],
+.widget_inverse .cmb[readonly],
+.widget_inverse .txt[readonly],
+.widget_inverse .area[disabled],
+.widget_inverse .cmb[disabled],
+.widget_inverse .txt[disabled],
+.widget_inverse .hsearch[disabled],
+.widget_inverse .widget[disabled],
+.widget_inverse .widget_disabled {
+	color: #CCC;
+	background: #444;
+}
+.widget_inverse .area[readonly],
+.widget_inverse .cmb[readonly],
+.widget_inverse .txt[readonly],
+.widget_inverse .area[readonly],
+.widget_inverse .hsearch[readonly] {
+	background: #333;
 }
 .area:focus,
 .cmb:focus,
@@ -138,7 +166,9 @@
 .widget_inverse .cmb:focus,
 .widget_inverse .txt:focus,
 .widget_inverse .widget:focus,
-.widget_inverse .widget_focus { border-color: #FFF; }
+.widget_inverse .widget_focus {
+	border-color: #CCC;
+}
 .widget_fill {
 	flex: 1;
 }
@@ -247,6 +277,9 @@
 	background: transparent;
 	border: 0;
 }
+.widget_inverse .cmb_input {
+	color: inherit;
+}
 .cmb_items {
 	overflow: auto;
 }
@@ -255,7 +288,12 @@
 	display: none;
 	z-index: 10;
 	border: 1px solid #444;
+	color: #000;
 	background: #FFF;
+}
+.widget_inverse .cmb_options {
+	color: #FFF;
+	background: #222;
 }
 .cmb_dropdown {
 	position: relative;
@@ -278,7 +316,12 @@
 .cmb_open .cmb,
 .cmb_open .cmb_options {
 	border-color: #444;
-	background-color: #FFF;
+}
+.widget_inverse .cmb_group:focus .cmb,
+.widget_inverse .cmb_focus .cmb,
+.widget_inverse .cmb_open .cmb,
+.widget_inverse .cmb_open .cmb_options {
+	border-color: #CCC;
 }
 .cmb_item {
 	display: block;
@@ -297,9 +340,16 @@
 .cmb_item:hover {
 	background-color: #F0F0F0;
 }
+.widget_inverse .cmb_item:hover {
+	background-color: #444;
+}
 .cmb_item_selected,
 .cmb_item_selected:hover {
-	background: #DDD;
+	background-color: #DDD;
+}
+.widget_inverse .cmb_item_selected,
+.widget_inverse .cmb_item_selected:hover {
+	background-color: #555;
 }
 .cmb_caption_empty,
 .cmb_item_empty {
@@ -376,7 +426,8 @@
 .cmb_checkboxes .cmb_item,
 .cmb_radios .cmb_item {
 	padding-left: 24px;
-	background: 2px center no-repeat;
+	background-repeat: no-repeat;
+	background-position: 2px center;
 	background-size: 1em;
 }
 
