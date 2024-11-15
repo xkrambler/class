@@ -5,7 +5,7 @@ Licencia: GPL (http://www.gnu.org/licenses/gpl.txt)
 Autores.: Pablo Rodríguez Rey
           https://mr.xkr.es/
           Javier Gil Motos
-          http://cucaracha.inertinc.org/
+          https://javiergm.com/
 
 Estas librerías y helpers PHP/JS/CSS pretenden ofrecer:
 - Una base para hacer aplicaciones ligeras.
@@ -73,6 +73,30 @@ en el repositorio del proyecto:
 	local/
 	.htaccess
 	.htpasswd
+
+
+.htaccess de ejemplo
+====================
+
+# este .htaccess tiene la funcionalidad de permitir ejecutar sin extensión
+# en la base así como proteger algunos directorios y configuraciones básicas.
+RewriteEngine on
+
+# seguridad: no Indexes/MultiViews
+Options -Indexes -MultiViews
+
+# seguridad: evitar acceso a lugares restringidos
+RewriteRule ^(INSTALL(|\.md)$|README(|\.md)$|composer\.(json|lock)|\.svn/|\.git/|\..+|bin/|data/|conf/|edit/|local/) / [R]
+
+# permitir escribir URLs de scripts sin la extensión
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^([^\/]+)$ $1.php [L]
+
+# 404
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule .+ kernel/404.php [L]
 
 
 Aplicación típica
