@@ -1906,7 +1906,7 @@ var xwidgets={
 				self.o.requested=true;
 				var r={
 					"search":(self.e.cmb_search?self.e.cmb_search.value:(self.e.cmb_input?self.e.cmb_input.value:"")),
-					"visible":(self.o.visible?self.o.visible:null)
+					"visible":(isset(self.o.visible)?self.o.visible:null)
 				};
 				var er=self.data();
 				if (er) r=array_merge(r, er);
