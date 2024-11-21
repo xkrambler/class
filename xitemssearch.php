@@ -20,7 +20,7 @@ class xItemsSearch {
 
 		// inicialización
 		$page=intval(isset($o["page"])?$o["page"]:$adata["page"]); if (!$page || $page < 0) $page=0;
-		$visible=intval(isset($o["visible"])?$o["visible"]:$adata["visible"]); if ($visible < 1 || $visible > 1000) $visible=100;
+		$visible=intval(isset($o["visible"])?$o["visible"]:$adata["visible"]); if ($visible < 1 || $visible > 1000) $visible=0;
 
 		// ordenación
 		$sqlsort="";
@@ -63,7 +63,7 @@ class xItemsSearch {
 		// limitar (sqlsrv)
 		if (!$o["nolimit"] && $db_protocol=="sqlsrv") {
 			switch ($o["querytype"]) {
-			default: $sqlquery="SELECT TOP ".$visible." * FROM (".$sqlquery.") xis_table";
+			default: if ($visible) $sqlquery="SELECT TOP ".$visible." * FROM (".$sqlquery.") xis_table";
 			}
 		}
 
