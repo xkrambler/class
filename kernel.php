@@ -416,7 +416,7 @@ class Kernel {
 				.($a["id"]?"Content-ID: <".$a["id"].">\r\n":"")
 				."Content-Transfer-Encoding: base64\r\n"
 				//."Content-Length: ".strlen($temp)."\r\n"
-				.($name?"Content-Disposition: attachment;\r\n filename=\"".str_replace('"', "''", $name)."\"\r\n":"")
+				.($name?"Content-Disposition: attachment;\r\n filename=\"".self::headerFilename($name)."\"\r\n":"")
 				."\r\n".$temp."\r\n\r\n"
 			;
 			unset($temp);
@@ -537,7 +537,7 @@ class Kernel {
 		if (!$f) $f="file";
 		// cabeceras
 		header("Content-Type: ".$o["type"].($o["charset"]?"; charset=".$o["charset"]:""));
-		header("Content-Disposition: ".($o["attachment"]?"attachment; ":"inline; ")."filename=\"".str_replace('"', "''", $f).'"');
+		header("Content-Disposition: ".($o["attachment"]?"attachment; ":"inline; ")."filename=\"".self::headerFilename($f).'"');
 		switch ($method) {
 		case "headers":
 			return true;
@@ -579,52 +579,59 @@ class Kernel {
 		return Mimetypes::file($f);
 	}
 
+	// escape header file name special chars
+	static function headerFilename($f) {
+		return basename(str_replace(array('"', "'", "?", "*", "\r", "\n", "\t"), "", $f));
+	}
+
 	// output data as CSV
-	static function csv($o) {
+	static function csv(array $o) {
 		foreach ($defaults=array(
 			"attachment"=>true,
 			"delimiter"=>'"',
 			"separator"=>';',
 			"numeric"=>true,
 			"doexit"=>true,
+			"escape"=>"\\",
 			"eol"=>"\n",
 			"mimetype"=>self::getMimetype(".csv"),
-			"filename"=>"export_".time().".csv",
+			"filename"=>"export_".date("YmdHis").".csv",
 		) as $k=>$v)
 			if (!isset($o[$k]))
 				$o[$k]=$v;
 		if ($o["mimetype"]) header('Content-Type: '.$o["mimetype"]);
-		if ($o["filename"]) header('Content-Disposition: '.($o["attachment"]?"attachment":"inline").'; filename="'.str_replace('"', "''", $o["filename"]).'"');
-		if ($o["add_bom"] || $o["addBom"]) { // DEPRECATED: addBom
-			// Esta modificación hace que los csv generados se vean bien en Excel para Windows, pero no en el de MAC
-			// Para que funcione bien en el Excel for MAC, hay que generar el fichero en formato UTF-16.
-			// - Añadir BOM para que el texto en UTF-8 se vea bien en Excel -
-			echo "\xEF\xBB\xBF";
-		}
+		if ($o["filename"]) header('Content-Disposition: '.($o["attachment"]?"attachment":"inline").'; filename="'.self::headerFilename($o["filename"]).'"');
+		if ($o["add_bom"] || $o["addBom"]) echo "\xEF\xBB\xBF"; // BOM header (required for Windows if exported in UTF-8)
 		$d=$o["delimiter"];
 		$s=$o["separator"];
 		$eol=$o["eol"];
+		$escape=$o["escape"];
 		$numeric=$o["numeric"];
 		$filter=$o["filter"];
-		if (is_array($o["data"])) foreach ($o["data"] as $i=>$row) {
-			if ($o["filter"]) $row=$o["filter"]($row);
-			$c=0;
-			foreach ($row as $n=>$v) {
-				echo ($c++?$s:"").$d.str_replace($d, "\\".$d, $n).$d;
+		if ($r=is_array($o["data"])) {
+			foreach ($o["data"] as $i=>$row) {
+				if ($filter) $row=$filter($row);
+				$c=0;
+				foreach ($row as $v=>$n) {
+					if (!strlen($d)) $v=str_replace($s, $escape.$s, $v);
+					echo ($c++?$s:"").(strlen($d)?$d.str_replace($d, $escape.$d, $v).$d:$v);
+				}
+				echo $eol;
+				break;
 			}
-			echo $eol;
-			break;
-		}
-		if (is_array($o["data"])) foreach ($o["data"] as $i=>$row) {
-			if ($o["filter"]) $row=$o["filter"]($row);
-			$c=0;
-			foreach ($row as $n=>$v) {
-				$rd=($numeric && is_numeric($v)?"":$d);
-				echo ($c++?$s:"").$rd.str_replace($d, "\\".$d, $v).$rd;
+			foreach ($o["data"] as $i=>$row) {
+				if ($filter) $row=$filter($row);
+				$c=0;
+				foreach ($row as $n=>$v) {
+					$rd=(!strlen($d) || $numeric && is_numeric($v)?"":$d);
+					if (!strlen($d)) $v=str_replace($s, $escape.$s, $v);
+					echo ($c++?$s:"").$rd.(strlen($d)?str_replace($d, $escape.$d, $v):$v).$rd;
+				}
+				echo $eol;
 			}
-			echo $eol;
 		}
 		if ($v=$o["doexit"]) exit($v === true?0:$v);
+		return $r;
 	}
 
 	// replace template values enclosed between tags characters
@@ -842,7 +849,7 @@ class Kernel {
 		if ($o["name"] || $o["disposition"]) {
 			header('Content-Disposition: '
 				.($o["disposition"]?$o["disposition"]:'')
-				.($o["name"]?($o["disposition"]?'; ':'').'filename="'.str_replace('"', "''", $o["name"]).'"':'')
+				.($o["name"]?($o["disposition"]?'; ':'').'filename="'.self::headerFilename($o["name"]).'"':'')
 			);
 		}
 		// obtener inicio y fin de un rango especificado (leer solo el primero)
