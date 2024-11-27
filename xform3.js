@@ -778,6 +778,7 @@ function xForm3(o) {
 					"h":(h?h:a.o.thumbnail.h)
 				});
 				div.style.backgroundImage="url("+url+")";
+				div.innerHTML="<img class='xform3_files_item_image' src='"+url+"' />"; // for printer
 				break;
 
 			case "file":

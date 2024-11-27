@@ -257,3 +257,16 @@ a.xform3_files_file_button {
 .xform3_files_file_upload:hover {
 	opacity: 0.7;
 }
+.xform3_files_item_image {
+	display: none;
+}
+@media print {
+	.xform3_files_item_buttons,
+	.xform3_image_upload,
+	.xform3_files_upload {
+		display: none;
+	}
+	.xform3_files_item_image {
+		display: block;
+	}
+}
