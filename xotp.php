@@ -134,17 +134,20 @@ class xOTP {
 		$binsecret=$this->base32dec($this->secret);
 		if ($binsecret === false) return false;
 
+		// moment
+		$time=($this->time?$this->time:time());
+
 		// base time period
-		$time=floor(time()/$this->period);
+		$base=floor($time/$this->period);
 
 		// save remaining seconds
-		$this->valid=round($this->period-(time()/$this->period-$time)*$this->period);
+		$this->valid=round($this->period-($time/$this->period-$base)*$this->period);
 
 		// pack time bytes
-		$time_s=pack('N*', 0).pack('N*', $time);
+		$base_s=pack('N*', 0).pack('N*', $base);
 
 		// generate hash
-		$hash=hash_hmac(strtolower($this->algorithm), $time_s, $binsecret, true);
+		$hash=hash_hmac(strtolower($this->algorithm), $base_s, $binsecret, true);
 
 		// determine dynamic position to truncate hash
 		$offset=ord($hash[$algorithm["size"]-1]) & 0xf;
