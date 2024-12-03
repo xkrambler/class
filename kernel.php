@@ -846,6 +846,7 @@ class Kernel {
 			if (!$o["len"]) $o["len"]=($o["data"]?strlen($o["data"]):filesize($o["file"]));
 			if (!isset($o["name"])) $o["name"]=basename($o["file"]);
 		}
+		if ($o["attachment"]) $o["disposition"]="attachment";
 		if ($o["name"] || $o["disposition"]) {
 			header('Content-Disposition: '
 				.($o["disposition"]?$o["disposition"]:'')
@@ -870,7 +871,7 @@ class Kernel {
 					header('Content-Range: bytes '.$start.'-'.$end.'/'.$o["len"]);
 					header('Accept-Ranges: bytes');
 					if ($o["streamer"]) {
-						echo $o["streamer"](array_merge($o,array("start"=>$start,"end"=>$end,"length"=>($end-$start))));
+						echo $o["streamer"](array_merge($o, array("start"=>$start, "end"=>$end, "length"=>($end-$start))));
 					} else if ($o["data"]) {
 						echo substr($o["data"], $start, $end-$start);
 					} else if ($o["file"]) {
@@ -880,6 +881,7 @@ class Kernel {
 							fclose($f);
 						}
 					}
+					if ($end >= $o["len"] && $o["onend"]) $o["onend"]($o);
 				}
 			}
 		} else {
@@ -891,12 +893,9 @@ class Kernel {
 			} else if ($o["data"]) {
 				echo $o["data"];
 			} else if ($o["file"]) {
-				if ($f=fopen($o["file"],"r")) {
-					while (!feof($f))
-						echo fread($f, 1024);
-					fclose($f);
-				}
+				readfile($o["file"]);
 			}
+			if ($o["onend"]) $o["onend"]($o);
 		}
 		exit;
 	}
