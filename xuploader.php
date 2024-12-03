@@ -48,6 +48,13 @@ class xUploader {
 		return intval($size);
 	}
 
+	// output AJAX
+	static function ajax($o) {
+		header("Content-type: application/json; charset=".\x::charset());
+		echo json_encode($o);
+		exit;
+	}
+
 	// constructor and upload control
 	function __construct($o) {
 		$this->o=$o;
@@ -113,7 +120,7 @@ class xUploader {
 						if ($o["oncomplete"]) $o["oncomplete"]($this, $upload, $o);
 						if ($chunked) {
 							$this->uploadEnd($u);
-							if (($num==$count) && $o["onupload"]) $o["onupload"]($this, array("uploads"=>$this->uploads()), $o);
+							if (($num == $count) && $o["onupload"]) $o["onupload"]($this, array("uploads"=>$this->uploads()), $o);
 							if (!$o["store"] && file_exists($upload["tmp"])) unlink($upload["tmp"]);
 						} else {
 							if ($o["store"]) $this->store($upload);
@@ -201,13 +208,6 @@ class xUploader {
 	function uploads() {
 		$this->session();
 		return $_SESSION["xuploader"]["uploads"];
-	}
-
-	// send AJAX request
-	function ajax($o) {
-		header("Content-type: application/json");
-		echo json_encode($o);
-		exit;
 	}
 
 }

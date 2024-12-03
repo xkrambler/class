@@ -180,20 +180,22 @@ function xUploader(o) {
 	self.send=function(){
 
 		// check if browser is supported
-		if (!self.isBrowserSupported()) return false;
+		if (!self.isBrowserSupported() || typeof(self.data.files) == "undefined") return false;
 
 		// form data
 		var fd=new FormData();
 
 		// post additional fields
-		for (var k in self.o.post)
-			fd.append(k, self.o.post[k]);
+		for (var k in self.o.post) fd.append(k, self.o.post[k]);
+
+		// delete requested post fields for next request
+		if (self.o.postunique) for (var i in self.o.postunique) delete self.o.post[self.o.postunique[i]];
 
 		// files
 		self.data.count=self.o.files.length;
-		if (self.chunked()) {
+		if (self.data.count > 0 && self.chunked()) {
 			// read next file chunk
-			for (var i=0; i<self.o.files.length; i++) {
+			for (var i=0; i < self.o.files.length; i++) {
 				if (!self.data.files[i].sent) {
 					self.data.index=i+1;
 					self.data.file=self.o.files[i];
@@ -222,7 +224,7 @@ function xUploader(o) {
 			}
 		} else {
 			// normal file send
-			for (var i=0; i<self.o.files.length; i++)
+			for (var i=0; i < self.o.files.length; i++)
 				fd.append(self.o.input.name, self.o.files[i]);
 			// ajax request
 			self.ajax(fd);
@@ -247,13 +249,13 @@ function xUploader(o) {
 				if (!self.data.files[i].sent) loaded+=self.data.files[i].sending;
 				total+=self.o.files[i].size;
 			}
-			if (typeof(r)!="undefined" && r.loaded && r.total) {
-				for (var i=0; i<self.o.files.length; i++)
+			if (typeof(r) != "undefined" && r.loaded && r.total) {
+				for (var i=0; i < self.o.files.length; i++)
 					if (!self.data.files[i].sent)
 						loaded+=self.data.files[i].sending*r.loaded/r.total;
 			}
 		} else {
-			if (typeof(r)!="undefined" && r.loaded) {
+			if (typeof(r) != "undefined" && r.loaded) {
 				loaded=r.loaded;
 				total=(r.total?r.total:r.loaded);
 			}
@@ -268,7 +270,7 @@ function xUploader(o) {
 		};
 		if (self.chunked()) {
 			d.index=self.data.index;
-			d.file={
+			if (self.data.file) d.file={
 				"name":self.data.file.name,
 				"type":self.data.file.type,
 				"size":self.data.file.size
@@ -336,12 +338,13 @@ function xUploader(o) {
 	self.submit=function(){
 
 		// check if browser is supported
-		if (!self.isBrowserSupported() || !self.o.files || !self.o.files.length) return false;
+		if (!self.isBrowserSupported()) return false;
 
 		// restart submit data and initialize file submit counters
-		self.data={"files":[]};
-		for (var i=0; i<self.o.files.length; i++)
-			self.data.files[i]={"start":0, "sending":0, "sent":false,};
+		if (!self.o.files) self.o.files=[];
+		self.data.files=[];
+		for (var i=0; i < self.o.files.length; i++)
+			self.data.files[i]={"start":0, "sending":0, "sent":false};
 
 		// run onstart callback, when file browsing closed
 		if (self.o.onstart) self.o.onstart(self, {"files":self.o.files});
@@ -613,6 +616,9 @@ function xUploader(o) {
 		onerror: null
 	};
 	self.set(o);
+
+	// default data
+	self.data={"files":[]};
 
 	// enable input event
 	if (self.o.input) self.input(self.o.input);
