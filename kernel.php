@@ -360,6 +360,7 @@ class Kernel {
 		]);
 	*/
 	static function mailto($o) {
+		if (!is_array($o)) return false;
 		// prepare boundaries
 		$mime_boundary_alt="==awesome_ALT".strtoupper(sha1(uniqid()))."_";
 		$mime_boundary_mix="==awesome_MIX".strtoupper(sha1(uniqid()))."_";
