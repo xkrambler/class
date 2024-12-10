@@ -83,6 +83,7 @@ class xImage {
 		if (substr($bytes, 0, 3) == "\xFF\xD8\xFF") return "jpg";
 		else if (substr($bytes, 0, 3) == "GIF") return "gif";
 		else if (substr($bytes, 1, 3) == "PNG") return "png";
+		else if (substr($bytes, 4, 8) == "ftypheic") return "heic";
 		return false;
 	}
 
@@ -92,6 +93,7 @@ class xImage {
 		case "jpg": return "image/jpeg";
 		case "gif": return "image/gif";
 		case "png": return "image/png";
+		case "heic": return "image/heic";
 		default: return false;
 		}
 	}
@@ -120,7 +122,7 @@ class xImage {
 	// create image from a string
 	function fromString($s) {
 		if ($imt=(@imagecreatefromstring($s))) $this->im=$imt;
-		imagesavealpha($this->im, true);
+		@imagesavealpha($this->im, true);
 		return ($imt?true:false);
 	}
 
