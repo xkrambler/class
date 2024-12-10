@@ -84,7 +84,7 @@ class xTelegram {
 		]));
 	}
 
-	// get file info - https://api.telegram.org/bot348307714:AAHMNRMq66c_KgQ9TEjyVaUhr614nyxvw4M/getFile?file_id=BQACAgQAAx0Ca-f34gACCOtnWBkYNoPceD_LdNCms_4Tmto2owACDBQAAk0VwFKjMg4tHd_QmjYE
+	// get file info - https://api.telegram.org/bot<token>/getFile?file_id=<file_id>
 	function getFile($o=[]) {
 		return $this->request(($o["to"]?$o["to"]:$this->to)."/getFile", $this->selectOptions($o, [
 			"file_id",
