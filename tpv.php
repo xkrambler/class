@@ -305,9 +305,14 @@ abstract class TPV {
 	}
 
 	// throw error
-	function err($_exit=true) {
-		echo $this." ".($this->lasterr?"ERROR: ".$this->lasterr:"Exited");
-		if ($_exit) exit;
+	function err($exit=1) {
+		$msg=$this." ".($this->lasterr?"ERROR: ".$this->lasterr:"Exited");
+		if (function_exists("perror")) {
+			perror($msg, $exit);
+		} else {
+			echo $msg;
+		}
+		if ($exit) exit($exit);
 	}
 
 	// devolver respuesta por código

@@ -362,7 +362,7 @@ function xItemsSearch(o) {
 		if (!page) return "";
 		if (i == a.page) {
 			return "<input class='txt xitemsearch_page_input xitemsearch_page_input_length_"+(""+page).length+(o.input_alone?" xitemsearch_page_input_alone":"")+"' type='text' value='"+page+"' onFocus='this.select();'"
-				+" onKeyPress='javascript:if(event.keyCode == 13){ window.xItemsSearchs[\""+a.o.id+"\"].go(parseInt(this.value)-1, {\"down\":"+(o.down?"true":"false")+"}); }' />"
+				+" size='"+(o.pages?(""+o.pages).length:"")+"' onKeyPress='javascript:if(event.keyCode == 13){ window.xItemsSearchs[\""+a.o.id+"\"].go(parseInt(this.value)-1, {\"down\":"+(o.down?"true":"false")+"}); }' />"
 		}
 		return ""
 			+"<span class='noselect xitemsearch_page xitemsearch_page_enabled'"
@@ -456,12 +456,15 @@ function xItemsSearch(o) {
 		var w=pager_pages.offsetWidth, h="", lh="";
 		h+=(o.page != 0 && o.page != o.pages-1?a.pagerLinkHTML(o.page, o):""); // página actual
 		if (o.pages > 1) {
+			pc=0;
+			var no_pages=(isset(a.o.pagesMax) && !a.o.pagesMax);
 			for (var i=1; i < o.pages; i++) {
 				var pp=o.page-i, np=o.page+i;
-				h=(pp > 0?a.pagerLinkHTML(o.page-i, o):"") // anterior
+				h=(no_pages?h:""
+					+(pp > 0?a.pagerLinkHTML(o.page-i, o):"") // anterior
 					+h // anteriores
 					+(np < o.pages-1?a.pagerLinkHTML(o.page+i, o):"") // siguiente
-				;
+				);
 				var hfiller="<span class='xitemsearch_page xitemsearch_page_filler noselect'>...</span>";
 				var hpp=(pp > 1?hfiller:""), npp=(np < o.pages-2?hfiller:"");
 				var hstart="<div class='xitemsearch_pager_pages_divisor'>"
@@ -478,6 +481,7 @@ function xItemsSearch(o) {
 					break;
 				}
 				lh=fh;
+				if (isset(a.o.pagesMax) && (++pc >= a.o.pagesMax)) break;
 			}
 		} else {
 			pager_pages.innerHTML=""
@@ -522,7 +526,7 @@ function xItemsSearch(o) {
 		h+="<thead><tr>";
 		for (var i in a.fields) if (!a.fields[i].disabled) {
 			var title=htmlentities(a.fields[i].title?a.fields[i].title:(a.fields[i].caption?a.fields[i].caption:""));
-			h+="<th"+(a.fields[i].nosort?" title='"+title+"'":"")+">"
+			h+="<th"+(a.fields[i].class?" class='"+a.fields[i].class+"'":"")+(a.fields[i].nosort?" title='"+title+"'":"")+">"
 				+(a.fields[i].nosort?"":"<a href='javascript:window.xItemsSearchs[\""+a.o.id+"\"].swapsort(\""+i+"\");' title='"+title+"'>")
 				+"<span class='"+(a.o.sort && isset(a.o.sort[i])?(a.o.sort[i]?"sortdesc":"sortasc"):"")+(default_sort?"_default":"")+"'>"
 				+(a.fields[i].caption?a.fields[i].caption:"")
@@ -555,11 +559,13 @@ function xItemsSearch(o) {
 					if (n.filter && typeof(n.filter) == "string") n.filter=eval(n.filter);
 					else if (v && n.limit) v=(v.length >= n.limit?v.substring(0, n.limit-1)+"…":v);
 					var caption=(n.filter?n.filter(e[i],i,e,c-1,n):v);
+					var tdclass=(n.tdclass?n.tdclass(e[i],i,e,c-1,n):"");
 					var tdextra=(n.tdextra?n.tdextra(e[i],i,e,c-1,n):"");
 					var tdstyle=(n.tdstyle?n.tdstyle(e[i],i,e,c-1,n):"");
 					var tdtitle=(n.tdtitle?(typeof(n.tdtitle) == "function"?n.tdtitle(e[i],i,e,c-1,n):n.tdtitle):htmlentities(v));
 					var link=(n.link?n.link(e[i], i, e, c-1, n):null);
 					h+="<td"
+							+(tdclass || n.class?" class='"+(n.class?n.class:"")+(tdclass?" "+tdclass:"")+"'":"")
 							+(n.width?" width='"+n.width+"'":"")
 							+(n.align?" align='"+n.align+"'":"")
 							+(n.valign?" valign='"+n.valign+"'":"")
@@ -625,6 +631,16 @@ function xItemsSearch(o) {
 		this.searchTimer=setTimeout(function(){ a.search(); },(timeout?timeout:300));
 	};
 
+	// update class for search input
+	a.refreshSearchInputText=function(){
+		var id=a.o.id+"_search_txt";
+		if (gid(id)) {
+			var input=gidval(id).length;
+			classEnable(id, "xitemsearch_search_input", input);
+			classEnable(id, "xitemsearch_search_empty", !input);
+		}
+	};
+
 	// búsqueda
 	a.search=function(p){
 		if (typeof(p) == "string") var p={"search":p};
@@ -644,8 +660,10 @@ function xItemsSearch(o) {
 			if (!p[ev] && a.o[ev]) p[ev]=a.o[ev];
 		}
 		// petición AJAX
+		a.refreshSearchInputText();
 		if (gid(a.o.id+"_search_txt")) classAdd(a.o.id+"_search_txt", "xitemsearch_search_wait");
 		if (p.onajaxstart) p.onajaxstart(a, p);
+		if (a.autoupdateTimer) clearTimeout(a.autoupdateTimer);
 		ajax(a.o.ajax,{
 			"search":a.getSearchValue(),
 			"page":(a.o.paged?a.page:0),
@@ -658,8 +676,14 @@ function xItemsSearch(o) {
 			if (gid(a.o.id+"_search_txt")) classDel(a.o.id+"_search_txt", "xitemsearch_search_wait");
 			a.searching=false;
 		},function(r){
+			if (a.o.autoupdate > 0) {
+				a.autoupdateTimer=setTimeout(function(){
+					a.search();
+				}, a.o.autoupdate);
+			}
 			if (r.data.err) newerror(r.data.err);
 			if (r.data.ok) {
+				a.refreshSearchInputText();
 				a.setVisible(r.data.visible);
 				if (p.onsearchok) p.onsearchok(a, r);
 				if ((a.page*a.getVisible()) > r.data.max) {
@@ -766,7 +790,12 @@ function xItemsSearch(o) {
 				+"</div>"
 			);
 			gid(a.o.id).appendChild(item_search);
-			if (gid(a.o.id+"_search_txt")) gid(a.o.id+"_search_txt").placeholder=a.o.placeholder;
+			if (gid(a.o.id+"_search_txt")) {
+				gid(a.o.id+"_search_txt").placeholder=a.o.placeholder;
+				gid(a.o.id+"_search_txt").addEventListener("change", function(e){ a.refreshSearchInputText(); });
+				gid(a.o.id+"_search_txt").addEventListener("input", function(e){ a.refreshSearchInputText(); });
+			}
+			a.refreshSearchInputText();
 
 			// acciones del buscador
 			var search_txt=gid(a.o.id+"_search_txt");

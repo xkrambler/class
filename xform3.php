@@ -86,6 +86,7 @@ class xForm3 {
 			"checkbox"=>"checkbox",
 			"radio"=>"radio",
 			"select"=>"cmb",
+			"color"=>"cmd",
 			"image"=>"image",
 			"images"=>"images",
 			"audio"=>"audio",
@@ -112,7 +113,22 @@ class xForm3 {
 	// check if a variable is a hashmap
 	private function _is_hash($var) {
 		if (!is_array($var)) return false;
-		return array_keys($var) !== range(0,sizeof($var)-1);
+		return array_keys($var) !== range(0, sizeof($var)-1);
+	}
+
+	// strtolower w/o multibyte
+	function strtolower($s) {
+		return (function_exists("mb_strtolower")?mb_strtolower($s):(function_exists("strtolower_utf8")?strtolower_utf8($s):strtolower($s)));
+	}
+
+	// strtoupper w/o multibyte
+	function strtoupper($s) {
+		return (function_exists("mb_strtoupper")?mb_strtoupper($s):strtoupper($s));
+	}
+
+	// ucwords w/o multibyte
+	function ucwords($s) {
+		return (function_exists("mb_convert_case")?mb_convert_case($s, MB_CASE_TITLE):ucwords($s));
 	}
 
 	// return AJAX action
@@ -377,6 +393,7 @@ class xForm3 {
 		case "decimal": return doubleval($value);
 		case "positive": return abs(doubleval($value));
 		}
+		if ($field["base64"]) $value=base64_decode($value);
 		return $value;
 	}
 
@@ -385,6 +402,8 @@ class xForm3 {
 		$field=$this->fields[$f];
 		if ($field["string"]) return (string)$value;
 		if ($field["nullifempty"] && !strlen($value)) return null;
+		if ($field["nozero"] && !strlen($value)) return 0;
+		if ($field["base64"]) $value=base64_encode($value);
 		return $value;
 	}
 
@@ -434,9 +453,9 @@ class xForm3 {
 		if ($field["readonly"] && isset($field["value"])) $value=$field["value"];
 		// filters
 		if ($field["trim"]) $value=trim($value);
-		if ($field["lowercase"]) $value=strtolower_utf8($value);
-		if ($field["uppercase"]) $value=strtoupper($value);
-		if ($field["capitalize"]) $value=ucwords(strtolower_utf8($value));
+		if ($field["lowercase"] || $field["type"] == "email") $value=$this->strtolower($value);
+		if ($field["uppercase"]) $value=$this->strtoupper($value);
+		if ($field["capitalize"]) $value=$this->ucwords($this->strtolower($value));
 		if ($field["integer"]) $value=intval($value);
 		if ($field["number"]) $value=doubleval($value);
 		if ($field["decimal"]) $value=doubleval($value);
@@ -473,7 +492,7 @@ class xForm3 {
 			}
 			if (!isset($f["verify"]) || $r === null) {
 				// required field
-				if ($f["required"] && !trim($v))
+				if ($f["required"] && !strlen(trim($v)))
 					$this->errors[$field]=array(
 						"id"=>$this->id($field),
 						"field"=>$field,
@@ -521,7 +540,7 @@ class xForm3 {
 						);
 				}
 				// check minimum number
-				if ($f["min"] && $f["min"] > doubleval($v))
+				if (isset($f["min"]) && $f["min"] > doubleval($v))
 					$this->errors[$field]=array(
 						"id"=>$this->id($field),
 						"field"=>$field,
@@ -529,7 +548,7 @@ class xForm3 {
 						"err"=>$prefix."Debe ser como mínimo ".$f["min"].".",
 					);
 				// check maximum number
-				if ($f["max"] && $f["max"] < doubleval($v))
+				if (isset($f["max"]) && $f["max"] < doubleval($v))
 					$this->errors[$field]=array(
 						"id"=>$this->id($field),
 						"field"=>$field,
@@ -645,7 +664,10 @@ class xForm3 {
 		$class=$this->className($field);
 		$styles=$this->styles($field);
 		$datalist="";
-		$autocomplete=(isset($f["autocomplete"])?" autocomplete='".(is_string($f["autocomplete"])?$f["autocomplete"]:($f["autocomplete"]?"on":"off"))."'":"");
+		$common=""
+			.(isset($f["autocomplete"])?" autocomplete='".(is_string($f["autocomplete"])?$f["autocomplete"]:($f["autocomplete"]?"on":"off"))."'":"")
+			.($f["required"]?" required":"")
+		;
 		// types with align/conversions
 		switch ($f["type"]) {
 		case "area":
@@ -655,7 +677,7 @@ class xForm3 {
 		case "number":
 		case "text":
 			if ($f["align"]) $styles.="text-align: ".$f["align"].";";
-			if ($f["lowercase"]) $styles.="text-transform: lowercase;";
+			if ($f["lowercase"] || $f["type"] == "email") $styles.="text-transform: lowercase;";
 			else if ($f["uppercase"]) $styles.="text-transform: uppercase;";
 			else if ($f["capitalize"]) $styles.="text-transform: capitalize;";
 			break;
@@ -693,7 +715,7 @@ class xForm3 {
 				.($f["cols"]?" cols='".intval($f["cols"])."'":"")
 				.($f["placeholder"]?" placeholder='".$this->entities($f["placeholder"])."'":"")
 				.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
-				.$autocomplete
+				.$common
 				.($styles?" style='".$styles."'":"")
 				.$f["extra"].">".$this->entities($f["value"])."</textarea>"
 			;
@@ -718,7 +740,7 @@ class xForm3 {
 				.($f["title"]?" title='".$this->entities($f["title"])."'":"")
 				.($f["placeholder"]?" placeholder='".$this->entities($f["placeholder"])."'":" placeholder='dd/mm/yyyy'")
 				.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
-				.$autocomplete
+				.$common
 				.($styles || $styles_date?" style='".$styles.$styles_date."'":"")
 				.$f["extra"]
 				." />"
@@ -737,7 +759,7 @@ class xForm3 {
 				.($f["title"]?" title='".$this->entities($f["title"])."'":"")
 				.($f["placeholder"]?" placeholder='".$this->entities($f["placeholder"])."'":" placeholder='hh:mm".($f["precise"]?":ss":"")."'")
 				.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
-				.$autocomplete
+				.$common
 				.($styles || $styles_time?" style='".$styles.$styles_time."'":"")
 				.$f["extra"]
 				." />"
@@ -761,7 +783,7 @@ class xForm3 {
 				.($f["title"]?" title='".$this->entities($f["title"])."'":"")
 				.($f["placeholder"]?" placeholder='".$this->entities($f["placeholder"])."'":" placeholder='dd/mm/yyyy'")
 				.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
-				.$autocomplete
+				.$common
 				.($styles?" style='".$styles."'":"")
 				.$f["extra"]
 				." />"
@@ -784,7 +806,7 @@ class xForm3 {
 				.($f["title"]?" title='".$this->entities($f["title"])."'":"")
 				.($f["placeholder"]?" placeholder='".$this->entities($f["placeholder"])."'":" placeholder='hh:mm'")
 				.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
-				.$autocomplete
+				.$common
 				.($styles?" style='".$styles."'":"")
 				.$f["extra"]
 				." />"
@@ -817,9 +839,9 @@ class xForm3 {
 				.($f["title"]?" title='".$this->entities($f["title"])."'":"")
 				.($f["maxlength"]?" maxlength='".intval($f["maxlength"])."'":"")
 				.($f["size"]?" size='".intval($f["size"])."'":"")
-				.($f["datalist"]?" list='".(is_string($f["datalist"])?$f["datalist"]:$id."_datalist")."'":"")
+				.(isset($f["datalist"])?" list='".(is_string($f["datalist"])?$f["datalist"]:$id."_datalist")."'":"")
 				.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
-				.$autocomplete
+				.$common
 				.($styles?" style='".$styles."'":"")
 				.$f["extra"]
 				." />".$datalist
@@ -838,7 +860,7 @@ class xForm3 {
 				.($f["disabled"]?" disabled":"")
 				.($f["readonly"]?" readonly":"")
 				.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
-				.$autocomplete
+				.$common
 				.($styles?" style='".$styles."'":"")
 				.$f["extra"].">"
 					.$opciones
@@ -864,7 +886,7 @@ class xForm3 {
 							.($f["disabled"]?" disabled":"")
 							.($f["readonly"]?" readonly":"")
 							.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
-							.$autocomplete
+							.$common
 							.($styles?" style='".$styles."'":"")
 							.$f["extra"]." />"
 							."<span id='".$id."-".$num."_span'>".$v."</span>"
@@ -887,11 +909,11 @@ class xForm3 {
 					." type='checkbox'"
 					." value='1'"
 					.($f["title"]?" title='".$this->entities($f["title"])."'":"")
+					.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
 					.(($f["values"]?($f["value"]==$f["values"][1]):$f["value"])?" checked":"")
 					.($f["disabled"]?" disabled":"")
 					.($f["readonly"]?" readonly":"")
-					.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
-					.$autocomplete
+					.$common
 					.($styles?" style='".$styles."'":"")
 					.$f["extra"]." />"
 					.(isset($f["label"])?"<span id='".$id."_label'>".$f["label"]."</span>":"")
@@ -953,7 +975,27 @@ class xForm3 {
 				.$f["extra"].">".$f["value"]."</div>"
 			;
 
+		case "color":
+			return "<div"
+				." id='".$id."'"
+				." class='".$class."'"
+				.($f["title"]?" title='".$this->entities($f["title"])."'":"")
+				.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
+				." style='background-color:#".$this->colorValue($f["value"]).";".$styles."'"
+				.$f["extra"].">".(isset($f["label"])?$f["label"]:"&nbsp;")."</div>"
+			;
+
 		}
+	} // var colorPicker = new iro.ColorPicker('#picker');
+
+	// ensure valid hex RGB color
+	function colorValue($c) {
+		$d="000000";
+		if (!strlen($c)) return $d;
+		$c=strtoupper(substr("".$c, 0, 6));
+		$c=preg_replace("/[^0-9A-F]/", "", $c);
+		if (strlen($c) == 3) $c=substr($c, 0, 1).substr($c, 0, 1).substr($c, 1, 1).substr($c, 1, 1).substr($c, 2, 1).substr($c, 2, 1);
+		return (strlen($c) == 6?$c:$d);
 	}
 
 	// get/set session name
@@ -1010,7 +1052,7 @@ class xForm3 {
 		// fix orientation
 		$xi->fixOrientation();
 		// scale only if dimensions exceeds threshold
-		if ($xi->width() > $w || $xi->height() > $h) $xi->scale($w, $h, false, true);
+		if ($xi->width() > $w || $xi->height() > $h) $xi->scale($w, $h);
 		// return content data image
 		return $xi->toString(($o["f"]?$o["f"]:"jpg"), $q);
 	}

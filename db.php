@@ -87,7 +87,7 @@ abstract class dbbase {
 	abstract function info();
 
 	// get/set/isset
-	function __get($n) { return $this->setup[$n]; }
+	function __get($n) { return (isset($this->setup[$n])?$this->setup[$n]:null); }
 	function __set($n, $v) { $this->setup[$n]=$v; }
 	function __isset($n) { return isset($this->setup[$n]); }
 
@@ -248,8 +248,8 @@ abstract class dbbase {
 			.$this->setup["user"]
 			.($this->setup["pass"]?":".($hide_password?"*":$this->setup["pass"]):"")
 			."@".$this->setup["host"]
-			.($this->setup["port"]?":".$this->setup["port"]:"")
-			.($this->setup["db"]?"/".$this->setup["db"]:"")."/"
+			.(isset($this->setup["port"])?":".$this->setup["port"]:"")
+			.(isset($this->setup["db"])?"/".$this->setup["db"]:"")."/"
 		;
 	}
 
@@ -329,6 +329,18 @@ abstract class dbbase {
 			$a[$row[$k]]=$row[$v];
 		$this->freequery();
 		return $a;
+	}
+
+	// get date in ISO format
+	static function date($timestamp=null) {
+		if ($timestamp === null) $timestamp=time();
+		return date("Y-m-d", $timestamp);
+	}
+
+	// get date and time in ISO format
+	static function datetime($timestamp=null) {
+		if ($timestamp === null) $timestamp=time();
+		return date("Y-m-d H:i:s", $timestamp);
 	}
 
 	// return complete or partial ISO date/date-time as an Spanish notation dd/mm/yyyy [hh:mm:ss]
@@ -721,13 +733,13 @@ class dbVoid extends dbbase {
 }
 
 // DEPRECATED: if db_setup defined, fill values
-if (@$db_setup) foreach ($db_setup as $db_name=>&$db_config) {
+if (isset($db_setup) && is_array($db_setup)) foreach ($db_setup as $db_name=>&$db_config) {
 	$db_config["class"]=dbbase::dbclass($db_config["type"]);
 	$db_config["lib"]=dbbase::lib($db_config["type"]);
-} unset($db_config);
+} unset($db_name); unset($db_config);
 
 // if any database setup defined...
-if ((!defined("DB_SETUP") || DB_SETUP) && @$db_setup) {
+if ((!defined("DB_SETUP") || DB_SETUP) && (isset($db_setup) && is_array($db_setup))) {
 
 	// ...create all defined databases
 	foreach ($db_setup as $db_name=>&$db_config) if ($db_config) {
@@ -743,10 +755,10 @@ if ((!defined("DB_SETUP") || DB_SETUP) && @$db_setup) {
 			}
 		}
 		if ($db_config["err"]) $db_errors=true;
-	} unset($db_config);
+	} unset($db_name); unset($db_config);
 
 	// if any error occurred, display errors and stop process (if display_errors or DB_ERRORS enabled)
-	if ((!defined("DB_ERRORS") || DB_ERRORS || (!defined("DB_ERRORS") && ini_get("display_errors"))) && $db_errors) {
+	if ((!defined("DB_ERRORS") || DB_ERRORS || (!defined("DB_ERRORS") && ini_get("display_errors"))) && isset($db_errors) && $db_errors) {
 		$_ishtml=true;
 		foreach (headers_list() as $_h)
 			if (strtolower(substr($_h, 0, 24)) == "content-type: text/plain") {
@@ -760,7 +772,7 @@ if ((!defined("DB_SETUP") || DB_SETUP) && @$db_setup) {
 			if (function_exists("perror")) perror($_err);
 			else echo $_err.($_ishtml?"<br />":"\n");
 			exit;
-		}
+		} unset($db_name); unset($db_config);
 	}
 
 }

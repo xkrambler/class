@@ -1,15 +1,14 @@
 <?php if (!class_exists("dbbase")) die();
 
 /*
-
-	PHP Access Class to MySQL Improved v0.2, by Pablo Rodríguez Rey
-	http://mr.xkr.es ~ mr-at-xkr-d0t-es
+	PHP database class for MySQL-Improved v0.3, by Pablo Rodríguez Rey
+	https://mr.xkr.es ~ mr-at-xkr-d0t-es
 	Under GPL license (http://www.gnu.org/copyleft/gpl.html)
-
 */
 class dbMySQLi extends dbbase {
 
 	protected $queryflags=0;
+	protected $last_exception=false;
 	protected $reconnect_errnums=array(
 		2006, // MySQL server has gone away
 		2013, // Lost connection to MySQL server during query
@@ -54,18 +53,18 @@ class dbMySQLi extends dbbase {
 
 	// definition
 	function driver() { return "MySQLi"; }
-	function version() { return 0.2; }
+	function version() { return 0.3; }
 	function protocol() { return "mysql"; }
 
 	// constructor
 	function __construct($setup=Array()) {
 		$this->setup($setup);
-		if ($this->setup["resource"]) $this->rconnect();
+		if ($this->resource) $this->rconnect();
 	}
 
 	// virtual connect (can be a dummy connect if connection is marked as delayed)
 	function connect() {
-		return ($this->setup["delayed"]?true:$this->rconnect());
+		return ($this->delayed?true:$this->rconnect());
 	}
 
 	// real connect
@@ -75,23 +74,23 @@ class dbMySQLi extends dbbase {
 			$this->real_error="ERROR: MySQL improved library not installed, mysqli() class does not exist.";
 			return false;
 		}
-		if (is_object($this->setup["resource"])) {
-			$this->idcon=$this->setup["resource"];
-			$this->setup["db"]=$this->database();
+		if ($this->resource && is_object($this->resource)) {
+			$this->idcon=$this->resource;
+			$this->db=$this->database();
 		} else {
 			$this->clear();
 			$this->idcon=@new mysqli(
-				($this->setup["persistent"] || !isset($this->setup["persistent"])?"p:":"").$this->setup["host"],
-				$this->setup["user"],
-				$this->setup["pass"],
-				($this->setup["db"]?$this->setup["db"]:""),
-				($this->setup["port"]?$this->setup["port"]:ini_get("mysqli.default_port"))
+				($this->persistent || !isset($this->persistent)?"p:":"").$this->host,
+				$this->user,
+				$this->pass,
+				($this->db?$this->db:""),
+				($this->port?$this->port:ini_get("mysqli.default_port"))
 			);
 		}
 		if ($this->connected=($this->idcon && !$this->idcon->connect_errno?true:false)) {
-			if ($this->setup["encoding"]) $this->idcon->query("SET NAMES ".$this->setup["encoding"]);
-			if (isset($this->setup["autocommit"])) $this->idcon->query("SET autocommit=".($this->setup["autocommit"]?1:0));
-			if ($this->setup["db"]) $this->select();
+			if ($this->encoding) $this->idcon->query("SET NAMES ".$this->encoding);
+			if ($this->autocommit) $this->idcon->query("SET autocommit=".($this->autocommit?1:0));
+			if ($this->db) $this->select();
 		}
 		$this->real_errnum=($this->connected?0:$this->idcon->connect_errno);
 		$this->real_error=($this->connected?"":$this->idcon->connect_error);
@@ -103,7 +102,7 @@ class dbMySQLi extends dbbase {
 		$this->clear();
 		if (!$this->idcon) return false;
 		$this->dbselected=false;
-		$this->idcon->close();
+		if (!$this->idcon->connect_errno) $this->idcon->close();
 		return true;
 	}
 
@@ -115,7 +114,7 @@ class dbMySQLi extends dbbase {
 
 	// check if connection is ready
 	function ready() {
-		return ($this->setup["delayed"] || ($this->idcon && $this->ping())?true:false);
+		return (($this->delayed) || ($this->idcon && $this->ping())?true:false);
 	}
 
 	// get current database selection
@@ -143,19 +142,24 @@ class dbMySQLi extends dbbase {
 	// select current working database
 	function select($db=null) {
 		$this->clear();
-		if ($db) $this->setup["db"]=$db;
-		if (!$this->setup["db"]) return true;
+		if ($db) $this->db=$db;
+		if (!$this->db) return true;
 		$this->dbselected=false;
 		return true;
 	}
 
 	// check if there is a database selected, and try to select it
 	function selectedcheck() {
-		if (!$this->dbselected && $this->setup["db"]) {
+		if (!$this->dbselected && $this->db) {
 			$retries=0;
 			do {
-				if ($this->dbselected=(@$this->idcon->select_db($this->setup["db"])?true:false)) break;
-				if (!in_array($this->idcon->errno, $this->reconnect_errnums)) break;
+				try {
+					$this->last_exception=false;
+					if (!$this->idcon->connect_errno && ($this->dbselected=(@$this->idcon->select_db($this->db)?true:false))) break;
+				} catch (Exception $e) {
+					$this->last_exception=$e;
+				}
+				if (!$this->idcon->connect_errno && !in_array($this->idcon->errno, $this->reconnect_errnums)) break;
 				else if (!$this->reconnect()) return false;
 			} while (++$retries < 3);
 			if (!$this->dbselected) return false;
@@ -165,7 +169,7 @@ class dbMySQLi extends dbbase {
 
 	// do a ping check
 	function ping() {
-		if (!$this->idcon) return false;
+		if (!$this->idcon || $this->idcon->connect_errno) return false;
 		return @$this->idcon->ping();
 	}
 
@@ -199,33 +203,38 @@ class dbMySQLi extends dbbase {
 
 	// query with reconnection/timeout
 	protected function pquery($sql) {
-		if ($this->setup["delayed"] && !($this->idcon > 0) && !$this->rconnect()) return false;
+		if ($this->delayed && !($this->idcon > 0) && !$this->rconnect()) return false;
 		if (!$this->idcon) return false;
 		// start query
 		$retries=0;
 		do {
 			if (!$this->idcon) return false;
 			unset($this->atimedout);
-			if ($this->atimeout) {
-				// async with timeout query
+			try {
+				$result=false;
 				if (!$this->selectedcheck()) return false;
-				$result=(@$this->idcon->query($sql, MYSQLI_ASYNC | $this->queryflags));
-				$errors=$reject=array();
-				$links=array($this->idcon);
-				$sec =(int)$this->atimeout;
-				$msec=(int)(($this->atimeout-$sec)*1000000);
-				if (mysqli_poll($links, $errors, $reject, $sec, $msec) > 0) {
-					$result=$this->idcon->reap_async_query();
-					$this->atimedout=false;
+				$this->last_exception=false;
+				if ($this->atimeout) {
+					// async with timeout query
+					$result=(@$this->idcon->query($sql, MYSQLI_ASYNC | $this->queryflags));
+					$errors=$reject=array();
+					$links=array($this->idcon);
+					$sec =(int)$this->atimeout;
+					$msec=(int)(($this->atimeout-$sec)*1000000);
+					if (mysqli_poll($links, $errors, $reject, $sec, $msec) > 0) {
+						$result=$this->idcon->reap_async_query();
+						$this->atimedout=false;
+					} else {
+						$this->atimedout=true;
+					}
 				} else {
-					$this->atimedout=true;
+					// sync query
+					$result=(@$this->idcon->query($sql, $this->queryflags));
 				}
-			} else {
-				// sync query
-				if (!$this->selectedcheck()) return false;
-				$result=(@$this->idcon->query($sql, $this->queryflags));
+			} catch (Exception $e) {
+				$this->last_exception=$e;
 			}
-			if ($result || !in_array($this->idcon->errno, $this->reconnect_errnums)) break;
+			if ($result || (!$this->idcon->connect_errno && !in_array($this->idcon->errno, $this->reconnect_errnums))) break;
 			else if (!$this->reconnect()) return false;
 		} while (++$retries < 3);
 		if ($this->idcon->errno) return false;
@@ -235,7 +244,12 @@ class dbMySQLi extends dbbase {
 	// set debug mode
 	function debug($enabled=null) {
 		parent::debug($enabled);
-		$this->pquery("SET SESSION query_cache_type=OFF");
+		$this->cache($enabled);
+	}
+
+	// enable/disable cache
+	function cache($enabled) {
+		$this->pquery("SET SESSION query_cache_type=".($enabled?"ON":"OFF"));
 	}
 
 	// begin transaction
@@ -256,16 +270,6 @@ class dbMySQLi extends dbbase {
 	// return current date/time field
 	function now($precission=null) {
 		return new dbrawvalue("NOW(".($precission?intval($precission):"").")");
-	}
-
-	// get date in ISO format
-	function date($timestamp) {
-		return date("Y-m-d", $timestamp);
-	}
-
-	// get date and time in ISO format
-	function datetime($timestamp) {
-		return date("Y-m-d H:i:s", $timestamp);
 	}
 
 	// generate/return always a query number and clear errors
@@ -304,7 +308,7 @@ class dbMySQLi extends dbbase {
 
 	// perform multiple query
 	function multi($sql, $querynum=null) {
-		if ($this->setup["delayed"] && !($this->idcon > 0) && !$this->rconnect()) return false;
+		if ($this->delayed && !($this->idcon > 0) && !$this->rconnect()) return false;
 		$querynum=$this->querynum($querynum, true);
 		$st=microtime(true);
 		$retries=0;
@@ -405,7 +409,7 @@ class dbMySQLi extends dbbase {
 
 	// escape string to be used in query
 	function escape($s) {
-		if ($this->setup["delayed"] && !($this->idcon > 0) && !$this->rconnect()) return false;
+		if ($this->delayed && !($this->idcon > 0) && !$this->rconnect() || $this->idcon->connect_errno) return false;
 		return $this->idcon->real_escape_string($s);
 	}
 
@@ -435,6 +439,11 @@ class dbMySQLi extends dbbase {
 		if (!$q=$this->idcon->query("SELECT VERSION()")) return false;
 		$irow=$q->fetch_array();
 		return $irow[0];
+	}
+
+	// return last exception
+	function exception() {
+		return $this->last_exception;
 	}
 
 	// return last error code

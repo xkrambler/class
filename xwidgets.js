@@ -374,10 +374,21 @@ var xwidgets={
 			});
 		};
 
+		self.value=function(){
+			if (self.o.key) {
+				var item=self.item();
+				return (typeof(item) == "object"?item[self.o.key]:null);
+			}
+			return null;
+		};
+
 		self.init=function(){
 
 			// ensure requisites
 			if (!self.o.render) return console.error("hsearch: render method required.");
+
+			// defaults
+			self.o.key=self.o.key||"id";
 
 			classAdd(self.o.id, "hsearch");
 
@@ -535,6 +546,12 @@ var xwidgets={
 			caption:function(item, index) (optional)
 				Renderer caption. Returns HTML.
 
+			disabled:boolean (opcional)
+				Set disabled field.
+
+			readonly:boolean (opcional)
+				Set read-only field.
+
 			render (optional)
 				Render item.
 				:string
@@ -633,6 +650,9 @@ var xwidgets={
 			.clear()
 				Clear items from dropdown combo.
 
+			.disable(disabled)
+				Enable/Disable combo.
+
 			.add(item)
 				Adds one item to the dropdown combo at the end.
 
@@ -679,6 +699,9 @@ var xwidgets={
 				Natural search a needle by words in a text haystack.
 				Return: true if found, false if not.
 
+			.readonly(readonly)
+				Enable/Disable read-only.
+
 			.resize()
 				Resize event.
 
@@ -696,6 +719,10 @@ var xwidgets={
 			.values([keys:string/array])
 				Get/Set selected keys by index or key, if defined.
 				Return: items by index or key, if defined..
+
+			.search([search:string])
+				Get/set search value
+				Return: search value.
 
 			.destroy()
 				Frees resources.
@@ -749,8 +776,23 @@ var xwidgets={
 			return false;
 		};
 
+		// get/set disabled state
+		self.disabled=function(disabled){
+			self.o.disabled=disabled;
+			self.close();
+			self.refresh();
+		};
+
+		// get/set readonly state
+		self.readonly=function(readonly){
+			self.o.readonly=readonly;
+			self.close();
+			self.refresh();
+		};
+
 		// open combobox
 		self.open=function(){
+			if (self.o.disabled || self.o.readonly) return false;
 			var first_time=(self.openedtimes?false:true);
 			if (!self.openedtimes) self.openedtimes=0;
 			self.openedtimes++;
@@ -758,7 +800,12 @@ var xwidgets={
 			if (self.closeTimeout) clearTimeout(self.closeTimeout);
 			classAdd(self.e.cmb_group, "cmb_open");
 			self.resize();
-			if (first_time) self.e.cmb_items.scrollTop=0;
+			if (first_time) {
+				self.e.cmb_items.scrollTop=0;
+				self.focusSearch();
+				self.update({"focusSearch":true});
+			}
+			return true;
 		};
 
 		// close combobox
@@ -1015,8 +1062,9 @@ var xwidgets={
 					"keypress":function(e){
 						var index=this.getAttribute("data-index");
 						var r=true;
-						index=(index===null?null:parseInt(index));
+						index=(index === null?null:parseInt(index));
 						switch (e.keyCode) {
+
 						case 13:
 							if (!self.isselected(index)) self.select(index);
 							if (self.o.onclick) r=self.o.onclick(self, item, index);
@@ -1383,6 +1431,14 @@ var xwidgets={
 				}
 			});
 
+			// set disabled attribute
+			if (self.o.disabled) self.e.cmb.setAttribute("disabled", "");
+			else self.e.cmb.removeAttribute("disabled");
+
+			// set readonly attribute
+			if (self.o.readonly) self.e.cmb.setAttribute("readonly", "");
+			else self.e.cmb.removeAttribute("readonly");
+
 			// items
 			self.e.cmb_items=newElement("div", {
 				"class":"cmb_items",
@@ -1437,6 +1493,7 @@ var xwidgets={
 				"class":"cmd cmd_add",
 				"html":"+",
 				"action":function(self, action, index){
+					if (self.o.disabled || self.o.readonly) return;
 					if (isset(self.o.onadd)) self.o.onadd(self, action, index);
 					else if (typeof(self.o.add) == "function") self.o.add(self, action, index);
 				}
@@ -1447,6 +1504,7 @@ var xwidgets={
 				"class":"cmd cmd_del",
 				"html":"⨯",
 				"action":function(self, action, index){
+					if (self.o.disabled || self.o.readonly) return;
 					self.unselect();
 					self.refreshCaption();
 					self.focus();
@@ -1613,15 +1671,19 @@ var xwidgets={
 
 		// scroll top relative to parent
 		self.parentScrollTop=function(){
-			return (self.o.parent?gid(self.o.parent).scrollTop:scrollTop());
+			return (self.o.parent && gid(self.o.parent)?gid(self.o.parent).scrollTop:scrollTop());
 		};
 
 		// resize event
 		self.resize=function(){
 
+			// checks
+			if (!gid(self.o.id)) return false;
+			var parent=(self.o.parent && gid(self.o.parent)?self.o.parent:false);
+
 			// initial setup
-			var maxWidth=(self.o.parent?getLeft(self.o.parent)+getWidth(self.o.parent):windowWidth());
-			var maxHeight=(self.o.parent?getTop(self.o.parent)+getHeight(self.o.parent):windowHeight());
+			var maxWidth=(parent?getLeft(parent)+getWidth(parent):windowWidth());
+			var maxHeight=(parent?getTop(parent)+getHeight(parent):windowHeight());
 			if (maxWidth > windowWidth()) maxWidth=windowWidth();
 			if (maxHeight > windowHeight()) maxHeight=windowHeight();
 
@@ -1654,7 +1716,7 @@ var xwidgets={
 			);
 			var resultsHeight=-inputHeight-margin;
 			if (valignTop) {
-				var bigger=(!self.o.parent || self.parentScrollTop() > getTop(self.o.parent)?self.parentScrollTop():getTop(self.o.parent));
+				var bigger=(!parent || self.parentScrollTop() > getTop(parent)?self.parentScrollTop():getTop(parent));
 				resultsHeight+=(getTop(self.e.cmb)-bigger);
 			} else {
 				resultsHeight+=maxHeight-(getTop(self.e.cmb)-self.parentScrollTop());
@@ -1668,6 +1730,9 @@ var xwidgets={
 			// save alignments
 			self.o.alignRight=alignRight;
 			self.o.valignTop=valignTop;
+
+			// ok
+			return true;
 
 		};
 
@@ -1755,14 +1820,14 @@ var xwidgets={
 		};
 
 		// get/set item
-		self.item=function(item){
-			if (isset(item) && item !== null) {
+		self.item=function(item, _noevents){
+			if (isset(item)) { //  && item !== null
 				self.o.selecteditem=item;
 				self.o.selected=[item];
 				self.o.selectedkeys={};
-				if (self.o.key) self.o.selectedkeys[item[self.o.key]]=item;
+				if (self.o.key && item !== null) self.o.selectedkeys[item[self.o.key]]=item;
 				self.refreshCaption();
-				if (self.o.onchange) self.o.onchange(self, item);
+				if (self.o.onchange && !_noevents) self.o.onchange(self, item);
 				if (self.o.input) gidval(self.o.input, self.value());
 			}
 			return self.o.selecteditem;
@@ -1795,8 +1860,7 @@ var xwidgets={
 			}
 			var a={};
 			var selected=(self.o.key?self.o.selecteditems:self.o.selected);
-			for (var index in selected)
-					a[(self.o.key?selected[index][self.o.key]:index)]=selected[index];
+			for (var index in selected) a[(self.o.key?selected[index][self.o.key]:index)]=selected[index];
 			return a;
 		};
 
@@ -1822,21 +1886,32 @@ var xwidgets={
 			return self.o.data;
 		};
 
+		// get/set search value
+		self.search=function(s){
+			var search_input=(self.e.cmb_search?self.e.cmb_search:(self.e.cmb_input?self.e.cmb_input:false));
+			if (isset(s)) {
+				search_input.value=s;
+				self.refreshItems();
+				self.update();
+			}
+			return search_input.value;
+		};
+
 		// update AJAX data
-		self.update=function(){
+		self.update=function(o){
+			var o=o||{};
 			self.updateTimerClear();
 			if (self.o.ajax) {
 				var first_request=(self.o.requested?false:true);
 				self.o.requested=true;
 				var r={
 					"search":(self.e.cmb_search?self.e.cmb_search.value:(self.e.cmb_input?self.e.cmb_input.value:"")),
-					"visible":(self.o.visible?self.o.visible:50)
+					"visible":(isset(self.o.visible)?self.o.visible:null)
 				};
 				var er=self.data();
 				if (er) r=array_merge(r, er);
 				if (self.o.ajaxrequest) r=self.o.ajaxrequest(self, r);
-				ajax(self.o.ajax, r, function(){
-				},function(r){
+				ajax(self.o.ajax, r, function(){}, function(r){
 					if (r.data.err) newerror(r.data.err);
 					if (r.data.ok) {
 						// update ajax data
@@ -1845,6 +1920,8 @@ var xwidgets={
 						self.refreshItems();
 						// if first request, autoselect item
 						if (first_request) self.firstselect();
+						// focus search, if requested
+						if (o.focusSearch) self.focusSearch();
 					}
 				});
 			}
@@ -1862,9 +1939,8 @@ var xwidgets={
 		// aux: first item/index/key/value selection (called twice, on refresh and on update)
 		self.firstselect=function(){
 			if (self.o.item) {
-				self.o.selecteditem=self.o.item;
-				if (self.o.key) self.o.selectedkeys[self.o.item[self.o.key]]=self.o.item;
-				if (self.e.cmb_caption) gidset(self.e.cmb_caption, self.renderItem(self.o.item));
+				self.item(self.o.item, true);
+				//if (self.e.cmb_caption) gidset(self.e.cmb_caption, self.renderItem(self.o.item));
 			} else {
 				if (isset(self.o.index)) self.index(self.o.index); else if (!self.o.editable && !self.o.multiple) self.index(0);
 				if (isset(self.o.keys)) self.keys(self.o.keys);

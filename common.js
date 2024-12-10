@@ -36,12 +36,12 @@ function gidenabled(id, enabled) {
 
 // foreach implementation
 function xforeach(a, f) {
-	var c=0;
-	if (typeof(a) == "object" && typeof(f) == "function")
-		for (var i in a)
-			if (f(a[i], i, a))
-				c++;
-	return c;
+	var r;
+	if (typeof(a) == "object" && typeof(f) == "function") for (var i in a) {
+		r=f(a[i], i, a);
+		if (typeof(r) != "undefined") return r;
+	}
+	return null;
 }
 
 // ensure valid date in ISO format YYYY-MM-DD (deprecated)
@@ -59,9 +59,19 @@ function gidvalFecha(id) {
 function gpreids(prefix, ids, sufix) {
 	var ids=ids.split(" ");
 	var a={};
-	for (var i in ids)
-		if (gid((prefix?prefix+"_":"")+ids[i]+(sufix?"_"+sufix:"")))
-			a[ids[i]]=gidval((prefix?prefix+"_":"")+ids[i]+(sufix?"_"+sufix:""));
+	for (var i in ids) {
+		var id=(prefix?prefix+"_":"")+ids[i]+(sufix?"_"+sufix:"");
+		var e=gid(id);
+		if (e) {
+			var v=gidval(id);
+			switch (e.type) {
+			case "checkbox":
+			case "radio":
+				if (!e.checked) v="";
+			}
+			a[ids[i]]=v;
+		}
+	}
 	return a;
 }
 
@@ -74,18 +84,19 @@ function spreids(prefix, ids, values, sufix) {
 			var v=values[ids[i]];
 			switch (o.type) {
 			case "checkbox":
+			case "radio":
 				if (parseInt(v) || (v.length>0 && v!="0")) o.checked=true;
 				break;
 			case "select-one":
 			case "select-multiple":
-				for (var j=0;j<o.options.length;j++)
-					if (o.options[j].value==v) {
-						gidval(o,v);
+				for (var j=0; j<o.options.length; j++)
+					if (o.options[j].value == v) {
+						gidval(o, v);
 						break;
 					}
 				break;
 			default:
-				gidval(o,v);
+				gidval(o, v);
 			}
 		}
 }
@@ -119,6 +130,7 @@ function newElement(element, o) {
 		if (o.id) e.id=o.id;
 		if (o.class) e.className=o.class;
 		if (o.html) e.innerHTML=o.html;
+		if (o.type) e.type=o.type;
 		if (o.title) e.title=o.title;
 		if (o.style) e.style=o.style;
 		if (o.value) e.value=o.value;
@@ -181,7 +193,11 @@ function getWidth(id) { return gid(id).offsetWidth; }
 function getHeight(id) { return gid(id).offsetHeight; }
 
 // element style change
-function style(id, styles) { var o=gid(id); for (var i in styles) o.style[i]=styles[i]; }
+function style(id, styles) {
+	var e=gid(id);
+	if (typeof(styles) == "string") e.style=styles;
+	else xforeach(styles, function(style, i){ e.style[i]=style; });
+}
 
 // element className functions
 function classAdd(id, c) {
@@ -220,8 +236,8 @@ function scrollLeft() { return ieTrueBody().scrollLeft; }
 function scrollTop() { return ieTrueBody().scrollTop; }
 function windowWidth() { return (document.documentElement.clientWidth?document.documentElement.clientWidth:(window.innerWidth?window.innerWidth:document.body.clientWidth)); }
 function windowHeight() { return (document.documentElement.clientHeight?document.documentElement.clientHeight:(window.innerHeight?window.innerHeight:document.body.clientHeight)); }
-function documentWidth() { return document.body.clientWidth; }
-function documentHeight() { return document.body.clientHeight; }
+function documentWidth() { return Math.max(document.body.scrollWidth, document.body.offsetWidth, document.documentElement.clientWidth, document.documentElement.scrollWidth, document.documentElement.offsetWidth); }
+function documentHeight() { return Math.max(document.body.scrollHeight, document.body.offsetHeight, document.documentElement.clientHeight, document.documentElement.scrollHeight, document.documentElement.offsetHeight); }
 
 // natural properties of an image (real size)
 function naturalWidth(idimg) {
@@ -253,13 +269,14 @@ function appearIntoView(id, callback, o) {
 		o.id=id;
 		o.event=e;
 		o.intoview=isIntoView(id, o.full);
-		if ((!intoview && o.intoview) || (intoview && !o.intoview)) {
+		if ((e && e._forced) || (!intoview && o.intoview) || (intoview && !o.intoview)) {
 			callback(o);
 			if (!o.always) document.removeEventListener("scroll", check_appear);
 		}
 		intoview=o.intoview;
 	};
 	document.addEventListener("scroll", check_appear);
+	if (o.always) check_appear({"_forced":true});
 }
 
 // set cursor
@@ -401,39 +418,57 @@ function getCookie(name) {
 
 // set cookie
 function setCookie(name, value, o) {
-	var o=(Number.isFinite(o)?{"days":o}:o||{});
-	if (o.days) o.expires=o.days*86400000;
-	var expires="";
-	if (o.expires) {
-		var date=new Date();
-		date.setTime(date.getTime()+o.expires);
-		expires="; expires="+date.toGMTString();
+	try {
+		var o=(Number.isFinite(o)?{"days":o}:o||{});
+		if (o.days) o.expires=o.days*86400000;
+		var expires="";
+		if (o.expires) {
+			var date=new Date();
+			date.setTime(date.getTime()+o.expires);
+			expires="; expires="+date.toGMTString();
+		}
+		document.cookie
+			=name.replace(/=/gi,"").replace(/;/gi,"")
+			+"="+(""+value).replace(/\\/gi,"\\\\").replace(/\n/gi,"\\n").replace(/;/gi,"\\,").replace(/;/gi,"_")
+			+expires
+			+"; path="+(o.path||"/")
+			+"; sameSite="+(o.samesite||"Lax")
+			+(o.domain?"; domain="+o.domain:"")
+			+(o.secure?"; Secure":"")
+		;
+	} catch(e) {
+		return false;
 	}
-	document.cookie
-		=name.replace(/=/gi,"").replace(/;/gi,"")
-		+"="+(""+value).replace(/\\/gi,"\\\\").replace(/\n/gi,"\\n").replace(/;/gi,"\\,").replace(/;/gi,"_")
-		+expires
-		+"; path="+(o.path||"/")
-		+"; sameSite="+(o.samesite||"Lax")
-		+(o.secure?"; Secure":"")
-	;
+	return true;
 }
 
 // delete cookie
 function delCookie(name) {
-	setCookie(name, "", {"expires":-1, "samesite":"Strict"});
-	setCookie(name, "", {"expires":-1, "samesite":"Lax"});
-	setCookie(name, "", {"expires":-1, "samesite":"None", "secure":true});
-	setCookie(name, "", {"expires":-1, "samesite":"None"});
+	var secures=[false];
+	var domain=document.domain;
+	var domains=[null, domain];
+	var p=domain.lastIndexOf(".");
+	if (p > 0) {
+		p=domain.lastIndexOf(".", p-1);
+		if (p > 0) domains.push(domain.substr(p));
+	}
+	if (location.protocol === 'https:') secures.push(true);
+	xforeach(secures, function(secure){
+		xforeach(domains, function(domain){
+			xforeach(["None", "Lax", "Strict"], function(samesite){
+				setCookie(name, "", {"expires":-1, "domain":domain, "samesite":samesite, "secure":secure});
+			});
+		});
+	});
 }
 
 // delete all accesible cookies
 function delAllCookies() {
 	var cookies=document.cookie.split(";");
-	for (var i=0; i<cookies.length; i++) {
+	for (var i=0; i < cookies.length; i++) {
 		var cookie=cookies[i];
-		var eqPos=cookie.indexOf("=");
-		var name=(eqPos>-1?cookie.substr(0, eqPos):cookie);
+		var p=cookie.indexOf("=");
+		var name=(p > -1?cookie.substr(0, p):cookie);
 		delCookie(name);
 	}
 }
@@ -889,6 +924,16 @@ function localeDecimalSeparator() {
 	return (1.1).toLocaleString().substring(1, 2);
 }
 
+// parse number from locale string number
+function localeNumber(n) {
+	return parseFloat((""+n).replace(localeDecimalSeparator(), '.'));
+}
+
+// number to locale string
+function numberLocale(n) {
+	return (""+localeNumber(n)).replace('.', localeDecimalSeparator());
+}
+
 // entrada sólo numérica entera
 function gInputInt(id, negatives, floating) {
 	var input=gid(id);
@@ -1007,8 +1052,15 @@ function spn(n, f) {
 	return (parseInt(n) == parseFloat(n)?spd(n):spf(n, f));
 }
 
+// asegurar una fecha en formato ISO
+function isoEnsure(dt) {
+	var m=dt.match(/\d{4}-[01]\d-[0-3]\d [0-2]\d:[0-5]\d:[0-5]\d/);
+	return (m?m[0]:null);
+}
+
 // devuelve fecha y hora en formato ISO YYYY-MM-DD HH:II:SS desde fecha JavaScript (o fecha y hora actual)
-function isoDatetime(f) {
+function isoDatetime(f) { return isoDateTime(f); } // coherencia
+function isoDateTime(f) {
 	var
 		f=f||new Date(),
 		y=f.getFullYear(),
@@ -1325,6 +1377,12 @@ function get_html_translation_table(table, quote_style) {
 	}
 
 	return hash_map;
+}
+
+// replace HTML special chars
+function htmlspecialchars(s) {
+	var map={'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&#34;', "'":'&#39;'};
+	return s.replace(/[&<>'"]/g, function(c){ return map[c]; });
 }
 
 // phpjs: convierte un texto a entidades HTML

@@ -121,6 +121,7 @@
 .xeditor_toolbox_clear {
 	clear: both;
 }
+.xeditor_area,
 .xeditor_editing {
 	position: relative;
 	outline: 0 transparent;

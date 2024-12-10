@@ -79,6 +79,15 @@
 	background-color: #FFF;
 	border: 1px solid #DDD;
 }
+.widget_inverse .area,
+.widget_inverse .cmb,
+.widget_inverse .txt,
+.widget_inverse .hsearch,
+.widget_inverse .widget {
+	color: #FFF;
+	background-color: #222;
+	border: 1px solid #000;
+}
 .area,
 .cmb,
 .txt,
@@ -113,7 +122,7 @@
 .widget_disabled {
 	color: #555;
 	background: #E4E4E4;
-	border-color: #BBB;
+	/*border-color: #BBB;*/
 }
 .area[readonly],
 .cmb[readonly],
@@ -121,6 +130,25 @@
 .area[readonly],
 .hsearch[readonly] {
 	background: #F4F4F4;
+}
+.widget_inverse .area[readonly],
+.widget_inverse .cmb[readonly],
+.widget_inverse .txt[readonly],
+.widget_inverse .area[disabled],
+.widget_inverse .cmb[disabled],
+.widget_inverse .txt[disabled],
+.widget_inverse .hsearch[disabled],
+.widget_inverse .widget[disabled],
+.widget_inverse .widget_disabled {
+	color: #CCC;
+	background: #444;
+}
+.widget_inverse .area[readonly],
+.widget_inverse .cmb[readonly],
+.widget_inverse .txt[readonly],
+.widget_inverse .area[readonly],
+.widget_inverse .hsearch[readonly] {
+	background: #333;
 }
 .area:focus,
 .cmb:focus,
@@ -138,7 +166,9 @@
 .widget_inverse .cmb:focus,
 .widget_inverse .txt:focus,
 .widget_inverse .widget:focus,
-.widget_inverse .widget_focus { border-color: #FFF; }
+.widget_inverse .widget_focus {
+	border-color: #CCC;
+}
 .widget_fill {
 	flex: 1;
 }
@@ -182,7 +212,7 @@
 	opacity: 0.5;
 }
 .checkbox>span, .radio>span {
-	padding: 0.1em 0.1em 0.1em 1.6em;
+	padding: 0.1em 0.1em 0.1em 1.4em;
 	user-select: none;
 	background: 2px center no-repeat;
 	background-size: 1em;
@@ -200,6 +230,7 @@
 
 /* combobox/hsearch */
 .cmb,
+.txt[list],
 .hsearch {
 	padding-right: 1.4em;
 	background-position: right center;
@@ -238,12 +269,16 @@
 }
 .cmb_caption {
 	position: absolute;
-	min-width: 100%;
+	left: 0;
+	right: 0;
 }
 .cmb_input {
 	width: 100%;
 	background: transparent;
 	border: 0;
+}
+.widget_inverse .cmb_input {
+	color: inherit;
 }
 .cmb_items {
 	overflow: auto;
@@ -253,7 +288,12 @@
 	display: none;
 	z-index: 10;
 	border: 1px solid #444;
+	color: #000;
 	background: #FFF;
+}
+.widget_inverse .cmb_options {
+	color: #FFF;
+	background: #222;
 }
 .cmb_dropdown {
 	position: relative;
@@ -276,7 +316,12 @@
 .cmb_open .cmb,
 .cmb_open .cmb_options {
 	border-color: #444;
-	background-color: #FFF;
+}
+.widget_inverse .cmb_group:focus .cmb,
+.widget_inverse .cmb_focus .cmb,
+.widget_inverse .cmb_open .cmb,
+.widget_inverse .cmb_open .cmb_options {
+	border-color: #CCC;
 }
 .cmb_item {
 	display: block;
@@ -295,9 +340,16 @@
 .cmb_item:hover {
 	background-color: #F0F0F0;
 }
+.widget_inverse .cmb_item:hover {
+	background-color: #444;
+}
 .cmb_item_selected,
 .cmb_item_selected:hover {
-	background: #DDD;
+	background-color: #DDD;
+}
+.widget_inverse .cmb_item_selected,
+.widget_inverse .cmb_item_selected:hover {
+	background-color: #555;
 }
 .cmb_caption_empty,
 .cmb_item_empty {
@@ -331,6 +383,11 @@
 .group {
 	display: flex;
 }
+.cmd_light,
+.cmd_light:active,
+.cmd_light:hover,
+.cmd_light:focus,
+.cmd_light:link,
 .cmd_input,
 .cmd_input:active,
 .cmd_input:hover,
@@ -345,18 +402,58 @@
 	background: #DDD;
 	color: #444;
 }
+.widget_inverse .cmd_light,
+.widget_inverse .cmd_light:active,
+.widget_inverse .cmd_light:hover,
+.widget_inverse .cmd_light:focus,
+.widget_inverse .cmd_light:link,
+.widget_inverse .cmd_input,
+.widget_inverse .cmd_input:active,
+.widget_inverse .cmd_input:hover,
+.widget_inverse .cmd_input:focus,
+.widget_inverse .cmd_input:link,
+.widget_inverse .group .cmd,        .widget_inverse .group a.cmd,
+.widget_inverse .group .cmd:active, .widget_inverse .group a.cmd:active,
+.widget_inverse .group .cmd:hover,  .widget_inverse .group a.cmd:hover,
+.widget_inverse .group .cmd:focus,  .widget_inverse .group a.cmd:focus,
+.widget_inverse .group .cmd:link,   .widget_inverse .group a.cmd:link,
+.widget_inverse .group .label {
+	background: #000;
+	color: #EEE;
+	border-style: solid;
+	border-color: #000;
+}
+.cmd_light:hover,
+.cmd_light:focus,
 .cmd_input:hover,
 .cmd_input:focus,
-.group .cmd:focus,  .group a.cmd:focus,
-.group .cmd:hover,  .group a.cmd:hover {
-	opacity: 0.9;
+.group .cmd:focus, .group a.cmd:focus,
+.group .cmd:hover, .group a.cmd:hover {
+	opacity: 0.8;
+}
+.cmd_light:active,
+.cmd_input:active,
+.group .cmd:active, .group a.cmd:active {
+	opacity: 0.6;
+}
+.cmd_light[disabled],
+.cmd_light[disabled]:hover,
+.cmd_light[disabled]:focus,
+.cmd_input[disabled]:hover,
+.cmd_input[disabled]:focus,
+.group .cmd[disabled],  .group a.cmd[disabled],
+.group .cmd[disabled]:focus,  .group a.cmd[disabled]:focus,
+.group .cmd[disabled]:hover,  .group a.cmd[disabled]:hover {
+	cursor: default;
+	opacity: 0.4;
 }
 
 /* combobox checkboxes & radios */
 .cmb_checkboxes .cmb_item,
 .cmb_radios .cmb_item {
 	padding-left: 24px;
-	background: 2px center no-repeat;
+	background-repeat: no-repeat;
+	background-position: 2px center;
 	background-size: 1em;
 }
 
@@ -469,6 +566,18 @@
 }
 
 /* images */
+.xicon {
+	position: relative;
+	display: inline-block;
+	background-repeat: no-repeat;
+	background-position: center center;
+	background-size: contain;
+	padding-left: 0.6em;
+	line-height: 1em;
+}
+.xicon:before {
+	content: "\00a0";
+}
 .cmb_search,
 .txt_search,
 .hsearch_input { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAYCAYAAACbU/80AAAACXBIWXMAAAsTAAALEwEAmpwYAAAABGdBTUEAALGOfPtRkwAAACBjSFJNAAB6JQAAgIMAAPn/AACA6QAAdTAAAOpgAAA6mAAAF2+SX8VGAAABSElEQVR42uzWPUscURTG8d+atLFIGl8xAQsFCYgQLCwEKxVMkw+QbhsTUexs7FNEos2mS2wsFEHR7GfIuiviBxAbQdLYxHROmrMwSLK6MMM288BwZuaey/PnnHvvTClJEp1Ulw6rACgAnj42sVwuN2978QHzGMAt6viK4/ScSqWSHUBoEjsYiucEzwPkLT5jJa8W9GA3zBt4h1G8CWNYbhegnQosoR+nmMFNaqyGC3zBGrbxK+sKLERcv2fe1CbOoiXTebSgD3c4b5HTiPgyD4A/KOFZi5wXEX/nAdAIgPf/GR9Olb6WB8BWxI9YvDd3NLZnN47yAqhiA09iwZ3gGw7CcCLyBlPnROYH0TKusIrxuJr6EcavA3YutmamAPAJ3zGFV7Hg6vgZAFWM4BBjeQDANfb+8f4Ss9iPb8aDKhW/ZAVApwH+DgCbnD2k6ZgSxAAAAABJRU5ErkJggg==); }

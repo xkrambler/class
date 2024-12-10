@@ -43,7 +43,7 @@ class View {
 			$this->media=$newMedia;
 		} else {
 			// comprobación de medio de representación
-			$agent=$_SERVER["HTTP_USER_AGENT"];
+			$agent=(isset($_SERVER["HTTP_USER_AGENT"])?$_SERVER["HTTP_USER_AGENT"]:"");
 			// por defecto el medio es PC
 			$this->media="pc";
 			// HTC P3300/1.35.621.1 Mozilla/4.0 Profile/MIDP-2.0 Configuration/CLDC-1.1 (compatible; MSIE 4.01; Windows CE; PPC; 240x320)

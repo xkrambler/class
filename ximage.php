@@ -55,7 +55,7 @@ class xImage {
 
 	// return version
 	static function version() {
-		return 0.4;
+		return 0.5;
 	}
 
 	// return handler
@@ -73,11 +73,16 @@ class xImage {
 		return ($this->im?imagesy($this->im):false);
 	}
 
+	// returns color, if is valid color
+	function isColor($color) {
+		return (is_array($color) && count($color) == 3?$color:false);
+	}
+
 	// get format by magic bytes
 	static function getFormatByMagic($bytes) {
-		if (substr($bytes,0,3)=="\xFF\xD8\xFF") return "jpg";
-		else if (substr($bytes,0,3)=="GIF") return "gif";
-		else if (substr($bytes,1,3)=="PNG") return "png";
+		if (substr($bytes, 0, 3) == "\xFF\xD8\xFF") return "jpg";
+		else if (substr($bytes, 0, 3) == "GIF") return "gif";
+		else if (substr($bytes, 1, 3) == "PNG") return "png";
 		return false;
 	}
 
@@ -115,6 +120,7 @@ class xImage {
 	// create image from a string
 	function fromString($s) {
 		if ($imt=(@imagecreatefromstring($s))) $this->im=$imt;
+		imagesavealpha($this->im, true);
 		return ($imt?true:false);
 	}
 
@@ -127,17 +133,28 @@ class xImage {
 		return $s;
 	}
 
+	// return image as URI encoded
+	function uri($format="jpg", $quality=75) {
+		$s=$this->toString($format, $quality);
+		return "data:".$this->getMimeByMagic($s).";base64,".base64_encode($s);
+	}
+
 	// load image from file
 	function load($filename) {
+		$im=false;
 		$this->filename=$filename;
 		if ($format=$this->getFileFormat($filename)) {
 			switch ($format) {
-			case "jpg": $this->im=imagecreatefromjpeg($filename); return true;
-			case "gif": $this->im=imagecreatefromgif($filename); return true;
-			case "png": $this->im=imagecreatefrompng($filename); return true;
+			case "jpg": $im=imagecreatefromjpeg($filename); break;
+			case "gif": $im=imagecreatefromgif($filename); break;
+			case "png": $im=imagecreatefrompng($filename); break;
+			}
+			if ($im) {
+				imagesavealpha($im, true);
+				$this->im=$im;
 			}
 		}
-		return false;
+		return $im;
 	}
 
 	// output mime header
@@ -153,9 +170,9 @@ class xImage {
 	function output($format="jpg", $quality=90, $withmime=true) {
 		if ($withmime) $this->OutMime($format);
 		switch ($format) {
-		case "jpg": imagejpeg($this->im, null, $quality); return true;
-		case "gif": imagegif($this->im); return true;
-		case "png": imagepng($this->im); return true;
+		case "jpg": return imagejpeg($this->im, null, $quality);
+		case "gif": return imagegif($this->im);
+		case "png": return imagepng($this->im);
 		}
 		return false;
 	}
@@ -163,49 +180,48 @@ class xImage {
 	// save in disk
 	function save($format="jpg", $filename, $quality=90) {
 		switch ($format) {
-		case "jpg": imagejpeg($this->im, $filename, $quality); return true;
-		case "gif": imagegif($this->im, $filename); return true;
-		case "png": imagepng($this->im, $filename); return true;
+		case "jpg": return imagejpeg($this->im, $filename, $quality);
+		case "gif": return imagegif($this->im, $filename);
+		case "png": return imagepng($this->im, $filename);
 		}
 		return false;
 	}
 
-	// paste an image in another
+	// paste an image
 	function paste($i2, $x=0, $y=0, $forzar=false) {
-		$im2=$i2->getHandler();
-		if ($forzar) imagecopyresized($this->im,$im2,$x,$y,0,0,imagesx($this->im),imagesy($this->im),imagesx($im2),imagesy($im2));
-		else imagecopy($this->im,$im2,$x,$y,0,0,imagesx($im2),imagesy($im2));
-		return true;
+		if (!($im2=($i2 instanceof self?$i2->getHandler():$i2))) return false;
+		return ($forzar
+			?imagecopyresized($this->im, $im2, $x, $y, 0, 0, imagesx($this->im), imagesy($this->im), imagesx($im2), imagesy($im2))
+			:imagecopy($this->im, $im2, $x, $y, 0, 0, imagesx($im2), imagesy($im2))
+		);
 	}
 
-	// copy image
-	function copy($i2) {
-		$im2=$i2->getHandler();
-		$this->im=imagecreatetruecolor(imagesx($im2),imagesy($im2));
-		imagecopy($this->im,$im2,0,0,0,0,imagesx($im2),imagesy($im2));
-		return true;
+	// copy an image
+	function copy($i2, $x=0, $y=0) {
+		if (!($im2=($i2 instanceof self?$i2->getHandler():$i2))) return false;
+		$this->im=imagecreatetruecolor(imagesx($im2), imagesy($im2));
+		return imagecopy($this->im, $im2, $x, $y, 0, 0, imagesx($im2), imagesy($im2));
 	}
 
 	// add color to image
 	function color($c=false) {
-		if ($c && count($c)==3) return imagecolorallocate($this->im, $c[0], $c[1], $c[2]);
-		return false;
+		$c=$this->isColor($c);
+		return ($c?imagecolorallocate($this->im, $c[0], $c[1], $c[2]):false);
 	}
 
 	// fill image with a color
-	function fill($color=array(0,0,0)) {
+	function fill($color=array(0, 0, 0)) {
 		$c=$this->color($color);
-		imagefilledrectangle($this->im,0,0, imagesx($this->im), imagesy($this->im), ($c?$c:0));
-		return true;
+		return ($c?imagefilledrectangle($this->im, 0, 0, imagesx($this->im), imagesy($this->im), ($c?$c:0)):false);
 	}
 
 	// resize image
 	function resize($width, $height, $resample=true) {
 		// create container
-		$imt=imagecreatetruecolor($width,$height);
+		$imt=imagecreatetruecolor($width, $height);
 		// create new image resized
-			if ($resample) imagecopyresampled($imt,$this->im,0,0,0,0,$width,$height,imagesx($this->im),imagesy($this->im));
-		else imagecopyresized($imt,$this->im,0,0,0,0,$width,$height,imagesx($this->im),imagesy($this->im));
+		if ($resample) imagecopyresampled($imt, $this->im, 0, 0, 0, 0, $width, $height, imagesx($this->im), imagesy($this->im));
+		else imagecopyresized($imt, $this->im, 0, 0, 0, 0, $width, $height, imagesx($this->im), imagesy($this->im));
 		// destroy old and return new
 		imagedestroy($this->im);
 		$this->im=$imt;
@@ -214,53 +230,58 @@ class xImage {
 	}
 
 	// scale image
-	function scale($maxwidth, $maxheight, $border=false, $resample=true, $background=array(255,255,255)) {
-		// cambiar tamaño manteniendo proporciones
-		$p=imagesx($this->im)/imagesy($this->im);
+	function scale($maxwidth, $maxheight, $border=false, $resample=true, $background=false) {
+		// calculate new proportions
+		$w=imagesx($this->im);
+		$h=imagesy($this->im);
+		$p=$w/$h;
+		$x=0;
+		$y=0;
 		$nw=$maxwidth;
 		$nh=$maxwidth/$p;
-		if ($nh>$maxheight) {
+		if ($nh > $maxheight) {
 			$nh=$maxheight;
 			$nw=round($maxheight*$p);
-			if (abs($nw-$maxwidth)<=4) $nw=$maxwidth;
+			if (abs($nw-$maxwidth) <= 4) $nw=$maxwidth;
 			$x=($border?($maxwidth-$nw)/2:0);
-			$y=0;
 		} else {
-			if (abs($nh-$maxheight)<=4) $nh=$maxheight;
-			$x=0;
+			if (abs($nh-$maxheight) <= 4) $nh=$maxheight;
 			$y=($border?($maxheight-$nh)/2:0);
 		}
 		$nh=round($nh);
-		// create container
-		if (!$border) $imt=imagecreatetruecolor($nw,$nh);
-		else $imt=imagecreatetruecolor($maxwidth,$maxheight);
-		// if border, paint with color ($border must be an array(R,G,B))
-		$color=(is_array($border) && count($border) == 3
-			?imagecolorallocate($imt,$border[0],$border[1],$border[2])
-			:imagecolorallocate($imt,$background[0],$background[1],$background[2])
+		// create destination image
+		$imt=($border
+			?imagecreatetruecolor($maxwidth, $maxheight)
+			:imagecreatetruecolor($nw, $nh)
 		);
-		imagefilledrectangle($imt,0,0,imagesx($imt),imagesy($imt),$color);
-		// create new image resized
-		if ($resample) imagecopyresampled($imt,$this->im,$x,$y,0,0,$nw,$nh,imagesx($this->im),imagesy($this->im));
-		else imagecopyresized($imt,$this->im,$x,$y,0,0,$nw,$nh,imagesx($this->im),imagesy($this->im));
-		// destroy old and return new
+		imagesavealpha($imt, true);
+		// if border, paint with color ($border must be an array(R,G,B))
+		$color=(($c=$this->isColor($border)) || ($c=$this->isColor($background)) 
+			?imagecolorallocate($imt, $c[0], $c[1], $c[2])
+			:false
+		);
+		imagealphablending($imt, ($color?true:false));
+		if ($color) imagefilledrectangle($imt, 0, 0, $nw, $nh, $color);
+		// create new image with new scale
+		if ($resample) imagecopyresampled($imt, $this->im, $x, $y, 0, 0, $nw, $nh, $w, $h);
+		else imagecopyresized($imt, $this->im, $x, $y, 0, 0, $nw, $nh, $w, $h);
+		// destroy old and set new
 		imagedestroy($this->im);
 		$this->im=$imt;
-		// todo ok
-		return true;
+		// done
+		return $this->im;
 	}
 
 	// flip image
-	function flip($f) {
-		imageflip($this->im, $f);
-		return true;
+	function flip($mode) {
+		return imageflip($this->im, $mode);
 	}
 
 	// rotate image
 	function rotate($a, $c=false) {
 		$c=$this->color($c);
 		$this->im=imagerotate($this->im, $a, ($c?$c:0));
-		return true;
+		return $this->im;
 	}
 
 	// get exif data
@@ -281,7 +302,7 @@ class xImage {
 	// fix orientation
 	function fixOrientation($filename=null) {
 		if ($orientation=$this->getOrientation($filename)) switch ($orientation) {
-		case 1: return true; // nothing
+		case 1: return true; // do nothing
 		case 2: $this->flip(IMG_FLIP_HORIZONTAL); return true; // horizontal flip
 		case 3: $this->rotate(180); return true; // 180 rotate left
 		case 4: $this->flip(IMG_FLIP_VERTICAL); return true; // vertical flip

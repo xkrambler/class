@@ -178,6 +178,6 @@ class xTelegram {
 }
 
 // instantiate all classes defined in the setup
-if (@$telegram_setup)
+if (isset($telegram_setup))
 	foreach ($telegram_setup as $_n=>$_s)
 		$$_n=new xTelegram($_s);

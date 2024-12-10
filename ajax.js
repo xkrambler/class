@@ -245,6 +245,15 @@ function ajax(data, realdata, func1, func2) {
 	
 	}
 
+	// gestión de timeout
+	http.ontimeout=function(e){
+		if (data.timeout) {
+			var d={"timeout":e};
+			if (always) always(d);
+			data.error(d);
+		}
+	};
+
 	// si se especifica acción, incluir parámetro GET ajax=acción
 	if (data.ajax) url+=(url.indexOf("?")<0?"?":"&")+"ajax="+data.ajax;
 
@@ -276,6 +285,7 @@ function ajax(data, realdata, func1, func2) {
 	http.open((post?"POST":"GET"), url, async);
 	if (async) http.onreadystatechange=function(){ events(http); };
 	if (data.progress) http.onprogress=data.progress;
+	if (data.timeout) http.timeout=data.timeout;
 	if (data.uploadProgress && http.upload) http.upload.onprogress=data.uploadProgress;
 	http.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
 	//try { http.setRequestHeader("Content-Length", (post?post.length:0)); } catch(e) {}

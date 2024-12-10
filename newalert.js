@@ -94,7 +94,8 @@ function newalert_change(o) {
 
 function newalert_resize(o) {
 	var o=o||{};
-	if (o.forced || _newalert.last_ismobile!=newalert_ismobile()) {
+	//if (o.forced || _newalert.last_ismobile!=newalert_ismobile()) {
+	if (!o.noresize) {
 		_newalert.last_ismobile=newalert_ismobile();
 		var body_noscroll_windows=0;
 		var body_full_windows=0;
@@ -108,7 +109,21 @@ function newalert_resize(o) {
 		classEnable(document.body, "newalert_window_body_desktop", !body_noscroll);
 		for (var id in newalerts) {
 			var newalert=newalerts[id];
-			if (gid(_newalert.id+id+"_back")) gid(_newalert.id+id+"_back").className=newalerts[id].backClass();
+			var back=gid(_newalert.id+id+"_back");
+			var frame=gid(_newalert.id+id+"_frame");
+			if (back) back.className=newalerts[id].backClass();
+			if (frame) {
+				frame.style.overflow="";
+				frame.style.maxWidth="";
+				frame.style.maxHeight="";
+				var borderw=getWidth(_newalert.id+id+"_table")-getWidth(_newalert.id+id+"_content");
+				var borderh=getHeight(_newalert.id+id+"_table")-getHeight(_newalert.id+id+"_content");
+				var maxw=getWidth(_newalert.id+id)-borderw;
+				var maxh=getHeight(_newalert.id+id)-borderh;
+				frame.style.overflow="auto";
+				if (maxw > 0) frame.style.maxWidth=maxw+"px";
+				if (maxh > 0) frame.style.maxHeight=maxh+"px";
+			}
 		}
 	}
 }
@@ -223,12 +238,14 @@ function newalert(o) {
 		}, 20);
 	}
 	_newalert.openWindows++;
-	// resize event
+	// resize events
 	if (!isset(_newalert.last_ismobile)) {
 		_newalert.last_ismobile=newalert_ismobile();
 		window.addEventListener("resize", function(){ newalert_resize({"auto":true}); }, false);
 	}
 	newalert_resize({"forced":true});
+	gid(_newalert.id+id).addEventListener("transitionstart", function(){ newalert_resize({"force":true}); }, true);
+	gid(_newalert.id+id).addEventListener("transitionend", function(){ newalert_resize({"force":true}); }, true);
 	// focus first button
 	try { gid(_newalert.id+id+"_cmd_"+index_default).focus(); } catch(e) {}
 	// return window information

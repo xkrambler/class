@@ -19,7 +19,7 @@ function xForm3(o) {
 		return (a.o.name?a.o.name:null);
 	};
 	a.class=function(f){ return (a.o.class?(f?a.o.class[f]:a.o.class):null); };
-	a.field=function(f){ return a.o.fields[f]; };
+	a.field=function(f){ return (f?a.o.fields[f]:null); };
 	a.fields=function(){ return a.o.fields; };
 	a.get=function(f,n,v){
 		return a.o.fields[f][n];
@@ -67,15 +67,37 @@ function xForm3(o) {
 
 	// select and set focus to correct a field
 	a.correct=function(f){
-		a.focus(f);
-		a.select(f);
+		if (a.field(f)) {
+			a.focus(f);
+			a.select(f);
+			return true;
+		}
+		return false;
+	};
+
+	// get/set first field
+	a.first=function(f){
+		if (typeof(f) != "undefined") {
+			xforeach(a.o.fields, function(field, field_id){
+				if (field_id == f) a.o.fields[field_id].first=true;
+				else delete a.o.fields[field_id].first;
+			});
+		}
+		var f=xforeach(a.o.fields, function(field, field_id){
+			if (field.first) return field_id;
+		});
+		if (f !== null) return f;
+		return xforeach(a.o.fields, function(field, field_id){
+			return field_id;
+		});
 	};
 
 	// set focus to first field
 	a.focusfirst=a.focusFirst=function(){
-		for (var field in a.o.fields) {
-			a.focus(field);
-			a.select(field);
+		var f=a.first();
+		if (f) {
+			a.focus(f);
+			a.select(f);
 			return true;
 		}
 		return false;
@@ -194,6 +216,12 @@ function xForm3(o) {
 				}
 			}
 			return a.o.fields[field].options;
+		},
+
+		// option text
+		text:function(field){
+			var combo=gid(a.id(field));
+			return (combo && combo.selectedIndex >=0?combo.options[combo.selectedIndex].text:null);
 		}
 
 	};
@@ -203,21 +231,23 @@ function xForm3(o) {
 		return (value === ""?null:value);
 	};
 
-	// locale float parser
-	a.localeParseFloat=function(value){
-		var lds=localeDecimalSeparator();
-		return parseFloat((""+value).replace(lds, "."));
+	// return null if zero value
+	a.nullifzero=function(value){
+		return (parseFloat(value) === 0 || parseFloat(value) === NaN?null:value);
 	};
 
 	// filter value
-	a.filter=function(field, value){
+	a.filter=function(field, value, set){
+		var set=set||false;
 		var f=a.o.fields[field];
 		if (f) {
+			if (f.maxlength)   value=(""+value).substring(0, f.maxlength);
+			if (f.integer)     value=(value?parseInt(value):0);
+			if (f.number)      value=(value?parseInt(value):0);
+			if (f.positive)    value=(value?Math.abs(localeNumber(value)):0);
+			if (f.decimal)     value=(value?localeNumber(value):0);
 			if (f.nullifempty) value=a.nullifempty(value);
-			if (f.integer)  value=(value?parseInt(value):0);
-			if (f.number)   value=(value?parseInt(value):0);
-			if (f.positive) value=(value?Math.abs(a.localeParseFloat(value)):0);
-			if (f.decimal)  value=(value?a.localeParseFloat(value):0);
+			if (f.nullifzero)  value=a.nullifzero(value);
 		}
 		return value;
 	};
@@ -289,14 +319,34 @@ function xForm3(o) {
 				var d=gidval(id+":d"); if (d.length != 10) d="";
 				var t=gidval(id+":t"); if (t.length != 5) t="";
 				return a.nullifempty(a.filter(field, trim(d && t?d+" "+t+":00":"")));
+			case "color":
+				if (isset(value)) if (a.gid(field)) a.gid(field).style.backgroundColor="#"+a.colorValue(value);
+				return a.colorValue(a.gid(field).style.backgroundColor.replace("#", ""));
 			case "time":
 			default:
 				if (!gid(id)) return null;
-				if (isset(value)) gidval(id, a.filter(field, value));
+				if (isset(value)) gidval(id, a.filter(field, value, true));
 			}
 			return a.filter(field, a.formValue(id));
 		}
 		return null;
+	};
+
+	// filter color value
+	a.colorValue=function(c){
+		var c=c.replace("#", "");
+    if (c.charAt(0) == 'r') {
+			c=c.replace('rgb(','').replace('rgba(','').replace(')','').split(',');
+			var r=parseInt(c[0], 10).toString(16);
+			var g=parseInt(c[1], 10).toString(16);
+			var b=parseInt(c[2], 10).toString(16);
+			r=(r.length == 1?'0'+r:r);
+			g=(g.length == 1?'0'+g:g);
+			b=(b.length == 1?'0'+b:b);
+			c=r+g+b;
+		}
+		if (c.length == 3) c=c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
+		return c.toUpperCase();
 	};
 
 	// get/set field placeholder
@@ -399,6 +449,13 @@ function xForm3(o) {
 			"name":"xform3_upload",
 			"chunked":(isset(a.o.chunksize)?a.o.chunksize:false), // default not chunked
 			"multiple":false,
+			"scale":o.field.scale,
+			"onscale":function(uploader, files){
+				newwait("<div class='xform3_upload_scaling' id='xform3_upload_scaling'>Escalando...</div>");
+			},
+			"onscaled":function(uploader, files){
+				newwait_close();
+			},
 			"onstart":function(uploader, files){
 				newwait("<div class='xform3_upload_progress' id='xform3_upload_progress'>Subiendo...</div>");
 			},
@@ -461,6 +518,14 @@ function xForm3(o) {
 		return true;
 	};
 
+	// icon renderer
+	a.icon=function(o){
+		if (a.o.icon) return a.o.icon(o);
+		if (window.kernel && window.kernel.icon) return window.kernel.icon(o);
+		if (typeof(o) == "string") var o={"icon":o};
+		return "<span class='fa fa-"+o.icon+"'"+(o.color?" style='color:"+o.color+";'":"")+""+(o.title?" title='"+htmlentities(o.title)+"'":"")+"></span>";
+	};
+
 	// audio related actions
 	a.audio={
 
@@ -499,8 +564,8 @@ function xForm3(o) {
 			var field=a.o.fields[f];
 			var d=a.data[f];
 			gidset(d.file, (d.uploaded && !d.deleted
-				?"<span class='fa fa-file-audio-o'></span> "+d.name+" ("+bytesToString(d.size)+")"
-				:"<span class='fa fa-file-o'></span> Sin audio"
+				?a.icon("file-audio-o")+" "+d.name+" ("+bytesToString(d.size)+")"
+				:a.icon("file-o")+" Sin audio"
 			));
 			gidset(d.audio_div, "");
 			var audio=document.createElement("audio");
@@ -631,31 +696,31 @@ function xForm3(o) {
 			if (o.href) e.href=o.href;
 			e.setAttribute("data-id", o.id);
 			e.setAttribute("data-index", o.index);
+			e.innerHTML=a.icon(o.type);
 			e.onclick=function(event){
-				// obtener campo por identificador
 				var index=parseInt(this.getAttribute("data-index"));
 				var field=a.fieldById(this.getAttribute("data-id"));
 				event.stopPropagation();
 				return o.action(field, index);
 			};
-			if (o.caption) e.innerHTML=o.caption;
+			if (o.caption) e.innerHTML+=" "+o.caption;
 			return e;
 		},
 
 		// return file button element
 		"htmlFileButton":function(o){
-			var span=document.createElement("span");
-			span.className="xform3_files_file_button xform3_files_item_button_"+o.type;
-			span.setAttribute("data-id", o.id);
-			span.setAttribute("data-index", o.index);
-			span.onclick=function(){
-				// obtener campo por identificador
+			var e=document.createElement("span");
+			e.className="xform3_files_file_button xform3_files_item_button_"+o.type;
+			e.setAttribute("data-id", o.id);
+			e.setAttribute("data-index", o.index);
+			e.innerHTML=a.icon(o.type);
+			e.onclick=function(){
 				var index=parseInt(this.getAttribute("data-index"));
 				var field=a.fieldById(this.getAttribute("data-id"));
 				o.action(field, index);
 			};
-			span.title="Borrar";
-			return span;
+			if (o.title) e.title=o.title;
+			return e;
 		},
 
 		// add file element
@@ -676,8 +741,8 @@ function xForm3(o) {
 				div.setAttribute("data-index", o.index);
 				var buttons=document.createElement("div");
 				buttons.className="xform3_files_item_buttons";
-				buttons.appendChild(a.files.htmlImageButton({"type":"delete", "id":a.id(o.field), "index":o.index, "action":a.files.del}));
-				//buttons.appendChild(a.files.htmlImageButton({"type":"zoom", "id":a.id(o.field), "index":o.index, "action":a.files.zoom, "href":a.files.fileURL(o.field, o.index)}));
+				buttons.appendChild(a.files.htmlImageButton({"type":"trash", "id":a.id(o.field), "index":o.index, "action":a.files.del}));
+				//buttons.appendChild(a.files.htmlImageButton({"type":"search", "id":a.id(o.field), "index":o.index, "action":a.files.zoom, "href":a.files.fileURL(o.field, o.index)}));
 				div.onclick=function(){
 					var index=parseInt(this.getAttribute("data-index"));
 					var field=a.fieldById(this.getAttribute("data-id"));
@@ -713,14 +778,15 @@ function xForm3(o) {
 					"h":(h?h:a.o.thumbnail.h)
 				});
 				div.style.backgroundImage="url("+url+")";
+				div.innerHTML="<img class='xform3_files_item_image' src='"+url+"' />"; // for printer
 				break;
 
 			case "file":
 			case "files":
 				// name=file.psd type=image/vnd.adobe.photoshop error=0 size=999 caption=file.psd
 				div.className="xform3_files_file";
-				div.innerHTML="<span class='xform3_files_file_icon xform3_files_file_icon_file'></span><a class='xform3_files_file_name' href='"+a.files.fileURL(o.field, o.index)+"' target='_blank'>"+o.item.name+"</a> <span class='xform3_files_file_size'>("+bytesToString(o.item.size)+")</span>";
-				div.appendChild(a.files.htmlFileButton({"type":"delete", "id":a.id(o.field), "index":o.index, "action":a.files.del}));
+				div.innerHTML=a.icon("file-o")+" <a class='xform3_files_file_name' href='"+a.files.fileURL(o.field, o.index)+"' target='_blank'>"+o.item.name+"</a> <span class='xform3_files_file_size'>("+bytesToString(o.item.size)+")</span>";
+				div.appendChild(a.files.htmlFileButton({"type":"trash", "id":a.id(o.field), "index":o.index, "action":a.files.del, "title":"Borrar"}));
 				a.data[o.field].container.appendChild(div);
 				break;
 
@@ -789,13 +855,13 @@ function xForm3(o) {
 				case "file": limit=1; // no break
 				case "files":
 				default:
-					div.className="xform3_files_file xform3_files_file_upload";
+					div.className="xform3_files_file xform3_files_file_upload xform3_files_file_upload_link";
 					var span=document.createElement("span");
 					span.className="a xform3_files_file_upload_caption";
 					span.setAttribute("data-id", a.id(field));
 					span.onclick=action_upload;
 					span.title=(limit == 1?"Subir archivo":"Subir archivos");
-					span.innerHTML="<span class='xform3_files_file_icon xform3_files_file_icon_upload'></span>"+span.title;
+					span.innerHTML=a.icon("upload")+" "+span.title;
 					div.appendChild(span);
 					gid(a.id(field)).appendChild(div);
 					break;
@@ -863,11 +929,11 @@ function xForm3(o) {
 					"title":"Confirme borrado",
 					"msg":"¿Está seguro de querer eliminar este elemento?",
 					"buttons":[
-						{"caption":"Borrar","action":function(id){
+						{"caption":a.icon("trash")+" Borrar","action":function(id){
 							newalert_close(id);
 							a.files.del(field, index, true);
 						}},
-						{"caption":"Cancelar"}
+						{"caption":a.icon("times")+" Cancelar"}
 					]
 				});
 				return;
@@ -1044,7 +1110,7 @@ function xForm3(o) {
 		}
 		document.body.appendChild(datalist);
 		// assign datalist to input
-		a.gid(f).setAttribute("list", datalist_id);
+		if (a.gid(f)) a.gid(f).setAttribute("list", datalist_id);
 	};
 
 	// is input date supported
@@ -1056,6 +1122,13 @@ function xForm3(o) {
 		return (input.value !== value);
 	};
 
+	// set color
+	a.setColor=function(field, color) {
+		var c=color.replace("#", "").toUpperCase();
+		gidset("xform3_color_picked", c);
+		a.value(field, c);
+	};
+
 	// setup
 	a.init=function(o){
 		var o=o||{};
@@ -1065,50 +1138,90 @@ function xForm3(o) {
 			var id=a.id(f);
 			if (!a.data[f]) a.data[f]={};
 			var field=a.o.fields[f];
-			if (o.set && o.set[f])
-				for (var n in o.set[f])
-					a.set(f, n, o.set[f][n]);
-			switch (field.type) {
-			case "date":
-				if (!a.isInputDateSupported()) {
-					var value=gidval(id);
-					if (value.indexOf("-") !== -1) gidval(id, a.filter(field, sqlDateSP(gidval(id))));
+			(function(field, f, id){
+				if (o.set && o.set[f])
+					for (var n in o.set[f])
+						a.set(f, n, o.set[f][n]);
+				switch (field.type) {
+				case "date":
+					if (!a.isInputDateSupported()) {
+						var value=gidval(id);
+						if (value.indexOf("-") !== -1) gidval(id, a.filter(field, sqlDateSP(gidval(id))));
+					}
+					break;
+				case "datetime":
+					(function(id){
+						gid(id+":d").onfocus=function(){
+							this.setAttribute("data-lastvalue", this.value);
+						};
+						gid(id+":d").oninput=function(){
+							if (
+								!this.getAttribute("data-lastvalue")
+								&& gid(id+":t")
+								&& !gid(id+":t").value
+								&& this.value
+							) gid(id+":t").value="00:00";
+						};
+					})(id);
+					break;
+				case "number":
+				case "text":
+					if (gid(id)) {
+						if (field.integer)  gInputInt(id);
+						if (field.number)   gInputInt(id, true);
+						if (field.positive) gInputFloat(id);
+						if (field.decimal)  gInputFloat(id, true);
+					}
+					break;
+				case "audio":
+					a.audio.init(f);
+					break;
+				case "file":
+				case "image":
+				case "files":
+				case "images":
+					a.files.init(f);
+					break;
+				case "color":
+					if (typeof(newalert) == "function" && typeof(iro) == "object" && iro.ColorPicker) {
+						a.gid(f).onclick=function(){
+							var buttons=[];
+							buttons.push({"caption":a.icon("check")+" Aceptar","default":true});
+							if (field.colors) for (var i in field.colors) {
+								var c=field.colors[i];
+								(function(c){
+									buttons.push({"caption":"<span style='color:#"+c+";'>◼</span>","action":function(){
+										a.setColor(f, c);
+										newalert_close("xform3_colorpicker");
+									}});
+								})(c);
+							}
+							newalert({
+								"id":"xform3_colorpicker",
+								//"title":"Seleccionar color",
+								"msg":""
+									+"<div class='acenter'>"
+										+"<div class='iblock'>"
+											+"<div id='xform3_colorpicker' style='margin:auto;min-width:300px;'></div>"
+											+"<div class='acenter' id='xform3_color_picked'>&nbsp;</div>"
+										+"</div>"
+									+"</div>"
+								,
+								"buttons":buttons
+							});
+							a.data[f].iro_colorpicker=new iro.ColorPicker("#xform3_colorpicker", {
+								"color":a.value(f)
+								//"width":getWidth("color_picker")
+							}).on("input:change", function(c){
+							//}).on("color:change", function(c){
+								a.setColor(f, c.hexString);
+								return true;
+							});
+						};
+					}
+					break;
 				}
-				break;
-			case "datetime":
-				(function(id){
-					gid(id+":d").onfocus=function(){
-						this.setAttribute("data-lastvalue", this.value);
-					};
-					gid(id+":d").oninput=function(){
-						if (
-							!this.getAttribute("data-lastvalue")
-							&& gid(id+":t")
-							&& !gid(id+":t").value
-							&& this.value
-						) gid(id+":t").value="00:00";
-					};
-				})(id);
-				break;
-			case "number":
-			case "text":
-				if (gid(id)) {
-					if (field.integer)  gInputInt(id);
-					if (field.number)   gInputInt(id, true);
-					if (field.positive) gInputFloat(id);
-					if (field.decimal)  gInputFloat(id, true);
-				}
-				break;
-			case "audio":
-				a.audio.init(f);
-				break;
-			case "file":
-			case "image":
-			case "files":
-			case "images":
-				a.files.init(f);
-				break;
-			}
+			})(field, f, id);
 			if (field.oninit) field.oninit(a, field, a.data[f]);
 		}
 	};

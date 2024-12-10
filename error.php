@@ -64,8 +64,7 @@ class xError {
 		$this->setup($setup);
 
 		// access log
-		if (($f=$this->access) && $_SERVER["HTTP_HOST"])
-			file_put_contents($f, $this->accessEntry(), FILE_APPEND);
+		if ($_SERVER["HTTP_HOST"]) $this->log($this->accessEntry());
 
 		// disable critical errors
 		$e=error_reporting();
@@ -78,7 +77,7 @@ class xError {
 	}
 
 	// getter/setter/isset
-	function __get($n) { return $this->setup[$n]; }
+	function __get($n) { return (isset($this->setup[$n])?$this->setup[$n]:null); }
 	function __set($n, $v) { $this->setup[$n]=$v; }
 	function __call($n, $a) { $f=$this->setup[$n]; if (is_callable($f)) call_user_func_array($f, $a); }
 	function __isset($n) { return isset($this->setup[$n]); }
@@ -109,13 +108,13 @@ class xError {
 			$this->visible(false);
 
 			// capture non-critical errors
-			set_error_handler(function($type, $message, $file, $line, $context){
+			set_error_handler(function($type, $message, $file, $line, $context=[]){
 				if (in_array($type, $this->warnings)) {
+					if (strpos($message, "Undefined array key") !== false) return; // ignore undefined array keys for PHP 8+
 					$this->error=[
 						"type"=>$type,
 						"message"=>$message,
 						"file"=>$file,
-						"type"=>$type,
 						"line"=>$line,
 						"trace"=>$this->trace(),
 						//"context"=>$context,
@@ -145,7 +144,7 @@ class xError {
 		}
 
 		// set database
-		if ($setup["db"]) $this->db($setup["db"]);
+		if (isset($setup["db"])) $this->db($setup["db"]);
 
 		// return setup
 		return $this->setup;
@@ -179,6 +178,11 @@ class xError {
 			." ".\x::request()."\n"
 			.($_POST?" POST ".substr(serialize($_POST), 0, 64*1024)."]\n":"")
 		;
+	}
+
+	// log
+	function log($m) {
+		if ($f=$this->access) file_put_contents($f, (string)$m, FILE_APPEND);
 	}
 
 	// convert first trace to file/line
@@ -267,8 +271,8 @@ class xError {
 			"type"=>self::ERR_APP,
 			"message"=>$err,
 		]);
-		if (!$err["title"]) $err["title"]=(($et=$this->error_types[$err["type"]])?$et:"Error[".$err["type"]."]");
-		if (!$err["text"]) $err["text"]=strip_tags($err["message"]).($err["file"]?""
+		if (!isset($err["title"])) $err["title"]=(($et=$this->error_types[$err["type"]])?$et:"Error[".$err["type"]."]");
+		if (!isset($err["text"])) $err["text"]=strip_tags($err["message"]).($err["file"]?""
 			.(strpos($err["message"], "\n")?"\n ":"")
 			." - ".$err["file"]." line ".$err["line"]:"");
 		if (!isset($err["trace"])) $err["trace"]=$this->trace();
@@ -360,7 +364,7 @@ class xError {
 		if ($GLOBALS["ajax"] && function_exists("ajax")) {
 			ajax(["err"=>$err["title"].": ".$err["text"], "code"=>$exit]);
 		// CLI
-		} else if (!$_SERVER["HTTP_HOST"]) {
+		} else if (!isset($_SERVER["HTTP_HOST"])) {
 			error_log("[".date("YmdHis")."] ".$err["title"].": ".$err["text"]);
 		// HTML
 		} else {
@@ -446,6 +450,6 @@ class xError {
 }
 
 // instance, if setup defined
-if ($error_setup)
-	foreach ($error_setup as $_n=>$_s)
-		$$_n=new xError($_s);
+if ($error_setup) foreach ($error_setup as $_n=>$_s) {
+	$$_n=new xError($_s);
+} unset($_n); unset($_s);

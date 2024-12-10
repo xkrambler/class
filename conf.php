@@ -15,7 +15,7 @@ class Conf {
 
 	// devolver una opción
 	function __get($n) {
-		return $this->o[$n];
+		return (isset($this->o[$n])?$this->o[$n]:null);
 	}
 
 	// establecer una opción
@@ -54,6 +54,7 @@ class Conf {
 			return null;
 		}
 		if (is_array($ids)) {
+			$a=array();
 			foreach ($ids as $n)
 				if (isset($this->cache[$n]))
 					$a[$n]=$this->cache[$n];

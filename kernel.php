@@ -269,9 +269,8 @@ class Kernel {
 	function arrayFromQueryString($qs=null) {
 		if ($qs === null) $qs=$_SERVER["QUERY_STRING"];
 		$a=[];
-		if (substr($qs, 0, 1)=="?") $qs=substr($qs, 1);
+		if (substr($qs, 0, 1) == "?") $qs=substr($qs, 1);
 		parse_str($qs, $a);
-		//debug($a);
 		return $a;
 	}
 
@@ -320,11 +319,36 @@ class Kernel {
 		$ctime_called=$t;
 	}
 
+	// encode mail string
+	static function mailEncode($s) {
+		return '=?'.\x::charset().'?B?'.base64_encode($s).'?=';
+	}
+
+	// encode e-mail destination
+	static function mailDestination($s) {
+		$s=trim($s);
+		if ($i=strrpos($s, " ")) {
+			if (substr($s, 0, 1) != "=") {
+				return self::mailEncode(substr($s, 0, $i)).substr($s, $i);
+			}
+		}
+		return $s;
+	}
+
+	// prepare e-mail destinations
+	static function headerMailDestinations($header, $emails) {
+		$s="";
+		if ($emails)
+			foreach ($a=(is_array($emails)?$emails:explode(",", $emails)) as $e)
+				$s.=$header.": ".self::mailDestination($e)."\r\n";
+		return $s;
+	}
+
 	// e-mail sending helper
 	/*
 		Kernel::mailto([
 			"from"=>"sender@domain",
-			"to"=>"recipient1@domain,recipient2@domain",
+			"to"=>["Name <recipient1@domain>","recipient2@domain"],
 			"cc"=>"recipient3@domain,recipient4@domain",
 			"subject"=>"Subject",
 			"html"=>"Message with <b>HTML</b> <img src='cid:testid' />",
@@ -336,37 +360,28 @@ class Kernel {
 		]);
 	*/
 	static function mailto($o) {
+		if (!is_array($o)) return false;
 		// prepare boundaries
 		$mime_boundary_alt="==awesome_ALT".strtoupper(sha1(uniqid()))."_";
 		$mime_boundary_mix="==awesome_MIX".strtoupper(sha1(uniqid()))."_";
-		// prepare CC
-		$cc="";
-		if ($o["cc"])
-			foreach ($ccs=explode(",", $o["cc"]) as $e)
-				$cc.="Cc: ".$e."\r\n";
-		// prepare BCC
-		$bcc="";
-		if ($o["bcc"])
-			foreach ($bccs=explode(",", $o["bcc"]) as $e)
-				$bcc.="Bcc: ".$e."\r\n";
 		// prepare headers
 		$headers
-			=($o["from"]?"From: ".$o["from"]."\r\n":"")
-			.($o["reply"]?"Reply-To: ".$o["reply"]."\r\n":"")
-			.$cc
-			.$bcc
+			=(($e=$o["from"])?"From: ".self::mailDestination($e)."\r\n":"")
+			.(($e=$o["reply"])?"Reply-To: ".self::mailDestination($e)."\r\n":"")
+			.self::headerMailDestinations("Cc", $o["cc"])
+			.self::headerMailDestinations("Bcc", $o["bcc"])
 			."Date: ".date("r")."\r\n"
 			."MIME-Version: 1.0\r\n"
 			."Content-Type: multipart/related;\r\n"
 			." boundary=\"{$mime_boundary_mix}\"\r\n"
 		;
 		// add mailer
-		if (!isset($o["mailer"]) || $o["mailer"]) $headers.="X-Mailer: ".($o["mailer"]?$o["mailer"]:"fsme_mailer/1.0.3")."\r\n";
+		if (!isset($o["mailer"]) || $o["mailer"]) $headers.="X-Mailer: ".(($v=$o["mailer"])?$v:"fsme_mailer/1.0.4")."\r\n";
 		// add headers
 		if (is_string($o["headers"])) $headers.=$o["headers"];
 		else if (is_array($o["headers"])) foreach ($o["headers"] as $v) $headers.=$v."\r\n";
 		// prepare body
-		$body="Scrambled for your security by the Flying Spaguetti Monster Engine Mailer.\r\n\r\n";
+		$body="Scrambled by the Flying Spaghetti Monster Engine Mailer.\r\n\r\n";
 		$body.="--{$mime_boundary_mix}\r\n"
 			."Content-Type: multipart/alternative;\r\n"
 			." boundary=\"{$mime_boundary_alt}\"\r\n"
@@ -402,7 +417,7 @@ class Kernel {
 				.($a["id"]?"Content-ID: <".$a["id"].">\r\n":"")
 				."Content-Transfer-Encoding: base64\r\n"
 				//."Content-Length: ".strlen($temp)."\r\n"
-				.($name?"Content-Disposition: attachment;\r\n filename=\"".str_replace('"', "''", $name)."\"\r\n":"")
+				.($name?"Content-Disposition: attachment;\r\n filename=\"".self::headerFilename($name)."\"\r\n":"")
 				."\r\n".$temp."\r\n\r\n"
 			;
 			unset($temp);
@@ -411,25 +426,23 @@ class Kernel {
 		// prepare destinations
 		$to="";
 		if ($o["to"]) {
-			$tos=explode(",", $o["to"]);
-			foreach ($tos as $e) {
-				if ($i=strpos($e, "<")) $e=substr($e, $i+1);
-				if ($i=strpos($e, ">")) $e=substr($e, 0, $i);
-				$to.=($to?",":"").$e;
+			if (is_array($o["to"])) {
+				foreach ($o["to"] as $e) $to.=($to?",":"").self::mailDestination($e);
+			} else {
+				$to=(strpos($o["to"], ",")?$o["to"]:self::mailDestination($o["to"]));
 			}
 		} else {
 			if ($o["bcc"]) $to="undisclosed-recipients:;";
 		}
-		// prepare subject: if not 7-bit, base64_encode(UTF-8)
+		// prepare subject: if not 7-bit, encode
 		$subject=$o["subject"];
-		if (!preg_match("/^[\\040-\\176]+$/", $subject))
-			$subject="=?UTF-8?B?".base64_encode($o["subject"])."?=";
+		if (!preg_match("/^[\\040-\\176]+$/", $subject)) $subject=self::mailEncode($o["subject"]);
 		// send it!
 		return @mail($to, $subject, $body, $headers);
 	}
 
 	// dir filename sorting
-	static function name_sort($a,$b) {
+	static function name_sort($a, $b) {
 		return (strtolower($a["name"]) > strtolower($b["name"])?1:(strtolower($a["name"]) < strtolower($b["name"])?-1:0));
 	}
 
@@ -440,7 +453,7 @@ class Kernel {
 		$fa=array();
 		$d=dir($p);
 		while ($e=$d->read()) {
-			if ($e=="." || $e=="..") continue;
+			if ($e == "." || $e == "..") continue;
 			if (is_dir($p.$e)) {
 				$fd[]=array(
 					"dir"=>true,
@@ -472,9 +485,9 @@ class Kernel {
 		$a=array();
 		$d=dir($root);
 		while ($e=$d->read()) {
-			if ($e=="." || $e=="..") continue;
+			if ($e == "." || $e == "..") continue;
 			if (is_dir($root.$e)) {
-				$res=$this->dir_recursive($root.$e."/",$paths);
+				$res=$this->dir_recursive($root.$e."/", $paths);
 				if ($res)
 					foreach ($res as $f)
 						$a[]=$f;
@@ -494,7 +507,7 @@ class Kernel {
 		if (!file_exists($base)) return false;
 		foreach ($this->dir_recursive($base) as $f)
 			@unlink($f);
-		$rutas=$this->dir_recursive($base,true);
+		$rutas=$this->dir_recursive($base, true);
 		rsort($rutas);
 		foreach ($rutas as $f)
 			@rmdir($f);
@@ -525,7 +538,7 @@ class Kernel {
 		if (!$f) $f="file";
 		// cabeceras
 		header("Content-Type: ".$o["type"].($o["charset"]?"; charset=".$o["charset"]:""));
-		header("Content-Disposition: ".($o["attachment"]?"attachment; ":"inline; ")."filename=\"".str_replace('"', "''", $f).'"');
+		header("Content-Disposition: ".($o["attachment"]?"attachment; ":"inline; ")."filename=\"".self::headerFilename($f).'"');
 		switch ($method) {
 		case "headers":
 			return true;
@@ -567,56 +580,64 @@ class Kernel {
 		return Mimetypes::file($f);
 	}
 
+	// escape header file name special chars
+	static function headerFilename($f) {
+		return basename(str_replace(array('"', "'", "?", "*", "\r", "\n", "\t"), "", $f));
+	}
+
 	// output data as CSV
-	static function csv($o) {
+	static function csv(array $o) {
 		foreach ($defaults=array(
 			"attachment"=>true,
 			"delimiter"=>'"',
 			"separator"=>';',
 			"numeric"=>true,
 			"doexit"=>true,
+			"escape"=>"\\",
 			"eol"=>"\n",
 			"mimetype"=>self::getMimetype(".csv"),
-			"filename"=>"export_".time().".csv",
+			"filename"=>"export_".date("YmdHis").".csv",
 		) as $k=>$v)
 			if (!isset($o[$k]))
 				$o[$k]=$v;
 		if ($o["mimetype"]) header('Content-Type: '.$o["mimetype"]);
-		if ($o["filename"]) header('Content-Disposition: '.($o["attachment"]?"attachment":"inline").'; filename="'.str_replace('"', "''", $o["filename"]).'"');
-		if ($o["add_bom"] || $o["addBom"]) { // DEPRECATED: addBom
-			// Esta modificación hace que los csv generados se vean bien en Excel para Windows, pero no en el de MAC
-			// Para que funcione bien en el Excel for MAC, hay que generar el fichero en formato UTF-16.
-			// - Añadir BOM para que el texto en UTF-8 se vea bien en Excel -
-			echo "\xEF\xBB\xBF";
-		}
+		if ($o["filename"]) header('Content-Disposition: '.($o["attachment"]?"attachment":"inline").'; filename="'.self::headerFilename($o["filename"]).'"');
+		if ($o["add_bom"] || $o["addBom"]) echo "\xEF\xBB\xBF"; // BOM header (required for Windows if exported in UTF-8)
 		$d=$o["delimiter"];
 		$s=$o["separator"];
 		$eol=$o["eol"];
+		$escape=$o["escape"];
 		$numeric=$o["numeric"];
-		if (is_array($o["data"])) foreach ($o["data"] as $i=>$row) {
-			$c=0;
-			foreach ($row as $n=>$v) {
-				echo ($c++?$s:"").$d.str_replace($d, "\\".$d, $n).$d;
-			}
-			echo $eol;
-			break;
-		}
 		$filter=$o["filter"];
-		if (is_array($o["data"])) foreach ($o["data"] as $i=>$row) {
-			if ($o["filter"]) $row=$o["filter"]($row);
-			$c=0;
-			foreach ($row as $n=>$v) {
-				$rd=($numeric && is_numeric($v)?"":$d);
-				echo ($c++?$s:"").$rd.str_replace($d, "\\".$d, $v).$rd;
+		if ($r=is_array($o["data"])) {
+			foreach ($o["data"] as $i=>$row) {
+				if ($filter) $row=$filter($row);
+				$c=0;
+				foreach ($row as $v=>$n) {
+					if (!strlen($d)) $v=str_replace($s, $escape.$s, $v);
+					echo ($c++?$s:"").(strlen($d)?$d.str_replace($d, $escape.$d, $v).$d:$v);
+				}
+				echo $eol;
+				break;
 			}
-			echo $eol;
+			foreach ($o["data"] as $i=>$row) {
+				if ($filter) $row=$filter($row);
+				$c=0;
+				foreach ($row as $n=>$v) {
+					$rd=(!strlen($d) || $numeric && is_numeric($v)?"":$d);
+					if (!strlen($d)) $v=str_replace($s, $escape.$s, $v);
+					echo ($c++?$s:"").$rd.(strlen($d)?str_replace($d, $escape.$d, $v):$v).$rd;
+				}
+				echo $eol;
+			}
 		}
 		if ($v=$o["doexit"]) exit($v === true?0:$v);
+		return $r;
 	}
 
 	// replace template values enclosed between tags characters
 	static function template($template, $fields, $o=array()) {
-		if (!$o["tags"]) $o["tags"]="%%";
+		if (!isset($o["tags"])) $o["tags"]="%%";
 		$j=0;
 		while ($j < strlen($template)) {
 			$i=strpos($template, substr($o["tags"], 0, 1), $j);   if ($i === false) break;
@@ -722,14 +743,14 @@ class Kernel {
 				2=>array('pipe', 'w'),
 			),
 			$pipes,
-			($o["cwd"]?$o["cwd"]:null),
-			($o["env"]?$o["env"]:null),
-			($o["options"]?$o["options"]:null)
+			(isset($o["cwd"])?$o["cwd"]:null),
+			(isset($o["env"])?$o["env"]:null),
+			(isset($o["options"])?$o["options"]:null)
 		);
 		if (is_resource($proc)) {
 
 			// write data to input pipe
-			if ($in=$o["in"]) {
+			if (isset($o["in"]) && ($in=$o["in"])) {
 				if (is_callable($in)) $in($o, $pipes, $proc);
 				else fwrite($pipes[0], $in);
 				fclose($pipes[0]);
@@ -737,9 +758,9 @@ class Kernel {
 
 			// read output and call back if requested
 			while (!feof($pipes[1]) || !feof($pipes[2])) {
-				if (!feof($pipes[1])) $data=fread($pipes[1], ($o["buffer"]?$o["buffer"]:4096));
-				if (!feof($pipes[2])) $error=fread($pipes[2], ($o["buffer"]?$o["buffer"]:4096));
-				if (strlen($error) && $redir=$o["redir"]) {
+				if (!feof($pipes[1])) $data=fread($pipes[1], (isset($o["buffer"])?$o["buffer"]:4096));
+				if (!feof($pipes[2])) $error=fread($pipes[2], (isset($o["buffer"])?$o["buffer"]:4096));
+				if (strlen($error) && isset($o["redir"]) && ($redir=$o["redir"])) {
 					if (is_callable($redir)) $error=$redir($error, $pipes, $proc);
 					if (is_string($error)) $data.=$error;
 				}
@@ -753,7 +774,7 @@ class Kernel {
 			}
 
 			// close pipes
-			if ($in) @fclose($pipes[0]);
+			if (!isset($o["in"]) && !$in) @fclose($pipes[0]);
 			@fclose($pipes[1]);
 			@fclose($pipes[2]);
 
@@ -813,7 +834,7 @@ class Kernel {
 	 */
 	static function autoload($base=null) {
 		spl_autoload_register(function($c){
-			if ($base === null) $base=getcwd();
+			if (!isset($base) || $base === null) $base=getcwd();
 			$f=$base.(substr($base, -1, 1) != "/"?"/":"").strtolower(str_replace('\\', '/', $c)).".php";
 			if (file_exists($f)) require_once($f);
 		});
@@ -826,10 +847,11 @@ class Kernel {
 			if (!$o["len"]) $o["len"]=($o["data"]?strlen($o["data"]):filesize($o["file"]));
 			if (!isset($o["name"])) $o["name"]=basename($o["file"]);
 		}
+		if ($o["attachment"]) $o["disposition"]="attachment";
 		if ($o["name"] || $o["disposition"]) {
 			header('Content-Disposition: '
 				.($o["disposition"]?$o["disposition"]:'')
-				.($o["name"]?($o["disposition"]?'; ':'').'filename="'.str_replace('"', "''", $o["name"]).'"':'')
+				.($o["name"]?($o["disposition"]?'; ':'').'filename="'.self::headerFilename($o["name"]).'"':'')
 			);
 		}
 		// obtener inicio y fin de un rango especificado (leer solo el primero)
@@ -850,7 +872,7 @@ class Kernel {
 					header('Content-Range: bytes '.$start.'-'.$end.'/'.$o["len"]);
 					header('Accept-Ranges: bytes');
 					if ($o["streamer"]) {
-						echo $o["streamer"](array_merge($o,array("start"=>$start,"end"=>$end,"length"=>($end-$start))));
+						echo $o["streamer"](array_merge($o, array("start"=>$start, "end"=>$end, "length"=>($end-$start))));
 					} else if ($o["data"]) {
 						echo substr($o["data"], $start, $end-$start);
 					} else if ($o["file"]) {
@@ -860,6 +882,7 @@ class Kernel {
 							fclose($f);
 						}
 					}
+					if ($end >= $o["len"] && $o["onend"]) $o["onend"]($o);
 				}
 			}
 		} else {
@@ -871,12 +894,9 @@ class Kernel {
 			} else if ($o["data"]) {
 				echo $o["data"];
 			} else if ($o["file"]) {
-				if ($f=fopen($o["file"],"r")) {
-					while (!feof($f))
-						echo fread($f, 1024);
-					fclose($f);
-				}
+				readfile($o["file"]);
 			}
+			if ($o["onend"]) $o["onend"]($o);
 		}
 		exit;
 	}

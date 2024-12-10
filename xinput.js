@@ -583,6 +583,14 @@ function xInput(o){
 		}
 	};
 
+	// icon renderer
+	a.icon=function(o){
+		if (a.o.icon) return a.o.icon(o);
+		if (window.kernel && window.kernel.icon) return window.kernel.icon(o);
+		if (typeof(o) == "string") var o={"icon":o};
+		return "<span class='fa fa-"+o.icon+"'"+(o.color?" style='color:"+o.color+";'":"")+""+(o.title?" title='"+htmlentities(o.title)+"'":"")+"></span>";
+	};
+
 	// inicializar
 	a.init=function(){
 
@@ -670,7 +678,7 @@ function xInput(o){
 		if (a.o.del) {
 			a.el.action_del=a.newElement("div",{
 				"class":"noselect xinput_action"+(a.o.class && a.o.class.action?" "+a.o.class.action:""),
-				"html":"<span class='fa fa-trash'></span>",
+				"html":a.icon("trash"),
 				"properties":{
 					"onclick":function(e){
 						a.close();
@@ -684,7 +692,7 @@ function xInput(o){
 		if (a.o.add) {
 			a.el.action_add=a.newElement("div",{
 				"class":"noselect xinput_action"+(a.o.class && a.o.class.action?" "+a.o.class.action:""),
-				"html":"<span class='fa fa-plus'></span>",
+				"html":a.icon("plus"),
 				"properties":{
 					"onclick":function(e){
 						e.stopPropagation();
@@ -698,7 +706,7 @@ function xInput(o){
 		if (a.o.edit) {
 			a.el.action_edit=a.newElement("div",{
 				"class":"noselect xinput_action"+(a.o.class && a.o.class.action?" "+a.o.class.action:""),
-				"html":"<span class='fa fa-edit'></span>",
+				"html":a.icon("edit"),
 				"properties":{
 					"onclick":function(e){
 						e.stopPropagation();
