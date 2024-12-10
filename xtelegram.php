@@ -57,6 +57,15 @@ class xTelegram {
 		]));
 	}
 
+	// send document
+	function sendDocument($o=[]) {
+		return $this->requestMultipart(($o["to"]?$o["to"]:$this->to)."/sendDocument", $this->selectOptions($o, [
+			"chat_id",
+			"document",
+			"no_webpage",
+		]));
+	}
+
 	// send message
 	function sendMessage($o=[]) {
 		return $this->request(($o["to"]?$o["to"]:$this->to)."/sendMessage", $this->selectOptions($o, [
@@ -75,7 +84,7 @@ class xTelegram {
 		]));
 	}
 
-	// get file info - https://api.telegram.org/bot1234:abcd/getFile?file_id=xyz890
+	// get file info - https://api.telegram.org/bot348307714:AAHMNRMq66c_KgQ9TEjyVaUhr614nyxvw4M/getFile?file_id=BQACAgQAAx0Ca-f34gACCOtnWBkYNoPceD_LdNCms_4Tmto2owACDBQAAk0VwFKjMg4tHd_QmjYE
 	function getFile($o=[]) {
 		return $this->request(($o["to"]?$o["to"]:$this->to)."/getFile", $this->selectOptions($o, [
 			"file_id",
