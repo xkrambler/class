@@ -31,7 +31,7 @@ class WS {
 		} else {
 			$this->data=json_decode(file_get_contents('php://input'), true);
 		}
-		if (!isset($this->action)) $this->action=$this->data["action"];
+		if (!isset($this->action) && $this->data) $this->action=$this->data["action"];
 
 		// ask for key
 		if (!($key=$this->key()) && isset($_REQUEST["askkey"])) {
@@ -109,10 +109,10 @@ class WS {
 	function key() {
 
 		// get key from data
-		$key=$this->data["key"];
+		$key=($this->data?$this->data["key"]:null);
 
 		// if no key in data, try get it from headers
-		if (!isset($key)) {
+		if ($key !== null) {
 			$headers=$this->getAllHeaders();
 			foreach ($keyheaders=["Authorization", "X-API-KEY"] as $k)
 				if (isset($headers[$k]))
