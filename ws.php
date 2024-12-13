@@ -112,7 +112,7 @@ class WS {
 		$key=($this->data?$this->data["key"]:null);
 
 		// if no key in data, try get it from headers
-		if ($key !== null) {
+		if ($key === null) {
 			$headers=$this->getAllHeaders();
 			foreach ($keyheaders=["Authorization", "X-API-KEY"] as $k)
 				if (isset($headers[$k]))
