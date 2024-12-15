@@ -493,13 +493,12 @@ function xForm3(o) {
 			},
 			"oncancel":function(uploader){
 				newwait_close();
-				newwarn("Subida cancelada.");
 			},
 			"onabort":function(uploader, r){
 			},
 			"onerror":function(uploader, r){
 				newwait_close();
-				newerror("Error en subida"+(r.data && r.data.err?": "+r.data.err:"")+": "+r.text);
+				newerror("Error en subida"+(r.data && r.data.err?": "+r.data.err:(r.text?": "+r.text:"")));
 				//alert(adump(r));
 			},
 			"browse":true
