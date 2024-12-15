@@ -52,7 +52,6 @@ class xForm3 {
 	static private $sid;
 	protected $o;
 	protected $fields;
-	protected $ssid="";
 	protected $errors=array();
 	protected $magicMimes=array(
 		"image/jpeg"=>array("\xFF\xD8\xFF"),
@@ -98,12 +97,14 @@ class xForm3 {
 		foreach ($default_class as $f=>$c)
 			if (!isset($o["class"][$f]))
 				$o["class"][$f]=$c;
-		if (!isset($o["name"])) $o["name"]="xform".self::$sid;
+		if (!isset($o["name"])) $o["name"]="xf".self::$sid;
 		$this->o=$o;
+		if (is_array($this->o["ssid"])) $this->o["ssid"]=\x::base().\x::link($this->o["ssid"]);
+		if (!isset($this->o["ssid"])) $this->o["ssid"]=\x::base().\x::link();
 		$this->fields($o["fields"]); unset($this->o["fields"]);
 		// si no es petición AJAX, se asume limpieza de sesión
-		if (!$this->isajax()) $this->sstart($this->ssid);
-		// asignar valores, si especificado
+		if (!$this->isajax()) $this->sstart($this->o["ssid"]);
+		// asignar valores iniciales, si especificado
 		if ($o["values"]) {
 			$this->values($o["values"]);
 			unset($this->o["values"]);
@@ -1000,13 +1001,16 @@ class xForm3 {
 
 	// get/set session name
 	function ssid($ssid=null) {
-		if ($ssid !== null) $this->ssid="".$ssid;
-		return $this->ssid;
+		if ($ssid !== null) $this->o["ssid"]="".$ssid;
+		return $this->o["ssid"];
 	}
 
 	// clear session
 	function sclean() {
-		unset($_SESSION["xform3"][$_SERVER["PHP_SELF"]][$this->o["name"]][$this->ssid]);
+		if ($_SESSION["xform3"]
+			&& $_SESSION["xform3"][$this->ssid()]
+			&& $_SESSION["xform3"][$this->ssid()][$this->o["name"]]
+		) unset($_SESSION["xform3"][$this->ssid()][$this->o["name"]]);
 	}
 
 	// start session
@@ -1024,11 +1028,10 @@ class xForm3 {
 	// get/set session data for a field
 	function svalue($field, $value=null) {
 		if ($value === false) {
-			unset($_SESSION["xform3"][$_SERVER["PHP_SELF"]][$this->o["name"]][$this->ssid][$field]);
+			unset($_SESSION["xform3"][$this->ssid()][$this->o["name"]][$field]);
 		} else {
-			if ($value !== null)
-				$_SESSION["xform3"][$_SERVER["PHP_SELF"]][$this->o["name"]][$this->ssid][$field]=$value;
-			return $_SESSION["xform3"][$_SERVER["PHP_SELF"]][$this->o["name"]][$this->ssid][$field];
+			if ($value !== null) $_SESSION["xform3"][$this->ssid()][$this->o["name"]][$field]=$value;
+			return $_SESSION["xform3"][$this->ssid()][$this->o["name"]][$field];
 		}
 	}
 
