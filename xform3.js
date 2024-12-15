@@ -248,6 +248,7 @@ function xForm3(o) {
 			if (f.decimal)     value=(value?localeNumber(value):0);
 			if (f.nullifempty) value=a.nullifempty(value);
 			if (f.nullifzero)  value=a.nullifzero(value);
+			if (f.trim)        value=trim(value);
 		}
 		return value;
 	};
@@ -1164,6 +1165,7 @@ function xForm3(o) {
 						};
 					})(id);
 					break;
+				case "area":
 				case "number":
 				case "text":
 					if (gid(id)) {
@@ -1171,6 +1173,7 @@ function xForm3(o) {
 						if (field.number)   gInputInt(id, true);
 						if (field.positive) gInputFloat(id);
 						if (field.decimal)  gInputFloat(id, true);
+						if (field.trim)     gid(id).addEventListener("blur", function(){ this.value=trim(this.value); });
 					}
 					break;
 				case "audio":
@@ -1183,7 +1186,7 @@ function xForm3(o) {
 					a.files.init(f);
 					break;
 				case "color":
-					if (typeof(newalert) == "function" && typeof(iro) == "object" && iro.ColorPicker) {
+					if (a.gid(f) && typeof(newalert) == "function" && typeof(iro) == "object" && iro.ColorPicker) {
 						a.gid(f).onclick=function(){
 							var buttons=[];
 							buttons.push({"caption":a.icon("check")+" Aceptar","default":true});
