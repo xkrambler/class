@@ -796,7 +796,7 @@ function xItemsSearch(o) {
 							+"<input id='"+a.o.id+"_search_txt' class='txt xitemsearch_search_txt' type='text' value='' />"
 					:"")
 					+(a.o.paged && a.helpers["listvisiblenum"]
-						?"<select id='"+a.o.id+"_visible_list' class='cmb xitemsearch_visible_cmb' onChange='javascript:window.xItemsSearchs[\""+a.o.id+"\"].search();'>"+h+"</select>"
+						?"<select id='"+a.o.id+"_visible_list' class='cmb xitemsearch_visible_cmb'>"+h+"</select>"
 					:"")
 					+(a.helpers["extra_buttons"]
 						?"<span id='"+a.o.id+"_extra_buttons' class='xitemsearch_buttons'></span>"
@@ -888,13 +888,13 @@ function xItemsSearch(o) {
 		if (visible_list) {
 			gidval(visible_list, a.o.visibleActual);
 			gid(visible_list).onchange=function(){
+				a.search();
 				if (a.o.cookie) {
 					var v=a.getVisible();
 					if (a.o.visible == v) a.store("visible", null);
 					else a.store("visible", v);
 				}
 			};
-			//if (a.o.cookie) a.store("page", a.page);
 		}
 
 		// establecer filtros
