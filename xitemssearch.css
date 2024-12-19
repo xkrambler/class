@@ -51,7 +51,7 @@
 }
 .xitemsearch_page {
 	cursor: default;
-	padding: 4px 9px;
+	padding: 3px 9px;
 	border: 1px solid transparent;
 	text-decoration: none !important;
 	white-space: nowrap;
@@ -105,7 +105,7 @@
 .xitemsearch_table th a {
 	display: block;
 	color: #666;
-	padding: 4px 12px 4px 4px;
+	padding: 3px 12px 3px 3px;
 	text-decoration: none;
 }
 .xitemsearch_table th a span {
@@ -136,7 +136,7 @@
 	color: #FFF;
 }
 .xitemsearch_table td {
-	padding: 4px 9px;
+	padding: 3px 9px;
 }
 .xitemsearch_table tr td,
 .xitemsearch_table tr.xitemssearch_tr_item_active td,
