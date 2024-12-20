@@ -8,6 +8,15 @@ var xwidgets={
 
 	widgets:{},
 
+	// create unique xwidget id
+	"uniqueid":function(){
+		var id;
+		do {
+			var id="xwidget_"+(""+Math.random()).substring(2);
+		} while (xwidgets.widgets[id]);
+		return id;
+	},
+
 	/*
 
 		xwidgets.selector()
@@ -1953,6 +1962,16 @@ var xwidgets={
 			if (self.o) self.destroy();
 			self.e={"items":{}};
 			self.o=array_copy(o);
+			if (!self.o.id && self.o.input) {
+				self.o.id=xwidgets.uniqueid();
+				self.o.input.type="hidden";
+				self.o.input.parentNode.appendChild(newElement("div", {
+					"id":self.o.id,
+					"attributes":{
+						"style":self.o.input.getAttribute("style")
+					}
+				}));
+			}
 			if (self.o.ajaxitem) self.o.ajaxitems=[self.o.ajaxitem];
 			if (self.o.ajaxitems) self.o.ajaxdata={"data":self.o.ajaxitems};
 			self.o.html=(isset(self.o.html)?self.o.html:gidget(self.o.id));
