@@ -68,6 +68,7 @@ class xForm3 {
 		"files"=>false,
 		"images"=>false,
 	);
+	protected $trimHTML=["&#9;", "&#10;", "&#13;", "&nbsp;"];
 
 	// constructor and default values
 	function __construct($o) {
@@ -446,15 +447,31 @@ class xForm3 {
 		);
 	}
 
+	// HTML trimming
+	function htmlTrim($s) {
+		$s=trim((string)$s);
+		if ($this->trimHTML) do {
+			$f=false;
+			foreach ($this->trimHTML as $e) {
+				$l=strlen($e);
+				if (strtolower(substr($s, 0, $l)) == $e) { $f=true; $s=substr($s, $l); }
+				if (strtolower(substr($s, -$l, $l)) == $e) { $f=true; $s=substr($s, 0, -$l); }
+			}
+		} while ($f);
+		$s=trim($s);
+		if (in_array(strtolower($s), ["<br>","<br/>","<br />","</br>","<br></br>"])) $s="";
+		return $s;
+	}
+
 	// purge: apply specified conversions to value and sanitize value
 	function purgeFieldValue($f, $value) {
+		if (!($field=$this->fields[$f])) return $value;
 		// readonly resets value
 		if ($field["readonly"] && isset($field["value"])) $value=$field["value"];
 		// allowed filter for HTML
-		if ($field["trim"] && $field["type"] == "html") $value=trim($value);
+		if ($field["trim"] && $field["type"] == "html") $value=$this->htmlTrim($value);
 		// if no purge enabled, return now
 		if (!$this->purgeFieldEnabled($f, $value)) return $value;
-		$field=$this->fields[$f];
 		// filters
 		if ($field["trim"]) $value=trim($value);
 		if ($field["lowercase"] || $field["type"] == "email") $value=$this->strtolower($value);
