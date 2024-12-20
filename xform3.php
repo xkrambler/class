@@ -448,10 +448,13 @@ class xForm3 {
 
 	// purge: apply specified conversions to value and sanitize value
 	function purgeFieldValue($f, $value) {
-		if (!$this->purgeFieldEnabled($f, $value)) return $value;
-		$field=$this->fields[$f];
 		// readonly resets value
 		if ($field["readonly"] && isset($field["value"])) $value=$field["value"];
+		// allowed filter for HTML
+		if ($field["trim"] && $field["type"] == "html") $value=trim($value);
+		// if no purge enabled, return now
+		if (!$this->purgeFieldEnabled($f, $value)) return $value;
+		$field=$this->fields[$f];
 		// filters
 		if ($field["trim"]) $value=trim($value);
 		if ($field["lowercase"] || $field["type"] == "email") $value=$this->strtolower($value);
