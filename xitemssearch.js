@@ -663,6 +663,15 @@ function xItemsSearch(o) {
 		}
 	};
 
+	// store visible value
+	a.storeVisible=function(){
+		if (a.o.cookie) {
+			var v=a.getVisible();
+			if (a.o.visible == v) a.store("visible", null);
+			else a.store("visible", v);
+		}
+	};
+
 	// búsqueda
 	a.search=function(p){
 		if (typeof(p) == "string") var p={"search":p};
@@ -706,6 +715,7 @@ function xItemsSearch(o) {
 			if (r.data.err) newerror(r.data.err);
 			if (r.data.ok) {
 				a.storeSearchInputText();
+				a.storeVisible();
 				a.setVisible(r.data.visible);
 				if (p.onsearchok) p.onsearchok(a, r);
 				if ((a.page*a.getVisible()) > r.data.max) {
@@ -888,14 +898,7 @@ function xItemsSearch(o) {
 		var visible_list=gid(a.o.id+"_visible_list");
 		if (visible_list) {
 			gidval(visible_list, a.o.visibleActual);
-			gid(visible_list).onchange=function(){
-				a.search();
-				if (a.o.cookie) {
-					var v=a.getVisible();
-					if (a.o.visible == v) a.store("visible", null);
-					else a.store("visible", v);
-				}
-			};
+			gid(visible_list).onchange=function(){ a.search(); };
 		}
 
 		// establecer filtros
