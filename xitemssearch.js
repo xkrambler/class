@@ -104,8 +104,9 @@ function xItemsSearch(o) {
 
 	// establecer texto de búsqueda
 	a.setSearch=a.setSearchValue=function(v){
-		if (gid(a.o.id+"_search_txt")) gidval(a.o.id+"_search_txt", v)
+		if (gid(a.o.id+"_search_txt")) gidval(a.o.id+"_search_txt", v);
 		a.searchValue=v;
+		a.storeSearchInputText();
 	}
 
 	// ir a una página
@@ -644,11 +645,11 @@ function xItemsSearch(o) {
 	};
 
 	// update class for search input
-	a.changeSearchInputText=function(){
+	a.storeSearchInputText=function(){
 		a.refreshSearchInputText();
 		if (a.o.cookie) {
 			var v=a.getSearchValue();
-			a.store("search", (v == a.o.searchValue?null:v));
+			a.store("search", (v == ""?null:v));
 		}
 	};
 
@@ -704,7 +705,7 @@ function xItemsSearch(o) {
 			}
 			if (r.data.err) newerror(r.data.err);
 			if (r.data.ok) {
-				a.refreshSearchInputText();
+				a.storeSearchInputText();
 				a.setVisible(r.data.visible);
 				if (p.onsearchok) p.onsearchok(a, r);
 				if ((a.page*a.getVisible()) > r.data.max) {
@@ -809,8 +810,8 @@ function xItemsSearch(o) {
 			gid(a.o.id).appendChild(item_search);
 			if (gid(a.o.id+"_search_txt")) {
 				gid(a.o.id+"_search_txt").placeholder=a.o.placeholder;
-				gid(a.o.id+"_search_txt").addEventListener("change", function(e){ a.changeSearchInputText(); });
-				gid(a.o.id+"_search_txt").addEventListener("input", function(e){ a.changeSearchInputText(); });
+				gid(a.o.id+"_search_txt").addEventListener("change", function(e){ a.refreshSearchInputText(); });
+				gid(a.o.id+"_search_txt").addEventListener("input", function(e){ a.refreshSearchInputText(); });
 			}
 			a.refreshSearchInputText();
 
