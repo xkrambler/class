@@ -572,7 +572,7 @@ function xUploader(o) {
 		// set elements
 		if (isset(elements)) self.o.drag=(Array.isArray(elements)?elements:[elements]);
 		// set event listeners
-		for (var i=0; i<self.o.drag.length; i++) {
+		for (var i=0; i < self.o.drag.length; i++) {
 			var zone=gid(self.o.drag[i]);
 			if (zone) {
 				zone.addEventListener("dragover", self.ondragover, true);
@@ -588,7 +588,7 @@ function xUploader(o) {
 	self.undrag=function(){
 		if (!window.addEventListener) return false;
 		// unregister
-		for (var i=0; i<self.o.drag.length; i++) {
+		for (var i=0; i < self.o.drag.length; i++) {
 			var zone=gid(self.o.drag[i]);
 			if (zone) {
 				zone.removeEventListener("dragover", self.ondragover, true);
@@ -598,7 +598,12 @@ function xUploader(o) {
 		}
 		// everything ok
 		return true;
-	}
+	};
+
+	// remove registered events
+	self.destroy=function(){
+		self.undrag();
+	};
 
 	// default values
 	self.o={
