@@ -289,7 +289,7 @@ var xRegion={
 							// dibujar punto
 							a.c.beginPath();
 							a.c.lineWidth=(selected?a.styles.xregion_point_active.size:a.styles.xregion_point.size);
-							a.c.strokeStyle=(selected?a.styles.xregion_point_active.color:a.styles.xregion_point.color);
+							a.c.strokeStyle=(selected?a.styles.xregion_point_active.color:(p.color?p.color:a.styles.xregion_point.color));
 							a.c.arc(rx,ry,a.grabSize,0,2*Math.PI,true);
 							//a.c.strokeRect(rx-a.grabSize, ry-a.grabSize, (a.grabSize<<1)+1, (a.grabSize<<1)+1);
 							//a.c.fillRect(rx,ry,1,1);
