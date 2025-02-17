@@ -397,7 +397,7 @@ class dbMySQLi extends dbbase {
 		if (!$this->idcon) return false;
 		$querynum=$this->querynum($querynum);
 		$this->lastrow=$this->idquery[$querynum]->fetch_assoc();
-		if (strlen($field)) return $this->lastrow[$field];
+		if (strlen((string)$field)) return $this->lastrow[$field];
 		else {
 			if ($this->lastrow)
 				foreach ($this->lastrow as $field=>$value)
