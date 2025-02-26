@@ -126,7 +126,7 @@ function ws($url, $fields=null, $options=array()) {
 		$rinfo["content"]=$r;
 	}
 	curl_close($ch);
-	return ($rinfo?$rinfo:$r);
+	return (isset($rinfo)?$rinfo:$r);
 }
 
 // envío de datos AJAX

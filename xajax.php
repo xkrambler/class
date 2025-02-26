@@ -73,7 +73,7 @@ function ws($url, $fields=null, $options=[]) {
 		$rinfo["content"]=$r;
 	}
 	curl_close($ch);
-	return ($rinfo?$rinfo:$r);
+	return (isset($rinfo)?$rinfo:$r);
 }
 
 // convert ajax data from JSON
