@@ -18,7 +18,16 @@ var xRegion={
 		}
 		return lista;
 	},
-	
+
+	"hexToRGB":function(hex) {
+		var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+		return result ? {
+			r: parseInt(result[1], 16),
+			g: parseInt(result[2], 16),
+			b: parseInt(result[3], 16)
+		} : null;
+	},
+
 	"map":function(o){
 		
 		// init
@@ -318,13 +327,15 @@ var xRegion={
 								var rect=a.tmp.regions[region].rect;
 								if (isset(rect)) {
 									var tx=a.dx+parseInt((rect.left+rect.right)/2)*a.scale, ty=a.dy+parseInt((rect.top+rect.bottom)/2)*a.scale;
+									//a.styles.xregion_caption.fontSize=16;
+									//a.styles.xregion_caption.fontSizeMax=32;
 									a.fillTextBorder(o.regions[region].caption, tx, ty);
 								}
 							}
 						}
 					}
 				}
-				
+
 				// dibujar region en creación
 				if (a.tmp.startRegion) {
 					var cl=o.regions[a.tmp.startRegion].coords[o.regions[a.tmp.startRegion].coords.length-1];
