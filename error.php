@@ -173,7 +173,7 @@ class xError {
 	function accessEntry() {
 		return date("YmdHis")
 			." ".($_SERVER["HTTP_HOST"]?$_SERVER["HTTP_HOST"]:"-")
-			." ".($_SERVER["REMOTE_ADDR"]?$_SERVER["REMOTE_ADDR"]:"-")
+			." ".(($v=\x::remoteaddr())?$v:"-")
 			." ".(is_string($_SESSION["user"])?$_SESSION["user"]:"-")
 			." ".\x::request()."\n"
 			.($_POST?" POST ".substr(serialize($_POST), 0, 64*1024)."]\n":"")
@@ -217,7 +217,7 @@ class xError {
 				if (!$db->query($db->sqlinsert("access_log", [
 					"host"=>$_SERVER["HTTP_HOST"],
 					"datetime"=>$db->now(),
-					"ip"=>$_SERVER["REMOTE_ADDR"],
+					"ip"=>(($v=\x::remoteaddr())?$v:""),
 					"agent"=>substr($_SERVER["HTTP_USER_AGENT"], 0, 255),
 					"url"=>substr(\x::request(), 0, 4096),
 					"post"=>($_POST?json_encode($_POST):null),
@@ -325,7 +325,7 @@ class xError {
 			.$err["title"].": ".strip_tags($err["message"])."\n"
 			.($err["file"]?"File: ".$err["file"].($err["line"]?" at line ".$err["line"]:"")."\n":"")
 			.($_SERVER["HTTP_HOST"]?"URL: ".\x::base().\x::alink()."\n":"")
-			.(($v=$_SERVER["REMOTE_ADDR"])?"Remote_Addr: ".$v."\n":"")
+			.(($v=\x::remoteaddr())?"Remote_Addr: ".$v."\n":"")
 			."Time: ".date("d/m/Y H:i:s")."\n"
 			.(isset($this->burst_loop)?"Burst: ".$this->burst_loop."\n":"")
 			.($err["sql"]?"SQL:\n".$err["sql"]."\n":"")
