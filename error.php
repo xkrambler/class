@@ -174,7 +174,7 @@ class xError {
 		return date("YmdHis")
 			." ".($_SERVER["HTTP_HOST"]?$_SERVER["HTTP_HOST"]:"-")
 			." ".(($v=\x::remoteaddr())?$v:"-")
-			." ".(is_string($_SESSION["user"])?$_SESSION["user"]:"-")
+			." ".(($v=session_id()))?$v:"-")
 			." ".\x::request()."\n"
 			.($_POST?" POST ".substr(serialize($_POST), 0, 64*1024)."]\n":"")
 		;
