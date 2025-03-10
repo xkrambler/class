@@ -326,17 +326,6 @@ if ($_f && file_exists($_f)) {
 	$_d->close();
 }
 
-// legacy PHP classes and additional libraries
-if ($_x=$classes) foreach ($_x as $_c) x::inc($_c);
-if ($_x=$include) foreach ($_x as $_c) x::inc($_c);
-
-// include all PHP classes
-if ($_x=x::inc()) foreach ($_x as $_c) {
-	$_f=(strpos($_c, "/") !== false?"":__DIR__."/").$_c;
-	if (file_exists($_f.'.php')) require_once($_f.'.php');
-	x::isinc($_c, true);
-}
-
 // session control
 if (is_string(x::page("sessionname"))) {
 	session_set_cookie_params(0, '/; samesite=Lax', '');
@@ -351,6 +340,17 @@ $user=(isset($_SESSION["user"])?$_SESSION["user"]:null);
 // legacy volatile variables
 if (isset($_SESSION["ok"]))  { $ok =$_SESSION["ok"];  unset($_SESSION["ok"]); }
 if (isset($_SESSION["err"])) { $err=$_SESSION["err"]; unset($_SESSION["err"]); }
+
+// legacy PHP classes and additional libraries
+if ($_x=$classes) foreach ($_x as $_c) x::inc($_c);
+if ($_x=$include) foreach ($_x as $_c) x::inc($_c);
+
+// include all PHP classes
+if ($_x=x::inc()) foreach ($_x as $_c) {
+	$_f=(strpos($_c, "/") !== false?"":__DIR__."/").$_c;
+	if (file_exists($_f.'.php')) require_once($_f.'.php');
+	x::isinc($_c, true);
+}
 
 // automatic instances
 if (class_exists("Kernel")) {
