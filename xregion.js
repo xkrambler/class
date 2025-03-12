@@ -29,24 +29,24 @@ var xRegion={
 	},
 
 	"map":function(o){
-		
+
 		// init
 		var a=this;
-		
+		a.o=o;
+
 		// ver si está deshabilitado temporalmente
-		if (isset(o.disabled))
-			a.disabled=o.disabled;
-		
+		if (isset(o.disabled)) a.disabled=o.disabled;
+
 		a.isie7=function(){ return (navigator.userAgent.indexOf("MSIE 7")!=-1); }
 		a.isie78=function(){ return (navigator.userAgent.indexOf("MSIE 7")!=-1 || navigator.userAgent.indexOf("MSIE 8")!=-1); }
 		a.hasCanvasEvents=function(){ return !a.isie7(); }
-		
+
 		// centrar mapa
 		a.center=function(){
 			a.tmp.centerMap=true;
 			a.redraw();
 		}
-		
+
 		// return results
 		a.get=function(){
 			return {
@@ -55,7 +55,7 @@ var xRegion={
 				"deleted":a.deleted
 			}
 		};
-		
+
 		// set edit mode
 		a.setEditable=function(enabled){
 			a.cancelRegion();
@@ -63,7 +63,7 @@ var xRegion={
 			a.redraw();
 			a.setCursor();
 		};
-		
+
 		// cursor
 		a.setCursor=function(cursor){
 			if (a.o.cursor) {
@@ -84,15 +84,15 @@ var xRegion={
 				}
 			}
 		},
-		
+
 		// adjust scale limits
 		a.setScale=function(newScale){
-			if (newScale=="image") {
+			if (newScale == "image") {
 				o.canvas.width=a.img.width;
 				o.canvas.height=a.img.height;
 				newScale=1;
 			}
-			if (newScale=="fit") {
+			if (newScale == "fit") {
 				var rw=o.canvas.width/a.img.width*(o.fitscale?o.fitscale:1);
 				var rh=o.canvas.height/a.img.height*(o.fitscale?o.fitscale:1);
 				newScale=(rw>rh?rh:rw);
@@ -101,15 +101,15 @@ var xRegion={
 			if (a.scale<a.minScale) a.scale=a.minScale;
 			if (a.scale>a.maxScale) a.scale=a.maxScale;
 		};
-		
+
 		// dibuja texto con borde
-		a.fillTextBorder=function(caption, x, y){
-			var size=parseInt(a.scale*a.styles.xregion_caption.fontSize);
-			if (size>a.styles.xregion_caption.fontSizeMax)
-			    size=a.styles.xregion_caption.fontSizeMax;
-			a.c.font=size+"px "+a.styles.xregion_caption.fontFamily;
-			a.c.fillStyle=a.styles.xregion_caption_border.color;
-			var size=a.styles.xregion_caption_border.size;
+		a.fillTextBorder=function(caption, x, y, color, style){
+			var style=style || a.styles.xregion_caption;
+			var size=parseInt(a.scale*style.fontSize);
+			if (size > style.fontSizeMax) size=style.fontSizeMax;
+			a.c.font=size+"px "+style.fontFamily;
+			a.c.fillStyle=style.borderColor;
+			var size=style.border;
 			a.c.fillText(caption, x-size, y);
 			a.c.fillText(caption, x-size, y-size);
 			a.c.fillText(caption, x-size, y+size);
@@ -118,22 +118,22 @@ var xRegion={
 			a.c.fillText(caption, x+size, y+size);
 			a.c.fillText(caption, x, y-size);
 			a.c.fillText(caption, x, y+size);
-			a.c.fillStyle=a.styles.xregion_caption.color;
+			a.c.fillStyle=(color?color:style.color);
 			a.c.fillText(caption, x, y);
 		};
-		
+
 		// redraw canvas
 		a.redraw=function(notDelayed){
 			if (this._redrawTimeout) clearTimeout(this._redrawTimeout);
 			var _redraw=function(){
-				
+
 				// si todavía no se ha cargado la imágen, esperar
 				if (!a.img.width || !a.img.height) { a.redraw(); return; }
-				
+
 				// resize
 				o.canvas.width=o.id.clientWidth;
 				o.canvas.height=o.id.clientHeight;
-				
+
 				// primero centramos el mapa
 				if (a.tmp.centerMap) {
 					a.setScale(a.scale);
@@ -141,7 +141,7 @@ var xRegion={
 					a.dy=-((a.img.height/2)*a.scale-o.canvas.height/2);
 					delete a.tmp.centerMap;
 				}
-				
+
 				// vemos si hay que centrar alguna región
 				if (a.tmp.centerRegion) {
 					if (a.tmp.regions[a.tmp.centerRegion]) {
@@ -168,11 +168,11 @@ var xRegion={
 					}
 					delete a.tmp.centerPoint;
 				}
-				
+
 				// real width
 				var w=a.img.width*a.scale;
 				var h=a.img.height*a.scale;
-								
+
 				// scroll control
 				if (o.strict) {
 					var mdx=(w-o.canvas.width);
@@ -196,7 +196,7 @@ var xRegion={
 				var rx=a.dx*1, ry=a.dy*1;
 				if (a.isie7()) var rx=(a.dx>0?a.dx/1.1:a.dx), ry=(a.dy>0?a.dy/1.1:a.dy);
 				a.c.drawImage(a.img, rx, ry, a.img.width*a.scale, a.img.height*a.scale);
-				
+
 				// ver si se está en modo edición
 				var isEditing=(o.editable && !o.disableAutoHide && (a.tmp.startRegion || (a.clicked && a.clicked.region) || a.tmp.startMoveRegion || a.tmp.startMoveCoord));
 				var activeRegion=(a.tmp.startRegion?a.tmp.startRegion:((a.clicked && a.clicked.region) || a.tmp.startMoveRegion || a.tmp.startMoveCoord?a.clicked.region:""));
@@ -287,33 +287,6 @@ var xRegion={
 
 				// estilo de textos
 				a.c.textAlign="center";
-				
-				// dibujar puntos
-				if (!isEditing) {
-					for (var i in o.points) {
-						var p=o.points[i];
-						var rx=a.dx+p.x*a.scale,ry=a.dy+p.y*a.scale;
-						var selected=(a.clicked && a.clicked.point==i);
-						if (!o.onDrawPoint || o.onDrawPoint(a,rx,ry,i,p,selected)) {
-							// dibujar punto
-							a.c.beginPath();
-							a.c.lineWidth=(selected?a.styles.xregion_point_active.size:a.styles.xregion_point.size);
-							a.c.strokeStyle=(selected?a.styles.xregion_point_active.color:(p.color?p.color:a.styles.xregion_point.color));
-							a.c.arc(rx,ry,a.grabSize,0,2*Math.PI,true);
-							//a.c.strokeRect(rx-a.grabSize, ry-a.grabSize, (a.grabSize<<1)+1, (a.grabSize<<1)+1);
-							//a.c.fillRect(rx,ry,1,1);
-							//a.c.fillStyle="rgba(255,0,255,0.2)";
-							a.c.fillStyle=a.c.strokeStyle;
-							a.c.fill();
-							a.c.stroke();
-							// dibujar texto
-							if (isset(p.caption)) {
-								a.c.textBaseline="top";
-								a.fillTextBorder(p.caption, rx, ry+(a.grabSize<<1));
-							}
-						}
-					}
-				}
 
 				// dibujar nombres de las regiones
 				if (a.c.fillText && !isEditing) {
@@ -326,10 +299,39 @@ var xRegion={
 							if (visibleCaption) {
 								var rect=a.tmp.regions[region].rect;
 								if (isset(rect)) {
+									var region=o.regions[region];
 									var tx=a.dx+parseInt((rect.left+rect.right)/2)*a.scale, ty=a.dy+parseInt((rect.top+rect.bottom)/2)*a.scale;
-									//a.styles.xregion_caption.fontSize=16;
-									//a.styles.xregion_caption.fontSizeMax=32;
-									a.fillTextBorder(o.regions[region].caption, tx, ty);
+									a.fillTextBorder(region.caption, tx, ty, (region.color_caption?region.color_caption:region.color), a.styles.xregion_building_caption);
+								}
+							}
+						}
+					}
+				}
+
+				// dibujar puntos
+				if (!isEditing) {
+					var selected=(a.clicked && a.clicked.point == i?i:null);
+					if (!o.onDrawPoints || o.onDrawPoints(a, o.points, selected)) {
+						for (var i in o.points) {
+							var p=o.points[i];
+							var rx=a.dx+p.x*a.scale,ry=a.dy+p.y*a.scale;
+							var selected=(a.clicked && a.clicked.point == i);
+							if (!o.onDrawPoint || o.onDrawPoint(a,rx,ry,i,p,selected)) {
+								// dibujar punto
+								a.c.beginPath();
+								a.c.lineWidth=(selected?a.styles.xregion_point_active.size:a.styles.xregion_point.size);
+								a.c.strokeStyle=(selected?a.styles.xregion_point_active.color:(p.color?p.color:a.styles.xregion_point.color));
+								a.c.arc(rx,ry,a.grabSize,0,2*Math.PI,true);
+								//a.c.strokeRect(rx-a.grabSize, ry-a.grabSize, (a.grabSize<<1)+1, (a.grabSize<<1)+1);
+								//a.c.fillRect(rx,ry,1,1);
+								//a.c.fillStyle="rgba(255,0,255,0.2)";
+								a.c.fillStyle=a.c.strokeStyle;
+								a.c.fill();
+								a.c.stroke();
+								// dibujar texto
+								if (isset(p.caption)) {
+									a.c.textBaseline="top";
+									a.fillTextBorder(p.caption, rx, ry+(a.grabSize<<1), (p.color_caption?p.color_caption:false), a.styles.xregion_point_caption);
 								}
 							}
 						}
@@ -353,12 +355,12 @@ var xRegion={
 					a.c.strokeStyle=a.styles.xregion_point_active.color;
 					a.c.strokeRect(rx-a.grabSize, ry-a.grabSize, a.grabSize<<1, a.grabSize<<1);
 				}
-				
+
 			};
 			// actualizar forzado o cuando esté libre de trabajo (1ms)
 			if (notDelayed) _redraw(); else this._redrawTimeout=setTimeout(_redraw,1);
 		};
-		
+
 		// comprueba si una posición (x,y) se encuentra en el interior
 		// del polígono cerrado indicado por sus coordenadas [{.x,.y}]
 		a.checkInsidePoly=function(x,y,coords){
@@ -376,13 +378,13 @@ var xRegion={
 			if (a.tmp.startRegion && a.tmp.startRegion==region) return false;
 			return (o.regions[region].coords.length>=3);
 		};
-		
+
 		// realizar todos los cálculos iniciales
 		a.computeAll=function(){
 			for (var i in o.points)       a.computePoint(i);
 			for (var region in o.regions) a.computeRegion(region);
 		};
-		
+
 		// calculo del area máxima de una región
 		a.computeRegion=function(region) {
 			if (!a.tmp.regions[region]) a.tmp.regions[region]={};
@@ -407,7 +409,7 @@ var xRegion={
 				delete a.tmp.regions[region].rect;
 			}
 		};
-		
+
 		// cálculo de puntos
 		a.computePoint=function(point) {
 			if (o.roundValues || o.pointRoundValues) { // aproximar
@@ -418,7 +420,7 @@ var xRegion={
 				o.points[point].y=parseFloat(o.points[point].y);
 			}
 		};
-		
+
 		// start new region
 		a.startRegion=function(region,x,y,opt){
 			if (!o.editable) return false;
@@ -435,7 +437,7 @@ var xRegion={
 			a.setCursor();
 			return true;
 		};
-		
+
 		// cancel region
 		a.cancelRegion=function(){
 			if (!isset(a.tmp.startRegion)) return false;
@@ -465,7 +467,7 @@ var xRegion={
 		a.getPoint=function(point){
 			return o.points[point];
 		};
-		
+
 		// set point
 		a.setPoint=function(point,info){
 			a.undoPush();
@@ -473,7 +475,7 @@ var xRegion={
 			a.redraw();
 			return true;
 		};
-		
+
 		// move point
 		a.movePoint=function(point,x,y){
 			if (!o.editable) return false;
@@ -507,7 +509,7 @@ var xRegion={
 				"o.regions":array_copy(o.regions)
 			});
 		};
-		
+
 		// UNDO: restore
 		a.undoPop=function(){
 			var i=(a.undo.length-1);
@@ -521,7 +523,7 @@ var xRegion={
 			a.computeAll();
 			a.redraw();
 		};
-		
+
 		// borrar región
 		a.deleteRegion=function(region,coord){
 			if (!o.regions[region]) return false;
@@ -543,7 +545,7 @@ var xRegion={
 			a.redraw();
 			return true;
 		};
-		
+
 		// borrar punto
 		a.deletePoint=function(point){
 			if (!o.points[point]) return false;
@@ -553,7 +555,7 @@ var xRegion={
 			a.redraw();
 			return true;
 		};
-		
+
 		// get computed style
 		a.getClass=function(className,styleProperty){
 			var tdiv=document.createElement("div")
@@ -563,27 +565,28 @@ var xRegion={
 			document.body.removeChild(tdiv);
 			return c;
 		};
-		
+
 		// reset
 		a.reset=function(){
 
 			// load styles from CSS
 			var borderTopColor=(isie()?"borderTopColor":"border-top-color");
 			var borderTopWidth=(isie()?"borderTopWidth":"border-top-width");
+			var xregion_caption={
+				"color":a.getClass("xregion_caption",'color'),
+				"fontFamily":a.getClass("xregion_caption",'font-family'),
+				"fontSize":parseInt(a.getClass("xregion_caption",'font-size')),
+				"fontSizeMax":parseInt(a.getClass("xregion_caption_maxsize",'font-size')),
+				"border":parseInt(a.getClass("xregion_caption_border", borderTopWidth)),
+				"borderColor":a.getClass("xregion_caption_border",borderTopColor)
+			};
 			a.styles={
 				"xregion_background":{
 					"color":a.getClass("xregion_background",'color')
 				},
-				"xregion_caption":{
-					"color":a.getClass("xregion_caption",'color'),
-					"fontFamily":a.getClass("xregion_caption",'font-family'),
-					"fontSize":parseInt(a.getClass("xregion_caption",'font-size')),
-					"fontSizeMax":parseInt(a.getClass("xregion_caption_maxsize",'font-size'))
-				},
-				"xregion_caption_border":{
-					"size":parseInt(a.getClass("xregion_caption_border",borderTopWidth)),
-					"color":a.getClass("xregion_caption_border",borderTopColor)
-				},
+				"xregion_caption":xregion_caption,
+				"xregion_building_caption":xregion_caption,
+				"xregion_point_caption":xregion_caption,
 				"xregion_newregion_line":{
 					"size":parseInt(a.getClass("xregion_newregion_line",borderTopWidth)),
 					"color":a.getClass("xregion_newregion_line",borderTopColor)
@@ -629,7 +632,11 @@ var xRegion={
 					"color":a.getClass("xregion_point_active",borderTopColor)
 				}
 			};
-			if (o.styles) a.styles=array_merge(a.styles, o.styles);
+			if (o.styles) {
+				xforeach(o.styles, function(styles, k){
+					a.styles[k]=array_merge(a.styles[k]||{}, styles);
+				});
+			}
 
 			// inicializar básicos y crear canvas
 			o.id=gid(o.id);
@@ -666,9 +673,9 @@ var xRegion={
 					return false;
 				}
 			}
-			
+
 			return true;
-			
+
 		};
 
 		a.destroy=function(){
@@ -677,7 +684,7 @@ var xRegion={
 
 		// startup
 		a.init=function(){
-			
+
 			// reset
 			if (!a.reset()) return false;
 
@@ -688,13 +695,13 @@ var xRegion={
 
 			// computar todos los cálculos/cachés
 			a.computeAll();
-			
+
 			// deshabilitar botón derecho, y reemplazar por scroll
 			o.canvas.oncontextmenu=function(){ return false; }
-	
+
 			// permitir recibir pulsaciones de teclas al canvas una vez activado
 			o.canvas.tabIndex=0;
-			
+
 			// keypress
 			o.id.onkeyup=function(e){
 				switch (e.keyCode) {
@@ -727,7 +734,7 @@ var xRegion={
 					break;
 				}
 			}
-			
+
 			// mousescroll para zoom
 			var mousewheel=function(e){
 				if (a.disabled) return;
@@ -754,7 +761,7 @@ var xRegion={
 			};
 			if (ismoz()) o.canvas.addEventListener('DOMMouseScroll',mousewheel,true);
 			else o.canvas.onmousewheel=mousewheel;
-			
+
 			// mouse down
 			o.canvas.onmousedown=function(e){
 				if (a.disabled) return;
@@ -896,7 +903,7 @@ var xRegion={
 					a.setCursor();
 				}
 			};
-			
+
 			// mouse move
 			if (!a.o.nohover) {
 				var onmousemove_last=window.onmousemove;
@@ -960,7 +967,7 @@ var xRegion={
 				if (a.hasCanvasEvents()) o.canvas.onmousemove=mousemoveEvent;
 				else window.onmousemove=mousemoveEvent;
 			}
-			
+
 			// mouse up
 			var onmouseup_last=window.onmouseup;
 			var mouseupEvent=function(e){
@@ -992,7 +999,7 @@ var xRegion={
 			};
 			if (a.hasCanvasEvents()) o.canvas.onmouseup=mouseupEvent;
 			else window.onmouseup=mouseupEvent;
-			
+
 			// bloquear scroll en IE7/8 si se está dentro del canvas (bug javascript)
 			if (a.hasCanvasEvents()) {
 				o.canvas.onmouseover=function(){ document.onmousewheel=function(){ return false; } }
@@ -1010,7 +1017,7 @@ var xRegion={
 					a.redraw();
 				};
 			}
-			
+
 			// load map
 			a.img=new Image();
 			a.img.onload=function(){
@@ -1018,25 +1025,23 @@ var xRegion={
 				a.redraw();
 			};
 			a.img.src=o.img;
-			
+
 			// marcar temporales de centraje
 			a.tmp.centerMap=true;
 			a.tmp.centerRegion=o.centerRegion;
 			a.tmp.centerPoint=o.centerPoint;
-			
+
 			// initial setup
 			a.setCursor();
-			
+
 			// init event
-			if (o.onInit) {
-				o.onInit(a);
-			}
+			if (o.onInit) o.onInit(a);
 
 		};
-		
+
 		// startup
 		a.init();
-		
+
 	}
-	
+
 };
