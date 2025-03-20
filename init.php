@@ -362,37 +362,40 @@ if (class_exists("Conf") && isset($db) && $db) $conf=new Conf(array("db"=>$db));
 // dump variables for debug
 if (!function_exists("debug")) {
 	function debug(&$v, $level=0) {
-		$old=$v;
-		$v=$new=$prefix.rand().$suffix;
-		$vname=false;
-		foreach ($GLOBALS as $key=>$val)
-			if ($val===$new) {
-				$vname=$key;
-				break;
-			}
-		$v=$old;
-		if (!$level) echo "<div style='font-family:FiraSans,Arial;font-size:11px;line-height:12px;color:#333;background:#EEE;margin:1px;'><b>".$vname."</b> ";
-		if (is_array($v)) {
-			echo "{<br>";
-			foreach ($v as $i=>$nv) {
-				echo "<span style='color:#23A;padding-left:".(20*($level+1))."px;'>".$i."</span>".(is_array($nv)?" ":"=");
-				debug($nv, $level+1);
-			}
-			echo "<span style='padding-left:".(20*$level)."px;'></span>}<br>";
-		} else {
-			if (
-				(!is_array($v))
-				&& (
-					(!is_object($v) && settype($v, 'string') !== false )
-					|| ( is_object($v) && method_exists($v, '__toString'))
-				)
-			) {
-				echo "<span style='color:#820;'>".$v."</span><br>";
+		if ($GLOBALS["argv"]) var_dump($v);
+		else {
+			$old=$v;
+			$v=$new=$prefix.rand().$suffix;
+			$vname=false;
+			foreach ($GLOBALS as $key=>$val)
+				if ($val === $new) {
+					$vname=$key;
+					break;
+				}
+			$v=$old;
+			if (!$level) echo "<div style='font-family:FiraSans,Arial;font-size:11px;line-height:12px;color:#333;background:#EEE;margin:1px;'><b>".$vname."</b> ";
+			if (is_array($v)) {
+				echo "{<br>";
+				foreach ($v as $i=>$nv) {
+					echo "<span style='color:#23A;padding-left:".(20*($level+1))."px;'>".$i."</span>".(is_array($nv)?" ":"=");
+					debug($nv, $level+1);
+				}
+				echo "<span style='padding-left:".(20*$level)."px;'></span>}<br>";
 			} else {
-				echo "<span style='color:#A0F;'>class <b>".get_class($v)."()</b></span><br>";
+				if (
+					(!is_array($v))
+					&& (
+						(!is_object($v) && settype($v, 'string') !== false )
+						|| ( is_object($v) && method_exists($v, '__toString'))
+					)
+				) {
+					echo "<span style='color:#820;'>".$v."</span><br>";
+				} else {
+					echo "<span style='color:#A0F;'>class <b>".get_class($v)."()</b></span><br>";
+				}
 			}
+			if (!$level) echo "</div>";
 		}
-		if (!$level) echo "</div>";
 	}
 }
 
