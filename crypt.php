@@ -103,17 +103,13 @@ class Crypt {
 	// encode base64-URL-Friendly
 	function base64ufEncode($d) {
 		$d=base64_encode($d);
-		$d=str_replace("+", ".", $d);
-		$d=str_replace("/", "_", $d);
-		$d=str_replace("=", "-", $d);
+		$d=str_replace(["+", "/", "="], [".", "_", "-"], $d);
 		return $d;
 	}
 
 	// decode base64-URL-Friendly
 	function base64ufDecode($d) {
-		$d=str_replace(".", "+", $d);
-		$d=str_replace("_", "/", $d);
-		$d=str_replace("-", "=", $d);
+		$d=str_replace([".", "_", "-"], ["+", "/", "="], $d);
 		return base64_decode($d);
 	}
 
