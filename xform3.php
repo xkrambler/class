@@ -466,6 +466,7 @@ class xForm3 {
 	// purge: apply specified conversions to value and sanitize value
 	function purgeFieldValue($f, $value) {
 		if (!($field=$this->fields[$f])) return $value;
+		//if ($field["caption"] == "Código de Cuenta Contable") {var_dump($value);debug($field);}
 		// readonly resets value
 		if ($field["readonly"] && isset($field["value"])) $value=$field["value"];
 		// allowed filter for HTML
@@ -484,10 +485,13 @@ class xForm3 {
 		if ($field["nozero"] && !$value) $value="";
 		// sanitize
 		$value=strip_tags(str_replace(array("<", ">"), array("&lt;", "&gt;"), $value));
-		// nullables
-		if (($field["nullifempty"] || $field["date"] || $field["datetime"]) && !strlen($value)) $value=null;
 		// force a string
 		if ($field["string"]) $value=(string)$value;
+		// nullables
+		if (
+			   ($field["nullifempty"] || $field["date"] || $field["datetime"]) && !strlen($value)
+			|| ($field["nullifzero"] && !doubleval($value))
+		) $value=null;
 		// return
 		return $value;
 	}

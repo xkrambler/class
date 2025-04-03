@@ -246,9 +246,9 @@ function xForm3(o) {
 			if (f.number)      value=(value?parseInt(value):0);
 			if (f.positive)    value=(value?Math.abs(localeNumber(value)):0);
 			if (f.decimal)     value=(value?localeNumber(value):0);
-			if (f.nullifempty) value=a.nullifempty(value);
-			if (f.nullifzero)  value=a.nullifzero(value);
 			if (f.trim)        value=trim(value);
+			if (f.nullifzero)  value=a.nullifzero(value);
+			if (f.nullifempty) value=a.nullifempty(value);
 		}
 		return value;
 	};
