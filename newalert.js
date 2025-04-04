@@ -188,7 +188,7 @@ function newalert(o) {
 				+"<td class='newalert_body "+(msg?"newalert_body_msg":"newalert_body_nomsg")+"'>"
 					+"<div class='newalert_frame' id='"+_newalert.id+id+"_frame'>"
 						+"<div class='newalert_content' id='"+_newalert.id+id+"_content'>"
-							+msg
+							+(typeof(msg) == "string"?msg:"")
 						+"</div>"
 					+"</div>"
 				+"</td>"
@@ -228,6 +228,7 @@ function newalert(o) {
 	d.innerHTML=s;
 	document.body.appendChild(b);
 	document.body.appendChild(d);
+	try { if (msg instanceof HTMLElement) gid(_newalert.id+id+"_content").appendChild(msg); } catch(e) { console.error(e); }
 	if (o.notransition) {
 		classAdd(_newalert.id+id+"_bg", "newalert_background_transition_none");
 		classAdd(_newalert.id+id, "newalert_container_transition_none");
