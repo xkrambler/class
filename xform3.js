@@ -293,6 +293,15 @@ function xForm3(o) {
 				}
 				if (isset(value)) gid(id).checked=(value?true:false);
 				return gid(id).checked;
+			case "checkboxes":
+				if (isset(value) && Array.isArray(value))
+					for (var i=0, e=false; e=gid(id+"-"+i); i++)
+						e.checked=(value.indexOf((""+e.value)) !== -1);
+				var values=[];
+				for (var i=0, e=false; e=gid(id+"-"+i); i++)
+					if (e.checked)
+						values.push(e.value);
+				return values;
 			case "radio":
 				if (isset(value))
 					for (var i=0, e=false; e=gid(id+"-"+i); i++)

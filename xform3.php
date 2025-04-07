@@ -84,6 +84,7 @@ class xForm3 {
 			"password"=>"txt",
 			"area"=>"area",
 			"checkbox"=>"checkbox",
+			"checkboxes"=>"checkbox",
 			"radio"=>"radio",
 			"select"=>"cmb",
 			"color"=>"cmd",
@@ -238,6 +239,8 @@ class xForm3 {
 		case "files":
 		case "images":
 			return null;
+		case "checkboxes":
+			if (!is_array($f["value"])) return [];
 		}
 		return $f["value"];
 	}
@@ -394,6 +397,7 @@ class xForm3 {
 		case "number": return doubleval($value);
 		case "decimal": return doubleval($value);
 		case "positive": return abs(doubleval($value));
+		case "checkboxes": if (!is_array($value)) return [];
 		}
 		if ($field["base64"]) $value=base64_decode($value);
 		return $value;
@@ -466,6 +470,13 @@ class xForm3 {
 	// purge: apply specified conversions to value and sanitize value
 	function purgeFieldValue($f, $value) {
 		if (!($field=$this->fields[$f])) return $value;
+		// support for array values
+		if (is_array($value)) {
+			foreach ($value as $i=>$v) {
+				$values[$i]=$this->purgeFieldValue($f, $value[$i]);
+			}
+			return $value;
+		}
 		//if ($field["caption"] == "Código de Cuenta Contable") {var_dump($value);debug($field);}
 		// readonly resets value
 		if ($field["readonly"] && isset($field["value"])) $value=$field["value"];
@@ -892,37 +903,6 @@ class xForm3 {
 				."</select>"
 			;
 
-		case "radio":
-			$html="";
-			if ($f["options"]) {
-				$num=0;
-				foreach ($f["options"] as $n=>$v) {
-					$html.="<label"
-						." id='".$id."-".$num."_label'"
-						." class='".$class."'"
-						.">"
-							."<input"
-							." id='".$id."-".$num."'"
-							." name='".$name."'"
-							." type='radio'"
-							." value='".$this->entities($n)."'"
-							.($f["title"]?" title='".$this->entities($f["title"])."'":"")
-							.((string)$n===(string)$f["value"]?" checked":"")
-							.($f["disabled"]?" disabled":"")
-							.($f["readonly"]?" readonly":"")
-							.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
-							.$common
-							.($styles?" style='".$styles."'":"")
-							.$f["extra"]." />"
-							."<span id='".$id."-".$num."_span'>".$v."</span>"
-						."</label>"
-						.($f["br"]?"<br />":"")
-					;
-					$num++;
-				}
-			}
-			return $html;
-
 		case "checkbox":
 			return "<label"
 				." id='".$id."-label'"
@@ -944,6 +924,68 @@ class xForm3 {
 					.(isset($f["label"])?"<span id='".$id."_label'>".$f["label"]."</span>":"")
 				."</label>"
 			;
+
+		case "checkboxes":
+			$html="";
+			if ($f["options"]) {
+				$num=0;
+				foreach ($f["options"] as $n=>$v) {
+					$html.="<label"
+						." id='".$id."-".$num."_label'"
+						." class='".$class."'"
+						.">"
+							."<input"
+							." id='".$id."-".$num."'"
+							." name='".$name."[]'"
+							." type='checkbox'"
+							." value='".$this->entities($n)."'"
+							.($f["title"]?" title='".$this->entities($f["title"])."'":"")
+							.(is_array($f["value"]) && in_array((string)$n, $f["value"])?" checked":"")
+							.($f["disabled"]?" disabled":"")
+							.($f["readonly"]?" readonly":"")
+							.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
+							.$common
+							.($styles?" style='".$styles."'":"")
+							.$f["extra"]." />"
+							."<span id='".$id."-".$num."_span'>".$v."</span>"
+						."</label>"
+						.($f["br"]?"<br />":"")
+					;
+					$num++;
+				}
+			}
+			return $html;
+
+		case "radio":
+			$html="";
+			if ($f["options"]) {
+				$num=0;
+				foreach ($f["options"] as $n=>$v) {
+					$html.="<label"
+						." id='".$id."-".$num."_label'"
+						." class='".$class."'"
+						.">"
+							."<input"
+							." id='".$id."-".$num."'"
+							." name='".$name."'"
+							." type='radio'"
+							." value='".$this->entities($n)."'"
+							.($f["title"]?" title='".$this->entities($f["title"])."'":"")
+							.((string)$n === (string)$f["value"]?" checked":"")
+							.($f["disabled"]?" disabled":"")
+							.($f["readonly"]?" readonly":"")
+							.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
+							.$common
+							.($styles?" style='".$styles."'":"")
+							.$f["extra"]." />"
+							."<span id='".$id."-".$num."_span'>".$v."</span>"
+						."</label>"
+						.($f["br"]?"<br />":"")
+					;
+					$num++;
+				}
+			}
+			return $html;
 
 		case "audio":
 			return "<div"
