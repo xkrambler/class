@@ -303,8 +303,9 @@
 	position: relative;
 	border: 0;
 	color: #444;
-	padding: 3px 3px 3px 32px;
+	padding: 3px 3px 3px 1.7em;
 	background: #EEE left center no-repeat;
+	background-size: contain;
 }
 .cmb_open .cmb_options {
 	display: flex;
