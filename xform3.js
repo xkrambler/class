@@ -1155,6 +1155,9 @@ function xForm3(o) {
 					for (var n in o.set[f])
 						a.set(f, n, o.set[f][n]);
 				switch (field.type) {
+				case "area":
+					if (field.autogrow) autogrow(id);
+					break;
 				case "date":
 					if (!a.isInputDateSupported()) {
 						var value=gidval(id);
