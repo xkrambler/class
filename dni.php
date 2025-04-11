@@ -1,18 +1,19 @@
 <?php
 
-// funciones para comprobación del DNI por mr.xkr 0.2.1
+// funciones para comprobación del DNI por mr.xkr 0.2.2
 define("DNI_LETRAS", "TRWAGMYFPDXBNJZSQVHLCKE");
 
 // comprobar si es un DNI (válidos con o sin letra)
 function isDNI($dni) {
 	if (!$info=arreglarDNI($dni)) return false;
 	$info=completarDNI($info);
-	return (is_numeric(substr($dni, 0, 8)) && strpos(DNI_LETRAS, substr($info, 8, 1)) !== false);
+	$c=substr($info, 8, 1);
+	return (is_numeric((string)substr($dni, 0, 8)) && is_string($c) && strpos(DNI_LETRAS, $c) !== false);
 }
 
 // arregla del DNI, suprime espacios, guiones y puntos para dejar el DNI limpio
 function arreglarDNI($dni) {
-	return str_replace(array(" ", "-", ".-"), "", trim(strtoupper($dni)));
+	return str_replace(array(" ", "-", ".-"), "", trim(strtoupper((string)$dni)));
 }
 
 // completar el DNI con la letra, si faltase
