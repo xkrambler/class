@@ -1030,7 +1030,7 @@ function spf(n, d) {
 	var d=d || 2;
 	var e=Math.pow(10, d);
 	var n=Math.round(n*e)/e;
-	if (typeof(Intl) == "object" && Intl.NumberFormat) return ""+(new Intl.NumberFormat(undefined, {minimumFractionDigits:f}).format(n));
+	if (typeof(Intl) == "object" && Intl.NumberFormat) return ""+(new Intl.NumberFormat(undefined, {minimumFractionDigits:d}).format(n));
 	return n.toFixed(d).replace(".", localeDecimalSeparator());
 }
 
