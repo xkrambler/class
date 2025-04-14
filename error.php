@@ -64,7 +64,7 @@ class xError {
 		$this->setup($setup);
 
 		// access log
-		if ($_SERVER["HTTP_HOST"]) $this->log($this->accessEntry());
+		if (isset($_SERVER["HTTP_HOST"])) $this->log($this->accessEntry());
 
 		// disable critical errors
 		$e=error_reporting();
@@ -248,17 +248,21 @@ class xError {
 
 	// get stack trace
 	function trace(array $o=[]) {
-		if (!$o["start"]) $o["start"]=0;
+		if (!isset($o["start"]) || !$o["start"]) $o["start"]=0;
 		$p=0;
 		$a=[];
 		$exception=new \Exception();
 		if ($trace=$exception->getTrace())
 			foreach ($trace as $i=>$t)
-				if (!($t["class"] == "xError" && in_array($t["function"], ["trace", "error"])))
+				if (!(($t["class"]??null) == "xError" || in_array(($t["function"]??null), ["trace", "error"])))
 					if ($p++ >= $o["start"])
 						$a[]=array_merge($t, [
-							"message"=>"#".count($a)." ".$t["file"]."(".$t["line"].")"
-								.($t["class"] != "xError"?": ".$t["class"].$t["type"].$t["function"].($t["args"]?"(".$this->args($t["args"]).")":""):"")
+							"message"=>"#".count($a)." ".(isset($t["file"])?$t["file"]:"").(isset($t["line"])?"(".$t["line"].")":"")
+								.(isset($t["class"]) && $t["class"] != "xError"
+									?": ".(isset($t["class"])?$t["class"]:"").(isset($t["type"])?$t["type"]:"").(isset($t["function"])?$t["function"]:"")
+										.(isset($t["args"]) && $t["args"]?"(".$this->args($t["args"]).")":"")
+									:""
+								)
 							,
 						]);
 		return $a;
