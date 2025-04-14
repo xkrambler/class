@@ -754,6 +754,7 @@ function xItemsSearch(o) {
 		a.o=o;
 		if (!isset(a.o.sortable)) a.o.sortable=true;
 		if (!isset(a.o.paged)) a.o.paged=true;
+		if (!isset(a.o.autofocus)) a.o.autofocus=!('ontouchstart' in window);
 		a.o.extra=(a.o.extra?a.o.extra:{});
 		a.o.placeholder=a.o.placeholder || "";
 		a.o.buttons=(a.o.buttons?a.o.buttons:{});
@@ -907,7 +908,7 @@ function xItemsSearch(o) {
 		// búsqueda inicial
 		if (a.data) a.refresh();
 		else a.search();
-		a.focus();
+		if (a.o.autofocus === true) a.focus();
 
 	};
 
