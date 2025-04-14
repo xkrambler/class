@@ -68,31 +68,31 @@ class x {
 	// is HTTPS?
 	static public function ishttps() {
 		return (
-			((string)$_SERVER['HTTPS'] && strtolower((string)$_SERVER['HTTPS']) !== 'off')
-			|| (strtolower((string)$_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https')
-			|| (strtolower((string)$_SERVER['HTTP_FRONT_END_HTTPS']) === 'on')
-			|| (strtolower((string)$_SERVER['HTTP_PROXY_SSL']) === 'true')
+			((string)($_SERVER['HTTPS']??"") && strtolower((string)$_SERVER['HTTPS']) !== 'off')
+			|| (strtolower((string)($_SERVER['HTTP_X_FORWARDED_PROTO']??"")) === 'https')
+			|| (strtolower((string)($_SERVER['HTTP_FRONT_END_HTTPS']??"")) === 'on')
+			|| (strtolower((string)($_SERVER['HTTP_PROXY_SSL']??"")) === 'true')
 		);
 	}
 
 	// is mobile?
 	static public function ismobile() {
 		return (
-			strpos((string)$_SERVER["HTTP_USER_AGENT"], "Android;")
-			|| strpos((string)$_SERVER["HTTP_USER_AGENT"], "iPhone;")
-			|| strpos((string)$_SERVER["HTTP_USER_AGENT"], "iPod;")
-			|| strpos((string)$_SERVER["HTTP_USER_AGENT"], "iPad;")
+			strpos((string)$_SERVER["HTTP_USER_AGENT"]??"", "Android;")
+			|| strpos((string)$_SERVER["HTTP_USER_AGENT"]??"", "iPhone;")
+			|| strpos((string)$_SERVER["HTTP_USER_AGENT"]??"", "iPod;")
+			|| strpos((string)$_SERVER["HTTP_USER_AGENT"]??"", "iPad;")
 		);
 	}
 
 	// is IE?
 	static public function isie() {
-		return (strpos((string)$_SERVER["HTTP_USER_AGENT"], "MSIE")!==false);
+		return (isset($_SERVER["HTTP_USER_AGENT"]) && strpos((string)$_SERVER["HTTP_USER_AGENT"], "MSIE")!==false);
 	}
 
 	// get my script
 	static public function self() {
-		return $_SERVER["PHP_SELF"];
+		return (isset($_SERVER["PHP_SELF"])?$_SERVER["PHP_SELF"]:null);
 	}
 
 	// get server base
@@ -139,7 +139,7 @@ class x {
 	static public function base($base=null) {
 		global $page;
 		if ($base !== null) $page["base"]=$base;
-		if ($page["base"]) return $page["base"];
+		if (isset($page["base"])) return $page["base"];
 		$path=self::path();
 		$server=self::server();
 		return ($server?$server.(($i=strrpos($path, "/"))!==false?substr($path, 0, $i+1):"/"):"");
@@ -342,8 +342,8 @@ if (isset($_SESSION["ok"]))  { $ok =$_SESSION["ok"];  unset($_SESSION["ok"]); }
 if (isset($_SESSION["err"])) { $err=$_SESSION["err"]; unset($_SESSION["err"]); }
 
 // legacy PHP classes and additional libraries
-if ($_x=$classes) foreach ($_x as $_c) x::inc($_c);
-if ($_x=$include) foreach ($_x as $_c) x::inc($_c);
+if (isset($classes) && $_x=$classes) foreach ($_x as $_c) x::inc($_c);
+if (isset($include) && $_x=$include) foreach ($_x as $_c) x::inc($_c);
 
 // include all PHP classes
 if ($_x=x::inc()) foreach ($_x as $_c) {
@@ -362,10 +362,10 @@ if (class_exists("Conf") && isset($db) && $db) $conf=new Conf(array("db"=>$db));
 // dump variables for debug
 if (!function_exists("debug")) {
 	function debug(&$v, $level=0) {
-		if ($GLOBALS["argv"]) var_dump($v);
+		if (isset($GLOBALS["argv"])) var_dump($v);
 		else {
 			$old=$v;
-			$v=$new=$prefix.rand().$suffix;
+			$v=$new=rand();
 			$vname=false;
 			foreach ($GLOBALS as $key=>$val)
 				if ($val === $new) {
