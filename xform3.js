@@ -403,6 +403,7 @@ function xForm3(o) {
 		var field_id=a.id(f);
 		if (field && field_id) {
 			switch (field.type) {
+			case "checkboxes":
 			case "radio":
 				if (field.options)
 					var num=0;
