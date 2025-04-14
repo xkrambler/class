@@ -1,4 +1,4 @@
-// common.js by mr.xkr v2 rev.4b
+// common.js by mr.xkr v2 rev.5a
 
 // check if a variable is set
 function isset(v) { return (typeof(v) != "undefined"?true:false); }
@@ -6,7 +6,7 @@ function isset(v) { return (typeof(v) != "undefined"?true:false); }
 // if not (a), then (b)
 function ifnot(a, b) { return (a?a:b); }
 
-// little functions to reduce code
+// small functions to minimize code
 function gid(id) { try { var rid=(typeof(id) == "object"?id:document.getElementById(id)); return rid; } catch(e) { return null; } }
 function gidget(id) { return gid(id).innerHTML; }
 function gidset(id, html) { var e=gid(id); try { e.innerHTML=(typeof(html) == "undefined"?"":html); } catch(e) { console.warn("gidset("+id+", html): "+e); } }
@@ -14,18 +14,18 @@ function gidval(id, data) { if (typeof(data) != "undefined") gid(id).value=(data
 function gidvals(idsdata) { for (var i in idsdata) gidval(i,idsdata[i]); }
 function giddel(id) { var d=gid(id); d.parentNode.removeChild(d); }
 function gidmove(id_org, id_dst) { gid(id_dst).innerHTML=gid(id_org).innerHTML; gid(id_org).innerHTML=""; }
+function gidfocus(id) { if (gid(id)) { try { gid(id).select(); } catch(e) {}; try { gid(id).focus(); } catch(e) {}; } }
 function alter(id) { gid(id).style.display=(gid(id).style.display == "none"?"block":"none"); }
-function show(id) { gid(id).style.display="block"; }
 function hide(id) { gid(id).style.display="none"; }
+function show(id) { gid(id).style.display="block"; }
 function cell(id) { gid(id).style.display="table-cell"; }
-function visible(id) { gid(id).style.visibility="visible"; }
 function hidden(id) { gid(id).style.visibility="hidden"; }
+function visible(id) { gid(id).style.visibility="visible"; }
 function isShow(id) { return(gid(id).style.display == "block"?true:false); }
 function isVisible(id) { return(gid(id).style.display != "none"?true:false); }
 function showSwitch(id) { gid(id).style.display=(gid(id).style.display != "none"?"none":""); }
-function gidfocus(id) { if (gid(id)) { try { gid(id).select(); } catch(e) {}; try { gid(id).focus(); } catch(e) {}; } }
 
-// set element is enabled
+// deprecated: set element is enabled
 function gidenabled(id, enabled) {
 	var e=gid(id);
 	if (e) {
@@ -34,7 +34,7 @@ function gidenabled(id, enabled) {
 	}
 }
 
-// foreach implementation
+// foreach implementation for array or object
 function xforeach(a, f) {
 	var r;
 	if (typeof(a) == "object" && typeof(f) == "function") for (var i in a) {
@@ -44,8 +44,9 @@ function xforeach(a, f) {
 	return null;
 }
 
-// ensure valid date in ISO format YYYY-MM-DD (deprecated)
+// deprecated: ensure valid date in ISO format YYYY-MM-DD
 function gidvalFecha(id) {
+	if (!gid(id)) return "";
 	var d=intval(gidval(id+"_d"));
 	var m=intval(gidval(id+"_m"));
 	var y=intval(gidval(id+"_y"));
@@ -55,7 +56,7 @@ function gidvalFecha(id) {
 	return y+"-"+(m<10?"0":"")+m+"-"+(d<10?"0":"")+d;
 }
 
-// obtener todos los datos de campos según su ID prefijados y/o sufijados
+// deprecated: obtener todos los datos de campos según su ID prefijados y/o sufijados
 function gpreids(prefix, ids, sufix) {
 	var ids=ids.split(" ");
 	var a={};
@@ -75,7 +76,7 @@ function gpreids(prefix, ids, sufix) {
 	return a;
 }
 
-// establecer todos los datos de campos según su ID prefijados y/o sufijados
+// deprecated: establecer todos los datos de campos según su ID prefijados y/o sufijados
 function spreids(prefix, ids, values, sufix) {
 	var ids=ids.split(" ");
 	for (var i in ids)
@@ -109,8 +110,8 @@ function template(s, replaces) {
 	return s;
 }
 
-// carga el contenido HTML de una capa y realiza reemplazos para usarla como template para ventanas o búsquedas AJAX
-// por defecto, los reemplazos que hace son automáticamente de id y name con prefijo $
+// load HTML from an element called template:<id> and make replaces
+// deprecated: automatic $id and $name replacements
 function gtemplate(id, replaces) {
 	var s=gidget("template:"+id);
 	s=s.replace(/ id=\$/gi," id=");
@@ -119,7 +120,7 @@ function gtemplate(id, replaces) {
 	s=s.replace(/ name=\$/gi," name=");
 	s=s.replace(/ name=\'\$/gi," name='");
 	s=s.replace(/ name=\"\$/gi,' name="');
-	if (replaces) s=template(s,replaces);
+	if (replaces) s=template(s, replaces);
 	return s;
 }
 
@@ -330,11 +331,11 @@ function getPaddingHeight(id) {
 	return (!isNaN(wext)?wext:0);
 }
 
-// obtiene el estilo final computado de un elemento
+// get computed style of an element
 function getStyle(id, styleprop) {
 	var x=gid(id);
-	if (x.currentStyle) { return x.currentStyle[styleprop]; }
-	else if (window.getComputedStyle) { return document.defaultView.getComputedStyle(x,null).getPropertyValue(styleprop); }
+	if (x.currentStyle) return x.currentStyle[styleprop];
+	else if (window.getComputedStyle) return document.defaultView.getComputedStyle(x,null).getPropertyValue(styleprop);
 	return null;
 }
 
@@ -342,7 +343,7 @@ function getStyle(id, styleprop) {
 function crossInnerWidth(id) {
 	var element=gid(id);
 	try {
-		if (window.getComputedStyle(element,""))
+		if (window.getComputedStyle(element, ""))
 			return(element.clientWidth-parseInt(window.getComputedStyle(element,"").getPropertyValue("padding-left"))-parseInt(window.getComputedStyle(element,"").getPropertyValue("padding-right")));
 	} catch(e) {
 		return(element.clientWidth-parseInt(element.currentStyle.paddingLeft)-parseInt(element.currentStyle.paddingRight));
@@ -353,28 +354,27 @@ function crossInnerWidth(id) {
 function crossInnerHeight(id) {
 	var element=gid(id);
 	try {
-		if (window.getComputedStyle(element,""))
+		if (window.getComputedStyle(element, ""))
 			return(element.clientHeight-parseInt(window.getComputedStyle(element,"").getPropertyValue("padding-top"))-parseInt(window.getComputedStyle(element,"").getPropertyValue("padding-bottom")));
 	} catch(e) {
 		return(element.clientHeight-parseInt(element.currentStyle.paddingTop)-parseInt(element.currentStyle.paddingBottom));
 	}
 }
 
-// image preloading
-var imagePreloadList={};
-function imagePreload(imageorlist) {
-	var image_list=(typeof(imageorlist) == "string"?[imageorlist]:imageorlist);
-	for (var i in image_list) {
-		var image=image_list[i];
-		imagePreloadList[image]={"loaded":false,"img":new Image()};
-		imagePreloadList[image].img.src=image;
-		imagePreloadList[image].img.onload=function(){ imagePreloadList[image].loaded=true; };
+// image or images preload
+function imagePreload(images) {
+	if (!window._imagePreloadList) window._imagePreloadList={};
+	var a=(typeof(images) == "string"?[images]:images);
+	for (var i in a) {
+		var src=a[i];
+		window._imagePreloadList[src]={"loaded":false, "img":new Image()};
+		window._imagePreloadList[src].img.src=src;
+		window._imagePreloadList[src].img.onload=function(){ window._imagePreloadList[src].loaded=true; };
 	}
 }
 
 // get scrollbar width (horizontal)
-// thanks to Alexandre Gomes (Portugal)
-// http://www.alexandre-gomes.com/?p=115
+// thanks to Alexandre Gomes (Portugal) - http://www.alexandre-gomes.com/?p=115
 function scrollWidth() {
 
 	var inner=document.createElement('p');
@@ -396,10 +396,11 @@ function scrollWidth() {
 	var w1=inner.offsetWidth;
 	outer.style.overflow='scroll';
 	var w2=inner.offsetWidth;
-	if (w1==w2) w2=outer.clientWidth;
+	if (w1 == w2) w2=outer.clientWidth;
 
 	document.body.removeChild(outer);
 	return(w1-w2);
+
 }
 
 // get cookie
@@ -474,23 +475,23 @@ function delAllCookies() {
 }
 
 // check for typical navigators
+function ischrome() { return (navigator.userAgent.indexOf("Chrome") != -1); }
 function isie() { return (navigator.userAgent.indexOf("MSIE") != -1); }
 function ismoz() { return (navigator.userAgent.indexOf("Firefox") != -1 || navigator.userAgent.indexOf("Iceweasel") != -1); }
-function ischrome() { return (navigator.userAgent.indexOf("Chrome") != -1); }
 
 // hide all selects (only in IE)
 function hideSelects(hidden) {
 	if (!isie()) return;
 	selects=document.getElementsByTagName("select");
-	for (i=0; i<selects.length; i++) selects[i].style.visibility=(hidden?"hidden":"");
+	for (i=0; i < selects.length; i++) selects[i].style.visibility=(hidden?"hidden":"");
 }
 
-// search and run embeded <script>
+// deprecated: search and run embeded <script>
 function getrunjs(data) {
 	runjs(getjs(data));
 }
 
-// search embeded <script>
+// deprecated: search embeded <script>
 function getjs(data) {
 	scode="";
 	while (true) {
@@ -502,16 +503,16 @@ function getjs(data) {
 	return scode;
 }
 
-// include javascript from string (faster than eval)
-function runjs(data) {
-	if (!data) return;
+// run javascript from string (faster than eval)
+function runjs(js) {
+	if (!js) return;
 	var escode=document.createElement("script");
 	escode.setAttribute("type","text/javascript");
-	escode.text=data;
+	escode.text=js;
 	document.getElementsByTagName("body").item(0).appendChild(escode);
 }
 
-// include javascript from file
+// include javascript file in document
 function includejs(filename, onload) {
 	if (!filename) return;
 	var escode=document.createElement("script");
@@ -521,13 +522,18 @@ function includejs(filename, onload) {
 	document.getElementsByTagName("body").item(0).appendChild(escode);
 }
 
+// html newlines to newlines (\n)
+function br2nl(s) {
+	return s.replace(/<br\s*\/?>/mg, "\n");
+}
+
 // convert string new lines to HTML <br /> tags
 function nl2br(t) {
-	try { return t.replace(/\n/gi, "<br />"); } catch(e) {}
+	try { return (""+t).replace(/\n/gi, "<br />"); } catch(e) {}
 	return t;
 }
 
-// id/object merge: de una lista de identificadores separadas por comas,
+// deprecated: id/object merge: de una lista de identificadores separadas por comas,
 // mezclar sus datos con objetos JavaScript previamente existentes
 function ioMerge(ids, root, obj) {
 	ids=ids.split(",");
@@ -537,7 +543,7 @@ function ioMerge(ids, root, obj) {
 	return(obj);
 }
 
-// object/object merge: de una lista de objetos separados por comas,
+// deprecated: object/object merge: de una lista de objetos separados por comas,
 // copia los los datos del primero objeto en el segundo y devuelve este
 function ooMerge(ids, o1, o2) {
 	ids=ids.split(",");
@@ -546,7 +552,7 @@ function ooMerge(ids, o1, o2) {
 	return o2;
 }
 
-// añade CSS al documento (no funciona bien en IE6)
+// add CSS styles to document (not working on IE6-)
 function cssAdd(css) {
 	var style=document.createElement("style");
 	style.type="text/css";
@@ -555,30 +561,30 @@ function cssAdd(css) {
 	document.getElementsByTagName("head")[0].appendChild(style);
 }
 
-// copia en profundidad de un objeto
+// deep array or object copy
 function array_copy(o) {
-	if (typeof o != "object" || o === null || o instanceof HTMLElement) return o;
+	if (typeof(o) != "object" || o === null || o instanceof HTMLElement) return o;
 	var r=(o instanceof Array?[]:{});
 	for (var i in o) r[i]=array_copy(o[i]);
 	return r;
 }
 
-// array_count: cuenta el número de elementos de un array asociativo
+// array_count: count number of elements in an array or object
 function array_count(a) {
 	var c=0;
 	try { if (a) for (var i in a) c++; } catch(e) {}
 	return c;
 }
 
-// array_merge: mezcla arrays puros o asociativos en profundidad
+// array_merge: deep array mixing
 function array_merge(a1, a2) {
 	var a=array_copy(a1);
 	var b=array_copy(a2);
 	for (var i in b) {
 		var e=b[i];
-		if (typeof a[i] === "object" && typeof e === "object") {
+		if (typeof(a[i]) === "object" && typeof(e) === "object") {
 			a[i]=array_merge(a[i], e);
-		} else if (typeof a[i] === "array" && typeof e === "array") {
+		} else if (typeof(a[i]) === "array" && typeof(e) === "array") {
 			a[i]=a[i].concat(e);
 		} else {
 			a[i]=e;
@@ -587,7 +593,7 @@ function array_merge(a1, a2) {
 	return a;
 }
 
-// elimina un elemento en la posición del indice de un array
+// deprecated: elimina un elemento en la posición del indice de un array
 function array_delete(a, index) {
 	var n=Array();
 	for (var i in a)
@@ -596,7 +602,7 @@ function array_delete(a, index) {
 	return n;
 }
 
-// array_remove: elimina claves de un array asociativo
+// deprecated: array_remove: elimina claves de un array asociativo
 function array_remove(a1, a2) {
 	var a=new Object();
 	var clone;
@@ -612,7 +618,7 @@ function array_remove(a1, a2) {
 	return a;
 }
 
-// array_get: devuelve las claves de un array dada una lista de ellas
+// deprecated: array_get: devuelve las claves de un array dada una lista de ellas
 function array_get(a, list) {
 	var o=new Object();
 	for (var i in list)
@@ -620,27 +626,26 @@ function array_get(a, list) {
 	return o;
 }
 
-// array_save: busca las claves de la lista en el segundo array y los mezcla con el primero
+// deprecated: array_save: busca las claves de la lista en el segundo array y los mezcla con el primero
 function array_save(a1, a2, list) {
 	for (var i in list)
 		a1[list[i]]=a2[list[i]];
 	return a1;
 }
 
-// añade un objeto a un array plano
-function array_push(a,o) {
-	a.push(o);
+// deprecated: add element to an array
+function array_push(a, e) {
+	a.push(e);
 }
 
-// verifica si un array está vacío o no
+// check if an array is empty
 function array_isclean(a) {
 	if (!a) return true;
-	for (var i in a)
-		return false;
+	for (var i in a) return false;
 	return true;
 }
 
-// devuelve si un array es idéntico a otro (se usa ===)
+// returns if an array is exact as another (using ===)
 function array_equals(a, b) {
 	var c=0, d=0;
 	for (var i in a) {
@@ -653,36 +658,33 @@ function array_equals(a, b) {
 	return (c == d?true:false);
 }
 
-// devolver un hash siempre, aunque el constructor sea un array
+// ensure always an object
 function array_hash(a) {
 	for (var i in a) return a;
 	return {};
 }
 
-// devuelve las claves de un hash en un nuevo array
+// get keys of an object as an array
 function array_keys(a) {
 	var b=[];
-	for (var i in a) b.push(i);
+	if (a) for (var i in a) b.push(i);
 	return b;
 }
 
-// convierte un hash/array para devolver siempre un array
-function array_values(h) {
-	var a=[];
-	for (var i in h) a.push(h[i]);
-	return a;
+// get values of an object as an array
+function array_values(a) {
+	var b=[];
+	if (a) for (var i in a) b.push(a[i]);
+	return b;
 }
 
-// verifica si un elemento está dentro del array
+// check element is in an array
 function in_array(e, a) {
-	if (!a) return false;
+	if (!a) return null;
 	for (var i in a)
 		if (a[i] === e) return true;
 	return false;
 }
-
-// control de impresión, sobrecargar este método
-function doprint() { window.print(); }
 
 // init_fast
 var init_fast_func=[];
@@ -886,7 +888,7 @@ function mouseleave(id, func, bubbling) {
 	if (!id.id) {
 		id.id="mouseleave_canceller_id_"+mouseleave_cancellers_count;
 	}
-	if (typeof id.onmouseleave=="object") {
+	if (typeof(id.onmouseleave) == "object") {
 		if (id.addEventListener) {
 			id.addEventListener("mouseleave", func, (bubbling?bubbling:false));
 		} else {
@@ -910,13 +912,13 @@ function mouseleave(id, func, bubbling) {
 	}
 }
 
-// habilitar/deshabilitar seleccionar texto en un elemento
-function selectionEnabled(o,enable) {
-	var o=gid(o);
-	if (typeof o.onselectstart!="undefined") { if (enable) o.onselectstart=null; else { o.onselectstart=function(){ return false; } } } // IE
-	else if (typeof o.style.MozUserSelect!="undefined") { o.style.MozUserSelect=(enable?"":"none"); } //Firefox
-	else { if (enable) o.onmousedown=null; else { o.onmousedown=function(){ return false; } } } // all other navs
-	o.style.cursor="default";
+// enable/disable select text in an element
+function selectionEnabled(e, enable) {
+	var e=gid(e);
+	if (typeof(e.onselectstart) != "undefined") { if (enable) e.onselectstart=null; else { e.onselectstart=function(){ return false; } } } // IE
+	else if (typeof(e.style.MozUserSelect) != "undefined") { e.style.MozUserSelect=(enable?"":"none"); } // Firefox
+	else { if (enable) e.onmousedown=null; else { e.onmousedown=function(){ return false; } } } // other navs
+	e.style.cursor="default";
 }
 
 // get current decimal separator
@@ -934,7 +936,7 @@ function numberLocale(n) {
 	return (""+localeNumber(n)).replace('.', localeDecimalSeparator());
 }
 
-// entrada sólo numérica entera
+// restrict numeric input
 function gInputInt(id, negatives, floating) {
 	var input=gid(id);
 	var lds=localeDecimalSeparator();
@@ -987,12 +989,12 @@ function gInputInt(id, negatives, floating) {
 	input.onblur();
 }
 
-// entrada sólo numérica floatante
+// restrict input to float numbers
 function gInputFloat(id, negatives) {
-	gInputInt(id,negatives,true);
+	gInputInt(id, negatives, true);
 }
 
-// comprobación autogrow
+// autogrow apply
 function autogrowcheck(id) {
 	var e=gid(id), h=0, p=['padding-top', 'padding-bottom'];
 	var s=window.getComputedStyle(e, null);
@@ -1009,37 +1011,30 @@ function autogrow(id) {
 	autogrowcheck(id);
 }
 
-// eliminar espacios de una cadena
+// trim all spaces from start and end of an string
 function trim(str) {
 	return (""+str).replace(/^\s*|\s*$/g,"");
 }
 
-// elimina la ruta de un nombre de fichero completo,
-// y también su sufijo, si se especifica y coincide
+// get base name and remove suffix, if any
 function basename(path, suffix) {
 	var b=path.replace(/^.*[\/\\]/g, '');
-	if (typeof(suffix) == 'string' && b.substr(b.length-suffix.length) == suffix)
-		b=b.substr(0, b.length-suffix.length);
+	if (typeof(suffix) == 'string' && b.substr(b.length-suffix.length) == suffix) b=b.substr(0, b.length-suffix.length);
 	return b;
 }
 
-// equivalente a br2nl en php
-function br2nl(s) {
-	return s.replace(/<br\s*\/?>/mg,"\n");
-}
-
-// mostrar un número en formato X.XXX,XX
-function spf(n, f) {
+// locale number format and thousands separator plus fixed decimals
+function spf(n, d) {
 	var n=parseFloat(n);
 	if (isNaN(n)) return "";
-	var f=f || 2;
-	var e=Math.pow(10, f);
+	var d=d || 2;
+	var e=Math.pow(10, d);
 	var n=Math.round(n*e)/e;
 	if (typeof(Intl) == "object" && Intl.NumberFormat) return ""+(new Intl.NumberFormat(undefined, {minimumFractionDigits:f}).format(n));
-	return n.toFixed(f).replace(".", localeDecimalSeparator());
+	return n.toFixed(d).replace(".", localeDecimalSeparator());
 }
 
-// mostrar un número en formato X.XXX
+// locale number format and thousands separator
 function spd(n) {
 	var n=parseFloat(n);
 	if (isNaN(n)) return "";
@@ -1047,19 +1042,19 @@ function spd(n) {
 	return n.toFixed(0).replace(".", localeDecimalSeparator());
 }
 
-// mostrar un número en formato X.XXX o X.XXX,XX (solo si tiene decimales)
-function spn(n, f) {
-	return (parseInt(n) == parseFloat(n)?spd(n):spf(n, f));
+// locale number format and thousands separator plus decimals (if any)
+function spn(n, d) {
+	return (parseInt(n) == parseFloat(n)?spd(n):spf(n, d));
 }
 
-// asegurar una fecha en formato ISO
+// check an ISO date format string
 function isoEnsure(dt) {
 	var m=dt.match(/\d{4}-[01]\d-[0-3]\d [0-2]\d:[0-5]\d:[0-5]\d/);
 	return (m?m[0]:null);
 }
 
-// devuelve fecha y hora en formato ISO YYYY-MM-DD HH:II:SS desde fecha JavaScript (o fecha y hora actual)
-function isoDatetime(f) { return isoDateTime(f); } // coherencia
+// returns ISO date & time from JavaScript Date object
+function isoDatetime(f) { return isoDateTime(f); } // obsolete: coherence
 function isoDateTime(f) {
 	var
 		f=f||new Date(),
@@ -1088,7 +1083,7 @@ function isoTime(f) {
 // convierte una fecha Javascript a format SQL YYYY-MM-DD HH:II:SS (alias OBSOLETO)
 function sqlFromDate(f) { return isoDatetime(f); }
 
-// convierte una fecha SQL en formato YYYY-MM-DD con o sin HH:II:SS a formato JavaScript
+// ISO to JavaScript date
 function sqlDate(fecha) {
 	var d=fecha.split(" ");
 	var f=d[0].split("-");
@@ -1143,7 +1138,7 @@ function spTimeNow() {
 	return spTime(new Date());
 }
 
-// getElementsByClassName, implementación para IE (el único que no lo soporta)
+// getElementsByClassName polyfill
 if (typeof(getElementsByClassName) == "undefined") {
 	function getElementsByClassName(oElm, strTagName, strClassName){
 		var arrElements=(strTagName == "*" && oElm.all)? oElm.all :	oElm.getElementsByTagName(strTagName);
@@ -1160,14 +1155,14 @@ if (typeof(getElementsByClassName) == "undefined") {
 	}
 }
 
-// pasa cualquier cadena a entero/decimal, incluyendo números que comienzan con 0
-function intval(t) { t=t+""; while (t.substring(0,1)=="0") t=t.substring(1); if (!t) t=0; return parseInt(t); }
-function doubleval(t) { t=t+""; while (t.substring(0,1)=="0") t=t.substring(1); if (!t) t=0; return parseFloat(t); }
+// integer/double values
+function intval(t) { return parseInt(""+t); }
+function doubleval(t) { return parseFloat(""+t); }
 
-// devuelve el timestamp con resolución de milisegundos
+// timestamp + microsecond resolution
 function militime() { return new Date().getTime(); }
 
-// devuelve parámetros GET (si no se especifican) o un parámetro GET de una URL o de la URL actual
+// return GET parameters as an object
 function get(n, url) {
 	var url=url || location.href;
 	var i=url.indexOf("?");
@@ -1175,26 +1170,27 @@ function get(n, url) {
 		url=url.substring(i+1);
 		var i=url.indexOf("#");
 		if (i !== -1) url=url.substring(0, i);
-		var items=url.split("&");
+		var g=url.split("&");
 		var k, v;
-		if (typeof(n) === "undefined" || n === null) {
-			var a={};
-			for (var i=0; i<items.length; i++) {
-				[k, v]=items[i].split("=");
-				a[decodeURIComponent(k)]=(typeof(v) == "undefined"?"":decodeURIComponent(v));
-			}
-			return a;
-		} else {
-			for (var i=0; i<items.length; i++) {
-				[k, v]=items[i].split("=");
-				if (decodeURIComponent(k) === n) return (typeof(v) == "undefined"?"":decodeURIComponent(v));
+		var a={};
+		for (var i=0; i < g.length; i++) {
+			[k, v]=g[i].split("=");
+			var k=decodeURIComponent(k);
+			var v=(typeof(v) == "undefined"?"":decodeURIComponent(v));
+			if (k.length > 2 && k.slice(-2) == "[]") {
+				k=k.substring(0, k.length-2);
+				if (!Array.isArray(a[k])) a[k]=[];
+				a[k].push(v);
+			} else {
+				a[k]=v;
 			}
 		}
+		return (typeof(n) !== "undefined"?a[n]:a);
 	}
 	return null;
 }
 
-// modifica parámetros (de una URL)
+// alter URL link
 function alink(p, url) {
 	var p=p||{};
 	var url=url||location.href;
@@ -1211,7 +1207,15 @@ function alink(p, url) {
 		url=url.substring(0, i);
 		for (var i in g) {
 			[k, v]=g[i].split("=");
-			get[decodeURIComponent(k)]=(typeof(v) == "undefined"?"":decodeURIComponent(v));
+			var k=decodeURIComponent(k);
+			var v=(typeof(v) == "undefined"?"":decodeURIComponent(v));
+			if (k.length > 2 && k.slice(-2) == "[]") {
+				k=k.substring(0, k.length-2);
+				if (!Array.isArray(get[k])) get[k]=[];
+				get[k].push(v);
+			} else {
+				get[k]=v;
+			}
 		}
 	}
 	for (var k in p) {
@@ -1222,15 +1226,21 @@ function alink(p, url) {
 	var qs="";
 	for (var k in get) {
 		var v=get[k];
-		qs+=(qs?"&":"")+encodeURIComponent(k)+(v===""?"":"="+encodeURIComponent(v));
+		if (Array.isArray(v)) {
+			for (var i in v) {
+				qs+=(qs?"&":"")+encodeURIComponent(k)+"[]"+(v[i] === ""?"":"="+encodeURIComponent(v[i]));
+			}
+		} else {
+			qs+=(qs?"&":"")+encodeURIComponent(k)+(v === ""?"":"="+encodeURIComponent(v));
+		}
 	}
 	return url+(qs?"?"+qs:"")+marker;
 }
 
-// evita la acción de carga de ficheros al arrastrarlos sobre la página o sobre un elemento de ella
+// prevent default dragover and drop files over document or an element inside
 function preventDefaultDrag(id) {
-	if (typeof(id)=="undefined") var id=document.body;
-	o=(typeof(id)=="object"?id:document.getElementById(id));
+	if (typeof(id) == "undefined") var id=document.body;
+	o=(typeof(id) == "object"?id:document.getElementById(id));
 	o.addEventListener("dragover",function(event) { event.preventDefault(); },true);
 	o.addEventListener("drop", function(event) { event.preventDefault(); }, false);
 }
@@ -1416,7 +1426,7 @@ function htmlentities(string, quote_style, charset, double_encode) {
 	return string;
 }
 
-// abrir una ventana centrada
+// open window centered or with some options
 function windowOpen(url, pw, ph, o) {
 	var o=o||{};
 	var options={
@@ -1446,7 +1456,7 @@ function windowOpen(url, pw, ph, o) {
 	return window.open(url, (o.name?o.name:""), p);
 }
 
-// convierte bytes a un string fácilmente legible
+// convert byte size to human-readable string
 function bytesToString(bytes) { return sizeString(bytes); }
 function sizeString(bytes) {
 	if (bytes >= 1099511627776) return spf(bytes/1099511627776)+" TB";
@@ -1456,7 +1466,7 @@ function sizeString(bytes) {
 	return spd(bytes);
 }
 
-// copiar texto al portapapeles
+// copy text to system clipboard
 function copyToClipboard(text) {
 	var e=document.createElement("textarea");
 	e.type="text";
@@ -1468,7 +1478,7 @@ function copyToClipboard(text) {
 	e.parentNode.removeChild(e);
 }
 
-// insertar texto en la posición del cursor o en sustitución de la selección de un input/textarea
+// text insert or replace selection in the cursor position in an input or textarea
 function insertAtCursor(id, text) {
 	var e=gid(id);
 	if (document.selection) {
