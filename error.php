@@ -94,6 +94,9 @@ class xError {
 		// define setup
 		$this->setup=$setup;
 
+		// php automatic compatibility support
+		$this->phpc=(isset($this->phpc) && $this->phpc?$this->phpc:(x::page("phpc")?x::page("phpc"):7));
+
 		// burst time
 		if (!$this->mail_bursttime) $this->mail_bursttime=60;
 
@@ -107,10 +110,10 @@ class xError {
 			// hide errors
 			$this->visible(false);
 
-			// capture non-critical errors
+			// capture non-critical warnings
 			set_error_handler(function($type, $message, $file, $line, $context=[]){
 				if (in_array($type, $this->warnings)) {
-					if (strpos($message, "Undefined array key") !== false) return; // ignore undefined array keys for PHP 8+
+					if ($this->phpc < 8 && strpos($message, "Undefined array key") !== false) return; // ignore undefined array keys for PHP 8+
 					$this->error=[
 						"type"=>$type,
 						"message"=>$message,
