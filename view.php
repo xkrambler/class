@@ -109,7 +109,7 @@ class View {
 	 * @param Boolean (opcional) TRUE si se desea en formato HTML o FALSE si se desea sólo texto.
 	 * @return String Cadena que muestra el tiempo transcurrido en formato legible.
 	 */
-	function afecha($fecha,$html=true) {
+	function afecha($fecha, $html=true) {
 		// comprobar si en vez de una fecha, nos pasan los segundos transcurridos y,
 		// si es así, convertir al formato de fecha
 		if (!strpos($fecha," ")) {
@@ -118,6 +118,7 @@ class View {
 		// obtener la fecha y la hora por separado
 		$f=explode(" ",$fecha); $d=$f[0]; $h=substr($f[1],0,5);
 		// si es de hoy...
+		$t="";
 		if ($d==date("Y-m-d")) {
 			$t=", hoy";
 			$ds=explode("-",$f[0]);
