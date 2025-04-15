@@ -32,7 +32,7 @@ class x {
 			if (is_array($m)) self::page("include", $m);
 			else {
 				if (!$GLOBALS["page"]["include"]) $GLOBALS["page"]["include"]=array();
-				$GLOBALS["page"]["include"][]=$m;
+				array_push($GLOBALS["page"]["include"], $m);
 			}
 		}
 		return $i;
@@ -65,50 +65,40 @@ class x {
 		return $_modulec;
 	}
 
+	// _server
+	static public function _server($k=null) {
+		return (isset($k)?(isset($_SERVER) && isset($_SERVER[$k])?$_SERVER[$k]:null):$_SERVER);
+	}
+
 	// is HTTPS?
 	static public function ishttps() {
 		return (
-			((string)($_SERVER['HTTPS']??"") && strtolower((string)$_SERVER['HTTPS']) !== 'off')
-			|| (strtolower((string)($_SERVER['HTTP_X_FORWARDED_PROTO']??"")) === 'https')
-			|| (strtolower((string)($_SERVER['HTTP_FRONT_END_HTTPS']??"")) === 'on')
-			|| (strtolower((string)($_SERVER['HTTP_PROXY_SSL']??"")) === 'true')
+			(self::_server("HTTPS") && strcasecmp((string)self::_server("HTTPS"), 'off'))
+			|| !strcasecmp((string)self::_server("HTTP_X_FORWARDED_PROTO"), 'https')
+			|| !strcasecmp((string)self::_server("HTTP_FRONT_END_HTTPS"), 'on')
+			|| !strcasecmp((string)self::_server("HTTP_PROXY_SSL"), 'true')
 		);
 	}
 
-	// is mobile?
-	static public function ismobile() {
-		return (
-			strpos((string)$_SERVER["HTTP_USER_AGENT"]??"", "Android;")
-			|| strpos((string)$_SERVER["HTTP_USER_AGENT"]??"", "iPhone;")
-			|| strpos((string)$_SERVER["HTTP_USER_AGENT"]??"", "iPod;")
-			|| strpos((string)$_SERVER["HTTP_USER_AGENT"]??"", "iPad;")
-		);
-	}
-
-	// is IE?
-	static public function isie() {
-		return (isset($_SERVER["HTTP_USER_AGENT"]) && strpos((string)$_SERVER["HTTP_USER_AGENT"], "MSIE")!==false);
-	}
-
-	// get my script
+	// get running script
 	static public function self() {
-		return (isset($_SERVER["PHP_SELF"])?$_SERVER["PHP_SELF"]:null);
+		return self::_server("PHP_SELF");
 	}
 
 	// get server base
 	static public function server() {
-		return (isset($_SERVER["HTTP_HOST"])?"http".(self::ishttps()?"s":"")."://".$_SERVER["HTTP_HOST"]:"");
+		return (($v=self::_server("HTTP_HOST"))?"http".(self::ishttps()?"s":"")."://".$v:"");
 	}
 
 	// get request path
 	static public function request() {
-		return (isset($_SERVER["REQUEST_URI"])?$_SERVER["REQUEST_URI"]:$_SERVER["SCRIPT_NAME"]);
+		return (isset($_SERVER["REQUEST_URI"])?self::_server("REQUEST_URI"):self::_server("SCRIPT_NAME"));
 	}
 
 	// get path
 	static public function path() {
 		$p=self::request();
-		if ($i=strpos($p,"?")) $p=substr($p, 0, $i);
+		if ($i=strpos($p, "?")) $p=substr($p, 0, $i);
 		return $p;
 	}
 
@@ -122,10 +112,10 @@ class x {
 	// get "me"
 	static public function me() {
 		$url=self::path();
-		return (substr($url, -1, 1)=="/"?"":basename($url));
+		return (substr($url, -1, 1) == "/"?"":basename($url));
 	}
 
-	// get relative URL with query
+	// get relative URL+query
 	static public function relative() {
 		return self::me().(($q=self::query())?"?".$q:"");
 	}
@@ -141,8 +131,7 @@ class x {
 		if ($base !== null) $page["base"]=$base;
 		if (isset($page["base"])) return $page["base"];
 		$path=self::path();
-		$server=self::server();
-		return ($server?$server.(($i=strrpos($path, "/"))!==false?substr($path, 0, $i+1):"/"):"");
+		return (($server=self::server())?$server.(($i=strrpos($path, "/")) !== false?substr($path, 0, $i+1):"/"):"");
 	}
 
 	// link: create parametrized link
@@ -153,7 +142,7 @@ class x {
 			$i=strpos($url, '?');
 			if ($i !== false) $url=substr($url, 0, $i);
 			$geturl=array();
-			parse_str((string)$p['query'], $geturl);
+			parse_str((isset($p['query'])?(string)$p['query']:''), $geturl);
 			if ($geturl) $get=array_replace($geturl, $get);
 		}
 		// build query
@@ -173,35 +162,34 @@ class x {
 
 	// redirect to URL and finish
 	static public function redir($url=null) {
-		header("Location: ".($url===null?self::base():$url));
+		header("Location: ".($url === null?self::base():$url));
 		exit;
 	}
 
 	// force HTTPS navigation
 	static public function forcehttps() {
-		if (!self::ishttps() && isset($_SERVER["HTTP_HOST"])) self::redir("https://".$_SERVER["HTTP_HOST"].self::request());
+		if (isset($_SERVER["HTTP_HOST"]) && !self::ishttps()) self::redir("https://".$_SERVER["HTTP_HOST"].self::request());
 	}
 
 	// efective remote address
 	static function remoteaddr() {
-		return ($_SERVER["HTTP_X_FORWARDED_FOR"]?$_SERVER["HTTP_X_FORWARDED_FOR"]:$_SERVER["REMOTE_ADDR"]);
+		return (($v=self::_server("HTTP_X_FORWARDED_FOR"))?$v:self::_server("REMOTE_ADDR"));
 	}
 
-	// return current page charset
+	// return current page charset or default charset
 	static public function charset($charset=null) {
 		if ($charset !== null) self::page("charset", $charset);
 		$charset=self::page("charset");
 		return ($charset?$charset:"UTF-8");
 	}
 
-	// return html entities in current page charset
+	// return HTML entities in current page charset
 	static public function entities($t) {
-		$charset=self::page("charset");
-		return htmlentities($t, ENT_QUOTES | ENT_SUBSTITUTE, self::charset());
+		return htmlentities((string)$t, ENT_QUOTES|ENT_SUBSTITUTE, self::charset());
 	}
 
 	// generic set cookie
-	static public function setcookie(string $name, string $value, array $o=[]) {
+	static public function setcookie(string $name, string $value, array $o=array()) {
 		$c=[
 			"\x00"=>"", "\x1F"=>"", "\x7F"=>"", "\n"=>"%0A", "\r"=>"%0D",
 			" "=>"%20", ","=>"%2C", "/"=>"%2F", ";"=>"%3B", "="=>"%3D", "\\"=>"%5C"
@@ -222,7 +210,7 @@ class x {
 	}
 
 	// generic delete cookie
-	static public function delcookie(string $name, array $o=[]) {
+	static public function delcookie(string $name, array $o=array()) {
 		self::setcookie($name, "", ["expires"=>1]+$o);
 	}
 
@@ -236,17 +224,17 @@ class x {
 	}
 
 	// isolated require
-	static public function irequire($file, $data=[]) {
+	static public function irequire($file, $data=array()) {
 		extract($data);
 		unset($data);
-		require($file);
+		return require($file);
 	}
 
 	// start and get + clean buffer
-	static function ob($continueob=true) {
+	static function ob($continue_ob=true) {
 		$d=(@ob_get_contents());
 		ob_end_clean();
-		if ($continueob) ob_start();
+		if ($continue_ob) ob_start();
 		return $d;
 	}
 
@@ -258,9 +246,8 @@ if (!function_exists("perror")) {
 		if (class_exists("xError") && ($error=xError::current())) {
 			$error->err($err, $exit);
 		} else {
-			$err=strip_tags($err);
-			if ($GLOBALS["ajax"]) ajax(array("err"=>"ERROR: ".$err));
-			else if (!$_SERVER["HTTP_HOST"]) echo "ERROR: ".$err."\n";
+			if ($GLOBALS["ajax"] && function_exists("ajax")) ajax(array("err"=>"ERROR: ".$err));
+			else if (!x::_server("HTTP_HOST")) echo "ERROR: ".strip_tags($err)."\n";
 			else {
 				?><!doctype html>
 				<html>
@@ -298,26 +285,24 @@ if (!function_exists("perror")) {
 	}
 }
 
-// check basic setup
-if ((bool)ini_get('register_globals')) perror("Security: register_globals must be disabled to continue.");
-
 // PHP compatibility
 if (intval(x::page("phpc")) < 8 && defined("PHP_VERSION_ID") && PHP_VERSION_ID >= 80000) error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
+
+// check basic setup
+if ((bool)ini_get('register_globals')) perror("Security: register_globals must be disabled to continue.");
 
 // forced variables
 $me=x::self();
 if (isset($_REQUEST["id"])) $id=$_REQUEST["id"];
-if (!isset($data)) $data=[];
+if (!isset($data)) $data=array();
 
 // legacy variables (deprecated)
 $server=x::server();
 $requesturi=x::path();
 $serverurl=x::base();
-$ismobile=x::ismobile();
-$isie=x::isie();
 
 // include all configuration files
-$_f=(x::page("conf")?x::page("conf"):"conf/");
+$_f=(is_string(x::page("conf"))?x::page("conf"):"conf/");
 if ($_f && file_exists($_f)) {
 	$_d=dir($_f);
 	while ($_e=$_d->read())
@@ -325,6 +310,9 @@ if ($_f && file_exists($_f)) {
 			require_once($_d->path.$_e);
 	$_d->close();
 }
+
+// change error reporting, if defined
+if ($_e=x::page("error_reporting")) error_reporting($_e);
 
 // session control
 if (is_string(x::page("sessionname"))) {
@@ -348,8 +336,7 @@ if (isset($include) && $_x=$include) foreach ($_x as $_c) x::inc($_c);
 // include all PHP classes
 if ($_x=x::inc()) foreach ($_x as $_c) {
 	$_f=(strpos($_c, "/") !== false?"":__DIR__."/").$_c;
-	if (file_exists($_f.'.php')) require_once($_f.'.php');
-	x::isinc($_c, true);
+	if (file_exists($_f.'.php')) x::isinc($_c, require_once($_f.'.php'));
 }
 
 // automatic instances
@@ -399,14 +386,14 @@ if (!function_exists("debug")) {
 	}
 }
 
-// start and get + clean buffer (deprecated)
+// start and get + clean buffer (deprecated: use x::ob)
 if (!function_exists("xob")) {
-	function xob($continueob=true) {
-		return x::ob($continueob);
+	function xob($continue_ob=true) {
+		return x::ob($continue_ob);
 	}
 }
 
-// module loading (replaced by x::module) (deprecated)
+// module loading (deprecated: use x::module)
 if (!function_exists("module")) {
 	function module($m) {
 		x::module($m);
@@ -417,33 +404,35 @@ if (!function_exists("module")) {
 if (isset($_GET["css"]) || isset($_GET["js"])) {
 
 	// crypt autoloading
+	$_pc=false;
 	if ($page["crypt"]) {
 		require_once(__DIR__."/crypt.php");
 		$_pc=new $page["crypt"]["type"]($page["crypt"]);
+		if (!$_pc->available()) $_pc->err();
 	}
 
 	// get includes
+	$_i=array();
 	$_x=false;
 	if (isset($_GET["css"])) { $_x="css"; $_m="text/css"; }
 	else if (isset($_GET["js"]))  { $_x="js";  $_m="text/javascript"; }
 	if (!$_x) perror("/* BOOM: No ext! */"); // allowed extension
-	if ($page["crypt"]) $_GET[$_x]=$_pc->decrypt($_GET[$_x]); // cypher
+	if ($_pc) $_GET[$_x]=$_pc->decrypt($_GET[$_x]); // cypher
 	if (strpos($_GET[$_x], "\0") !== false) die("/* BOOM: 0x00 Headshot! */"); // null character detected
 	if ($_GET[$_x] && !$_i=explode("|", $_GET[$_x])) die("/* No includes */"); // no includes
 
 	// caching
-	if (@$page["cache_".$_x]) {
+	if ($_c=x::page("cache_".$_x)) {
 		require_once(__DIR__."/xcache.php");
 		$xcache=new xCache();
-		$xcache->modified($page["cache_".$_x]);
+		$xcache->modified($_c);
 	}
 
 	// caching via headers (in seconds)
-	if (@$page["maxage"]) x::maxage($page["maxage"]);
+	if ($_c=x::page("maxage")) x::maxage($_c);
 
-	// send with gzip compression, if available and enabled
-	if (!$page["no_gzip"] && extension_loaded('zlib') && array_search("gzip", explode(",", $_SERVER["HTTP_ACCEPT_ENCODING"]))!==false)
-		ob_start("ob_gzhandler");
+	// send with compression, if available and not disabled
+	if (!x::page("no_gzip") && extension_loaded('zlib') && ($_c=x::_server("HTTP_ACCEPT_ENCODING")) && in_array("gzip", explode(",", $_c))) ob_start("ob_gzhandler");
 
 	// set mimetype and charset
 	header("Content-type: ".$_m."; charset=".x::charset());
