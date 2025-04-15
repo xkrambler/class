@@ -14,7 +14,7 @@ class xItemsSearch {
 
 	// make query and return as data
 	static function data($o) {
-		$adata=($o["adata"]?$o["adata"]:$GLOBALS["adata"]);
+		$adata=(isset($o["adata"]) && $o["adata"]?$o["adata"]:$GLOBALS["adata"]);
 		$db=$o["db"];
 		$db_protocol=$db->protocol();
 
@@ -24,8 +24,8 @@ class xItemsSearch {
 
 		// sorting
 		$sqlsort="";
-		if ($sort=($o["sort"]?$o["sort"]:$adata["sort"])) foreach ($sort as $f=>$t) {
-			if ($ordersf=$o["orders"][$f]) {
+		if ($sort=(isset($o["sort"])?$o["sort"]:$adata["sort"])) if (is_array($sort)) foreach ($sort as $f=>$t) {
+			if (isset($o["orders"]) && is_array($o["orders"]) && ($ordersf=$o["orders"][$f])) {
 				$ordersf=explode(",", $ordersf);
 				if ($ordersf)
 					foreach ($ordersf as $orderf)
