@@ -151,7 +151,7 @@ class PSession extends \xData {
 
 	// revalidate cookie
 	function revalidate() {
-		return (!$_SESSION["psession"] || (time()-$_SESSION["psession"] > $this->revalidate)?$this->check():false);
+		return (!isset($_SESSION["psession"]) || (time()-$_SESSION["psession"] > $this->revalidate)?$this->check():false);
 	}
 
 	// persistent session check
