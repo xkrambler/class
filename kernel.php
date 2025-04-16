@@ -6,306 +6,83 @@ class Kernel {
 	static $id=0;
 	public $db;
 	public $dbref;
-	public $conf_table;
-	public $process_table;
+	public $conf_table="conf";
 	protected $o;
 
-	// constructor: se requiere especificar la clase de base de datos que se usará
+	// constructor
 	function __construct($db=null) {
 		$this->db($db);
-		$this->setup();
+		$this->dbref=__CLASS__.++self::$id;
 	}
 
-	// get/set de la base de datos asociada
+	// return GET by key or null
+	static function get($k) {
+		return self::removeMagicQuotes(isset($_GET[(string)$k])?$_GET[(string)$k]:null);
+	}
+
+	// return POST by key or null
+	static function post($k) {
+		return self::removeMagicQuotes(isset($_POST[(string)$k])?$_POST[(string)$k]:null);
+	}
+
+	// remove magic quotes, if needed
+	static function removeMagicQuotes($v) {
+		return (ini_get("magic_quotes_gpc")?stripslashes($v):$v);
+	}
+
+	// get/set database
 	function db($db=null) {
-		if ($db!==null) $this->db=$db;
+		if ($db !== null) $this->db=$db;
 		return $db;
 	}
 
-	// inicializa variables base del núcleo
-	function setup() {
-		$this->dbref=__CLASS__.++self::$id;
-		$this->conf_table="conf";
-		$this->process_table="process";
+	// register generic autoloader, base path as an option
+	static function autoload($base=null) {
+		spl_autoload_register(function($c){
+			if (!isset($base) || $base === null) $base=getcwd();
+			$f=$base.(substr($base, -1, 1) != "/"?"/":"").strtolower(str_replace('\\', '/', $c)).".php";
+			if (file_exists($f)) require_once($f);
+		});
 	}
 
-	/**
-	 * conf.
-	 * Obtiene o establece un parámetro en la configuración del sistema.
-	 *
-	 * @param String Nombre del parámetro a obtener/establecer.
-	 * @param Mixed Datos a almacenar en la base de datos.
-	 * @return Mixed Datos obtenidos desde la base de datos.
-	 */
+	// DEPRECATED: get/set key/value pair in configuration table
 	function conf($name, $data=null) {
-		if (!$this->db->query("SELECT data FROM ".$this->conf_table." WHERE name='".$this->db->escape($name)."'", $this->dbref)) return(false);
-		if ($data===null) {
-			if ($this->db->numrows($this->dbref)) return($this->db->field(null, $this->dbref));
+		if (!$this->db->query("SELECT data FROM ".$this->db->sqltable($this->conf_table)." WHERE name='".$this->db->escape($name)."'", $this->dbref)) return(false);
+		if ($data === null) {
+			if ($this->db->numrows($this->dbref)) return $this->db->field(null, $this->dbref);
 		} else {
-			if ($this->db->numrows($this->dbref)) $sql=$this->db->sqlupdate($this->conf_table,array("data"=>$data),array("name"=>$name));
-			else $sql=$this->db->sqlinsert($this->conf_table,array("name"=>$name,"data"=>$data));
+			$sql=($this->db->numrows($this->dbref)
+				?$this->db->sqlupdate($this->conf_table, array("data"=>$data), array("name"=>$name))
+				:$this->db->sqlinsert($this->conf_table, array("data"=>$data, "name"=>$name))
+			);
 			return $this->db->query($sql, $this->dbref);
 		}
-		return(false);
+		return false;
 	}
 
-	/**
-	 * confdel.
-	 * Borrar un parámetro de la configuración del sistema.
-	 *
-	 * @param String Nombre del parámetro a eliminar.
-	 */
+	// DEPRECATED: delete key from configuration table
 	function confdel($name) {
 		return $this->db->query($this->db->sqldelete($this->conf_table,array("name"=>$name)), $this->dbref);
 	}
 
-	/**
-	 * process.
-	 * Obtiene/establece los datos de un proceso en la base de datos.
-	 *
-	 * @param String Identificador de sesión.
-	 * @param String Nombre de la variable almacenada.
-	 * @param Mixed (optional) Datos que se almacenarán en la base de datos.
-	 */
-	function process($sid,$name,$data=null) {
-		if (!$this->db->query("SELECT * FROM ".$this->process_table." WHERE sessionid='".$this->db->escape($sid)."' AND name='".$this->db->escape($name)."'", $this->dbref)) return false;
-		$row=$this->db->row($this->dbref);
-		if ($data==null) {
-			return(unserialize($row["data"]));
-		} else {
-			$fields=array("sessionid"=>$sid,"updated"=>date("Y-m-d H:i:s"),"name"=>$name,"data"=>serialize($data));
-			$sql=($row["sessionid"]
-				?$this->db->sqlupdate($this->process_table,$fields,array("sessionid"=>$sid,"name"=>$name))
-				:$this->db->sqlinsert($this->process_table,$fields)
-			);
-			return $this->db->query($sql, $this->dbref);
-		}
-	}
-
-	/**
-	 * processRemove.
-	 * Elimina datos de un proceso existente en la base de datos.
-	 *
-	 * @param String Identificador de sesión.
-	 * @param String Nombre de la variable almacenada.
-	 */
-	function processRemove($sid,$name) {
-		return $this->db->query($this->db->sqldelete($this->process_table,array("sessionid"=>$sid,"name"=>$name)), $this->dbref);
-	}
-
-	/**
-	 * removeMagicQuotes.
-	 * Obtiene un dato AJAX y elimina magic quotes (si es necesario).
-	 *
-	 * @return string Datos sin las magic quotes.
-	 */
-	function removeMagicQuotes($data) {
-		return(ini_get("magic_quotes_gpc")
-			?str_replace("\\\\","\\",str_replace("\\\"","\"",str_replace("\\'","'",$data)))
-			:$data
-		);
-	}
-
-	/**
-	 * get.
-	 * Obtiene un dato por usando $_REQUEST y lo filtra,
-	 * eliminando Magic Quotes si las posee.
-	 *
-	 * @param String Nombre de variable requerida.
-	 * @return String Datos recibidos y filtrados.
-	 */
-	function get($variable) {
-		return $this->removeMagicQuotes($_REQUEST[$variable]);
-	}
-
-	/**
-	 * dbget.
-	 * Obtiene un dato por usando $_REQUEST y lo filtra,
-	 * eliminando Magic Quotes si las posee y además escapando caracteres SQL.
-	 *
-	 * @param String Nombre de variable requerida.
-	 * @return String Datos recibidos y filtrados.
-	 */
-	function dbget($variable) {
-		return $this->db->escape($this->get($variable));
-	}
-
-	/**
-	 * isHash.
-	 * Comprueba si un array es asociativo o no lo es.
-	 *
-	 * @return boolean Verdadero si es asociativo o False si es un array puro.
-	 */
-	static function isHash($data) {
-		foreach ($data as $j=>$v)
-			return ($j?true:false);
-	}
-
-	/**
-	 * arrayPure.
-	 * Devuelve un array no asociativo desde uno asociativo.
-	 * Si se pasa un array no asociativo, no hace nada y devuelve el mismo.
-	 *
-	 * @return array Array no asociativo puro.
-	 */
-	static function arrayPure($data) {
-		if (self::isHash($data)) {
-			$newdata=array();
-			foreach ($data as $i=>$v)
-				$newdata[count($newdata)]=$i;
-			return $newdata;
-		} else {
-			return $data;
-		}
-	}
-
-	/**
-	 * arrayGet.
-	 * Devuelve las claves especificadas de una matriz asociativa.
-	 *
-	 * @return array Devuelve únicamente las claves especificadas en $keys que existan en $data.
-	 */
-	static function arrayGet($data,$keys) {
-		$newdata=array();
-		if ($this->isHash($keys)) {
-			foreach ($keys as $k=>$v)
-				$newdata[$k]=$data[$k];
-		} else {
-			foreach ($keys as $k)
-				$newdata[$k]=$data[$k];
-		}
-		return $newdata;
-	}
-
-	/**
-	 * arrayRemove.
-	 * Elimina las claves especificadas de una matriz asociativa.
-	 *
-	 * @return array Devuelve el mismo array cuyas claves especificadas en $keys han sido eliminadas de $data.
-	 */
-	static function arrayRemove($data, $keys) {
-		$keys_aux=self::arrayPure($keys);
-		foreach ($data as $k=>$v)
-			if (!in_array($k, $keys_aux))
-				$newdata[$k]=$data[$k];
-		return $newdata;
-	}
-
-	/**
-	 * keys.
-	 * Obtiene las claves únicas de un array por su nombre de clave.
-	 *
-	 * @param Array Array con la lista de elementos.
-	 * @param String Cadena con el nombre de la clave.
-	 * @return array Devuelve un array con las claves únicas.
-	 */
-	static function keys($data, $key) {
-		$a=array();
-		if (is_array($data))
-			foreach ($data as $v)
-				$a[$v[$key]]=true;
-		return array_keys($a);
-	}
-
-	/**
-	 * asoc.
-	 * Creates an associative array from a list of array with key name and, optionally, value-name elements.
-	 *
-	 * @param Array Array to process.
-	 * @param String Key name.
-	 * @param String Value name (optional).
-	 * @return Array Key-indexed array.
-	 */
-	static function asoc($data, $key, $value=null) {
-		$a=array();
-		if (is_array($data))
-			foreach ($data as $v)
-				$a[$v[$key]]=($v === null?$v:$v[$value]);
-		return $a;
-	}
-
-	/**
-	 * IP Ascendent Sort Function.
-	 * Función de ordenación por IP ascendente para usar con uasort.
-	 *
-	 * @param String Primera dirección IP a comparar.
-	 * @param String Segunda dirección IP a comparar.
-	 * @return Integer 1 si primero es mayor que segundo, -1 en caso contrario, 0 en caso de ser iguales
-	 */
+	// IP ascendent sort function
 	function ipAscSortFunction($a, $b) {
 		$ipa=sprintf("%u", ip2long($a));
 		$ipb=sprintf("%u", ip2long($b));
 		return ($ipa > $ipb?1:($ipa < $ipb?-1:0));
 	}
 
-	/**
-	 * IP Descendent Sort Function.
-	 * Función de ordenación por IP descendente para usar con uasort.
-	 * Puede usarse el método ipArraySort.
-	 *
-	 * @param String Primera dirección IP a comparar.
-	 * @param String Segunda dirección IP a comparar.
-	 * @return Integer 1 si primero es mayor que segundo, -1 en caso contrario, 0 en caso de ser iguales
-	 */
+	// IP descendent sort function
 	function ipDescSortFunction($b, $a) {
 		$ipa=sprintf("%u", ip2long($a));
 		$ipb=sprintf("%u", ip2long($b));
 		return ($ipa > $ipb?1:($ipa < $ipb?-1:0));
 	}
 	
-	/**
-	 * IP Array Sort.
-	 * Función de ordenación de arrays con IPs con preservación de claves.
-	 *
-	 * @param Array Array que desea ser ordenado
-	 * @param Boolean TRUE si se desea invertir la ordenación ascendente y convertirla a descendente.
-	 */
+	// sort IP array
 	function ipArraySort(&$arrayToSort, $desc=false) {
 		if (!$desc) uasort($arrayToSort, array($this, "ipAscSortFunction"));
 		else uasort($arrayToSort, array($this, "ipDescSortFunction"));
-	}
-
-	// obtener todos los parámetros como array
-	function arrayFromQueryString($qs=null) {
-		if ($qs === null) $qs=$_SERVER["QUERY_STRING"];
-		$a=[];
-		if (substr($qs, 0, 1) == "?") $qs=substr($qs, 1);
-		parse_str($qs, $a);
-		return $a;
-	}
-
-	// forma una Query String de un array asociativo
-	function queryStringFromarray($a) {
-		$s=http_build_query($a);
-		return (strlen($s)?"?":"").$s;
-	}
-
-	// suprime un parámetro de una QueryString
-	function removeFromQueryString($qs, $p) {
-		$a=$this->arrayFromQueryString($qs);
-		unset($a[$p]);
-		return ($a?$this->queryStringFromarray($a):"");
-	}
-
-	// DEPRECATED: obtener mi yo real
-	function realme() {
-		$me=$_SERVER["REQUEST_URI"];
-		if ($i=strpos($me, "?")) $me=substr($me, 0, $i);
-		return $me;
-	}
-
-	// DEPRECATED: alter link: modificar parámetros de URL
-	function alink($parametros=array(), $o=array()) {
-		$lnk=(isset($o["link"])?$o["link"]:$this->realme());
-		$entities=(isset($o["entities"])?$o["entities"]:true);
-		if ($qs=$_SERVER["QUERY_STRING"])
-			foreach ($parametros as $p=>$v)
-				$qs=$this->removeFromQueryString($qs,$p);
-		foreach ($parametros as $p=>$v)
-			if ($v!==null)
-				$qs.=($qs?"&":"?").urlencode($p).(strlen($v)?"=".urlencode($v):"");
-		$qs=($qs && substr($qs,0,1)!="?"?"?":"").$qs;
-		return $lnk.($entities?str_replace("&","&amp;",$qs):$qs);
 	}
 
 	// count timming from first to second call
@@ -442,12 +219,12 @@ class Kernel {
 	}
 
 	// dir filename sorting
-	static function name_sort($a, $b) {
-		return (strtolower($a["name"]) > strtolower($b["name"])?1:(strtolower($a["name"]) < strtolower($b["name"])?-1:0));
+	static function nameSort($a, $b) {
+		return strnatcasecmp($a["name"], $b["name"]);
 	}
 
-	// read a directory sorting it, first folders, and return entries as array
-	static function dir($p) {
+	// read a directory sorting it naturally, first folders, and return entries as array
+	static function dir($p="./") {
 		if (substr($p, -1, 1) != DIRECTORY_SEPARATOR) $p.=DIRECTORY_SEPARATOR;
 		$fd=array();
 		$fa=array();
@@ -458,21 +235,19 @@ class Kernel {
 				$fd[]=array(
 					"dir"=>true,
 					"name"=>$e,
-					"path"=>$p,
 					"mtime"=>filemtime($p.$e),
 				);
 			} else {
 				$fa[]=array(
 					"name"=>$e,
-					"path"=>$p,
 					"size"=>sprintf("%u", filesize($p.$e)),
 					"mtime"=>filemtime($p.$e),
 				);
 			}
 		}
 		$d->close();
-		usort($fd, array(__CLASS__, "name_sort"));
-		usort($fa, array(__CLASS__, "name_sort"));
+		usort($fd, array(__CLASS__, "nameSort"));
+		usort($fa, array(__CLASS__, "nameSort"));
 		$a=array();
 		if ($fd) foreach ($fd as $e) $a[]=$e;
 		if ($fa) foreach ($fa as $e) $a[]=$e;
@@ -526,7 +301,7 @@ class Kernel {
 	}
 
 	// vuelca el contenido de un fichero/buffer/datos a la web
-	static function dumpfile($o) {
+	static function dumpFile($o) {
 		// capturar metodo/tipo
 		if ($o["readfile"]) $o["file"]=$o["readfile"]; // compatibilidad
 		if ($o["file"]) { $method="file"; $f=basename($o["file"]); }
@@ -790,54 +565,25 @@ class Kernel {
 
 	}
 
-	/**
-	 * getEncoding.
-	 * Detects charset encoding for a given string.
-	 * Thanks to the public code ofered by Clbustos in http://php.apsique.com/node/536
-	 * and modified by mape367 in http://www.forosdelweb.com/f18/como-detectar-codificacion-string-448344/
-	 *
-	 * @param String String to detect charset
-	 * @return Encoding (UTF-8, ASCII or ISO-8859-1)
-	 */
+	// detects charset encoding for a given string
+	// thanks to the public code ofered by Clbustos in http://php.apsique.com/node/536 and modified by mape367 in http://www.forosdelweb.com/f18/como-detectar-codificacion-string-448344/
 	static function getEncoding($text) {
 		$c=0;
 		$ascii=true;
 		for ($i=0; $i < strlen($text); $i++) {
 			$byte=ord($text[$i]);
 			if ($c > 0) {
-				if (($byte>>6) != 0x2) {
-					return "ISO-8859-1";
-				} else {
-					$c--;
-				}
+				if (($byte>>6) != 0x2) return "ISO-8859-1";
+				else $c--;
 			} elseif ($byte&0x80) {
-				$ascii = false;
-				if (($byte>>5) == 0x6) {
-					$c=1;
-				} elseif (($byte>>4) == 0xE) {
-					$c=2;
-				} elseif (($byte>>3) == 0x14) {
-					$c=3;
-				} else {
-					return "ISO-8859-1";
-				}
+				$ascii=false;
+				if (($byte>>5) == 0x6) $c=1;
+				elseif (($byte>>4) == 0xE) $c=2;
+				elseif (($byte>>3) == 0x14) $c=3;
+				else return "ISO-8859-1";
 			}
 		}
 		return ($ascii?"ASCII":"UTF-8");
-	}
-
-	/**
-	 * autoload.
-	 * Register generic autoloader.
-	 *
-	 * @param String Base path (Optional)
-	 */
-	static function autoload($base=null) {
-		spl_autoload_register(function($c){
-			if (!isset($base) || $base === null) $base=getcwd();
-			$f=$base.(substr($base, -1, 1) != "/"?"/":"").strtolower(str_replace('\\', '/', $c)).".php";
-			if (file_exists($f)) require_once($f);
-		});
 	}
 
 	// return file via HTTP accepting a byte range protocol
@@ -854,7 +600,6 @@ class Kernel {
 				.($o["name"]?($o["disposition"]?'; ':'').'filename="'.self::headerFilename($o["name"]).'"':'')
 			);
 		}
-		// obtener inicio y fin de un rango especificado (leer solo el primero)
 		if (isset($_SERVER['HTTP_RANGE']) && $o["len"]) {
 			$ranges=explode(',', substr($_SERVER['HTTP_RANGE'], 6));
 			foreach ($ranges as $range) {
@@ -899,6 +644,109 @@ class Kernel {
 			if ($o["onend"]) $o["onend"]($o);
 		}
 		exit;
+	}
+
+	// DEPRECATED: check if an array is associative
+	static function isHash($data) {
+		if (is_array($data))
+			foreach ($data as $j=>$v)
+				return ($j?true:false);
+		return false;
+	}
+
+	// DEPRECATED: returns a valued array (like array_values)
+	static function arrayPure($data) {
+		if (self::isHash($data)) {
+			$newdata=array();
+			foreach ($data as $i=>$v)
+				$newdata[]=$i;
+			return $newdata;
+		} else {
+			return $data;
+		}
+	}
+
+	// DEPRECATED: returns only the keys that exists by name
+	static function arrayGet($data, $keys) {
+		$newdata=array();
+		if ($this->isHash($keys)) {
+			foreach ($keys as $k=>$v)
+				$newdata[$k]=$data[$k];
+		} else {
+			foreach ($keys as $k)
+				$newdata[$k]=$data[$k];
+		}
+		return $newdata;
+	}
+
+	// DEPRECATED: remove specific keys by name in an associative array
+	static function arrayRemove($data, $keys) {
+		$keys_aux=self::arrayPure($keys);
+		foreach ($data as $k=>$v)
+			if (!in_array($k, $keys_aux))
+				$newdata[$k]=$data[$k];
+		return $newdata;
+	}
+
+	// DEPRECATED: get unique keys from an array by key name
+	static function keys($data, $key) {
+		$a=array();
+		if (is_array($data))
+			foreach ($data as $v)
+				$a[$v[$key]]=true;
+		return array_keys($a);
+	}
+
+	// DEPRECATED: creates an associative array from a list of array with key name and, optionally, value-name elements.
+	static function asoc($data, $key, $value=null) {
+		$a=array();
+		if (is_array($data))
+			foreach ($data as $v)
+				$a[$v[$key]]=($v === null?$v:$v[$value]);
+		return $a;
+	}
+
+	// DEPRECATED: obtener todos los parámetros como array
+	function arrayFromQueryString($qs=null) {
+		if ($qs === null) $qs=$_SERVER["QUERY_STRING"];
+		$a=[];
+		if (substr($qs, 0, 1) == "?") $qs=substr($qs, 1);
+		parse_str($qs, $a);
+		return $a;
+	}
+
+	// DEPRECATED: forma una Query String de un array asociativo
+	function queryStringFromarray($a) {
+		$s=http_build_query($a);
+		return (strlen($s)?"?":"").$s;
+	}
+
+	// DEPRECATED: suprime un parámetro de una QueryString
+	function removeFromQueryString($qs, $p) {
+		$a=$this->arrayFromQueryString($qs);
+		unset($a[$p]);
+		return ($a?$this->queryStringFromarray($a):"");
+	}
+
+	// DEPRECATED: obtener mi yo real
+	function realme() {
+		$me=$_SERVER["REQUEST_URI"];
+		if ($i=strpos($me, "?")) $me=substr($me, 0, $i);
+		return $me;
+	}
+
+	// DEPRECATED: alter link: modificar parámetros de URL
+	function alink($parametros=array(), $o=array()) {
+		$lnk=(isset($o["link"])?$o["link"]:$this->realme());
+		$entities=(isset($o["entities"])?$o["entities"]:true);
+		if ($qs=$_SERVER["QUERY_STRING"])
+			foreach ($parametros as $p=>$v)
+				$qs=$this->removeFromQueryString($qs,$p);
+		foreach ($parametros as $p=>$v)
+			if ($v!==null)
+				$qs.=($qs?"&":"?").urlencode($p).(strlen($v)?"=".urlencode($v):"");
+		$qs=($qs && substr($qs,0,1)!="?"?"?":"").$qs;
+		return $lnk.($entities?str_replace("&","&amp;",$qs):$qs);
 	}
 
 	// DEPRECATED: validate a string for valid bytes
