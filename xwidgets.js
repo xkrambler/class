@@ -1489,7 +1489,7 @@ var xwidgets={
 
 			// general group for elements
 			self.e.group=newElement("div", {
-				"class":"group",
+				"class":"group full",
 				"childs":[self.e.cmb]
 			});
 
