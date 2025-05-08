@@ -48,9 +48,10 @@ if ($page["crypt"]) {
 
 // load CSS/JS: false=internal true=external 0=disabled
 foreach ($_e=array("css", "js") as $_i) {
+	if (!isset($$_i)) $$_i=array();
 	$_b="";
 	$_t="_".$_i;
-	$$_t=$$_t+($$_i?$$_i:array());
+	$$_t=$$_t+(is_array($$_i)?$$_i:array());
 	foreach ($$_t as $_n=>$_v)
 		if ($_v !== 0)
 			if (!$_v && substr($_n, -strlen($_i)-1) == ".".$_i)
