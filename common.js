@@ -1030,7 +1030,7 @@ function spf(n, d) {
 	var d=d || 2;
 	var e=Math.pow(10, d);
 	var n=Math.round(n*e)/e;
-	if (typeof(Intl) == "object" && Intl.NumberFormat) return ""+(new Intl.NumberFormat(undefined, {minimumFractionDigits:d}).format(n));
+	if (typeof(n.toLocaleString) == "function") return n.toLocaleString(undefined, {useGrouping:true, maximumFractionDigits:d, minimumFractionDigits:d});
 	return n.toFixed(d).replace(".", localeDecimalSeparator());
 }
 
@@ -1038,7 +1038,7 @@ function spf(n, d) {
 function spd(n) {
 	var n=parseFloat(n);
 	if (isNaN(n)) return "";
-	if (typeof(Intl) == "object" && Intl.NumberFormat) return ""+(new Intl.NumberFormat(undefined, {maximumFractionDigits:0}).format(n));
+	if (typeof(n.toLocaleString) == "function") return n.toLocaleString(undefined, {useGrouping:true, maximumFractionDigits:0});
 	return n.toFixed(0).replace(".", localeDecimalSeparator());
 }
 
