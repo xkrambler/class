@@ -917,7 +917,7 @@ class xForm3 {
 					.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
 					.(($f["values"]?($f["value"]==$f["values"][1]):$f["value"])?" checked":"")
 					.($f["disabled"]?" disabled":"")
-					.($f["readonly"]?" readonly":"")
+					.($f["readonly"]?" readonly onclick='javascript:return false;'":"")
 					.$common
 					.($styles?" style='".$styles."'":"")
 					.$f["extra"]." />"
@@ -942,7 +942,7 @@ class xForm3 {
 							.($f["title"]?" title='".$this->entities($f["title"])."'":"")
 							.(is_array($f["value"]) && in_array((string)$n, $f["value"])?" checked":"")
 							.($f["disabled"]?" disabled":"")
-							.($f["readonly"]?" readonly":"")
+							.($f["readonly"]?" readonly onclick='javascript:return false;'":"")
 							.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
 							.$common
 							.($styles?" style='".$styles."'":"")
@@ -973,7 +973,7 @@ class xForm3 {
 							.($f["title"]?" title='".$this->entities($f["title"])."'":"")
 							.((string)$n === (string)$f["value"]?" checked":"")
 							.($f["disabled"]?" disabled":"")
-							.($f["readonly"]?" readonly":"")
+							.($f["readonly"]?" readonly onclick='javascript:return false;'":"")
 							.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
 							.$common
 							.($styles?" style='".$styles."'":"")
