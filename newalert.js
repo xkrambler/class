@@ -199,26 +199,21 @@ function newalert(o) {
 					+"<td "+cols+" id='"+_newalert.id+id+"_cmds_td'>"
 						+"<div id='"+_newalert.id+id+"_cmds' "+cols+" class='newalert_cmds'>"
 			;
-			for (var i in buttons) {
-				if (!buttons[i].id) buttons[i].id=_newalert.id+id+"_cmd_"+i;
-				if (buttons[i].default) index_default=i;
-				if (buttons[i].caption) {
-					s+=" <button id='"+buttons[i].id+"' class='cmd"+(buttons[i].class?" "+buttons[i].class:"")+"'"
-						+" onClick='javascript:"+(buttons[i].action
-							?(typeof(buttons[i].action)=="function"
-								?"newalert_exec_button(\""+id+"\","+i+");"
-								:buttons[i].action
-							)
-							:"newalert_close(\""+id+"\")"
+			xforeach(buttons, function(button, i){
+				if (!button.id) button.id=_newalert.id+id+"_cmd_"+i;
+				if (button.default) index_default=i;
+				if (button.action || !button.href) {
+					button.onclick=(button.action
+						?(typeof(button.action) == "function"
+							?"newalert_exec_button(\""+id+"\","+i+");"
+							:button.action
 						)
-						+";'>"
-							+(buttons[i].ico?"<span class='icon' style='background-image:url(\""+buttons[i].ico+"\")'>":"")
-								+buttons[i].caption
-							+(buttons[i].ico?"</span>":"")
-						+"</button>"
-					;
+						:"newalert_close(\""+id+"\");"
+					);
 				}
-			}
+				buttons[i]=button;
+				if (button.caption) s+=newalertButton(button);
+			});
 			newalerts[id].buttons=buttons;
 			s+"</div></td></tr>";
 		}
@@ -248,13 +243,30 @@ function newalert(o) {
 	gid(_newalert.id+id).addEventListener("transitionstart", function(){ newalert_resize({"force":true}); }, true);
 	gid(_newalert.id+id).addEventListener("transitionend", function(){ newalert_resize({"force":true}); }, true);
 	// focus first button
-	try { gid(_newalert.id+id+"_cmd_"+index_default).focus(); } catch(e) {}
+	try { gid(buttons[index_default].id).focus(); } catch(e) {}
 	// return window information
 	return {
 		"id":id,
 		"o":o,
 		"close":function(){ newalert_close(id); }
 	};
+}
+
+function newalertButton(button) {
+	var button_element=(button.href?"a":"button");
+	return " <"+button_element
+			+" id='"+button.id+"'"
+			+" class='cmd"+(button.class?" "+button.class:"")+"'"
+			+(button.href?" href='"+htmlspecialchars(button.href)+"'":"")
+			+(button.target?" target='"+htmlspecialchars(button.target)+"'":"")
+			+(button.title?" target='"+htmlspecialchars(button.title)+"'":"")
+			+(button.onclick?" onclick='"+button.onclick+";'":"")
+		+">"
+			+(button.ico?"<span class='icon' style='background-image:url(\""+button.ico+"\")'>":"")
+				+button.caption
+			+(button.ico?"</span>":"")
+		+"</"+button_element+">"
+	;
 }
 
 function newwait(o) {
