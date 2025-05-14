@@ -241,12 +241,12 @@ function xForm3(o) {
 		var set=set||false;
 		var f=a.o.fields[field];
 		if (f) {
-			if (f.maxlength)   value=(""+value).substring(0, f.maxlength);
+			if (f.maxlength)   value=(""+(value === null?"":value)).substring(0, f.maxlength);
 			if (f.integer)     value=(value?parseInt(value):0);
 			if (f.number)      value=(value?parseInt(value):0);
 			if (f.positive)    value=(value?Math.abs(localeNumber(value)):0);
 			if (f.decimal)     value=(value?localeNumber(value):0);
-			if (f.trim)        value=trim(value);
+			if (f.trim)        value=(value === null?"":trim(value));
 			if (f.nullifzero)  value=a.nullifzero(value);
 			if (f.nullifempty) value=a.nullifempty(value);
 		}
@@ -335,10 +335,7 @@ function xForm3(o) {
 			case "time":
 			default:
 				if (!gid(id)) return null;
-				if (isset(value)) {
-					var v=a.filter(field, value, true);
-					gidval(id, (v === null?"":v));
-				}
+				if (isset(value)) gidval(id, a.filter(field, value, true));
 			}
 			return a.filter(field, a.formValue(id));
 		}
