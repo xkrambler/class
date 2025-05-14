@@ -288,7 +288,7 @@ function xForm3(o) {
 			case "checkbox":
 				if (!gid(id)) return null;
 				if (f.values) {
-					if (isset(value)) gid(id).checked=(value == f.values[1]?true:false);
+					if (isset(value)) gid(id).checked=(value === f.values[1]?true:false);
 					return f.values[(gid(id).checked?1:0)];
 				}
 				if (isset(value)) gid(id).checked=(value?true:false);
@@ -305,7 +305,7 @@ function xForm3(o) {
 			case "radio":
 				if (isset(value))
 					for (var i=0, e=false; e=gid(id+"-"+i); i++)
-						if ((""+e.value) == (""+value))
+						if ((""+e.value) == value)
 							e.checked=true;
 				for (var i=0, e=false; e=gid(id+"-"+i); i++)
 					if (e.checked)

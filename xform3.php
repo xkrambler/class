@@ -809,7 +809,7 @@ class xForm3 {
 				." name='".$name."'"
 				." class='".$class."'"
 				." type='".$f["type"]."'"
-				." value='".$this->entities(substr($f["value"],0,$length))."'"
+				." value='".$this->entities(substr($f["value"], 0, $length))."'"
 				." maxlength='".$length."'"
 				.($f["min"]?" min='".$f["min"]."'":"")
 				.($f["max"]?" max='".$f["max"]."'":"")
@@ -887,7 +887,7 @@ class xForm3 {
 			$opciones="";
 			if ($f["options"])
 				foreach ($f["options"] as $n=>$v)
-					$opciones.="<option value='".$this->entities($n)."'".((string)$n===(string)$f["value"]?" selected":"").">".$this->entities($v)."</option>";
+					$opciones.="<option value='".$this->entities($n)."'".((string)$n === $f["value"]?" selected":"").">".$this->entities($v)."</option>";
 			return "<select"
 				." id='".$id."'"
 				." name='".$name."'"
@@ -915,7 +915,7 @@ class xForm3 {
 					." value='1'"
 					.($f["title"]?" title='".$this->entities($f["title"])."'":"")
 					.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
-					.(($f["values"]?($f["value"]==$f["values"][1]):$f["value"])?" checked":"")
+					.(($f["values"]?($f["value"] === $f["values"][1]):$f["value"])?" checked":"")
 					.($f["disabled"]?" disabled":"")
 					.($f["readonly"]?" readonly onclick='javascript:return false;'":"")
 					.$common
@@ -940,7 +940,7 @@ class xForm3 {
 							." type='checkbox'"
 							." value='".$this->entities($n)."'"
 							.($f["title"]?" title='".$this->entities($f["title"])."'":"")
-							.(is_array($f["value"]) && in_array((string)$n, $f["value"])?" checked":"")
+							.(is_array($f["value"]) && in_array($n, $f["value"])?" checked":"")
 							.($f["disabled"]?" disabled":"")
 							.($f["readonly"]?" readonly onclick='javascript:return false;'":"")
 							.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
@@ -960,6 +960,7 @@ class xForm3 {
 			$html="";
 			if ($f["options"]) {
 				$num=0;
+				$html.=(isset($f["label"])?"<span id='".$id."_label'>".$f["label"]."</span>":"");
 				foreach ($f["options"] as $n=>$v) {
 					$html.="<label"
 						." id='".$id."-".$num."_label'"
@@ -971,7 +972,7 @@ class xForm3 {
 							." type='radio'"
 							." value='".$this->entities($n)."'"
 							.($f["title"]?" title='".$this->entities($f["title"])."'":"")
-							.((string)$n === (string)$f["value"]?" checked":"")
+							.((string)$n === $f["value"]?" checked":"")
 							.($f["disabled"]?" disabled":"")
 							.($f["readonly"]?" readonly onclick='javascript:return false;'":"")
 							.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
