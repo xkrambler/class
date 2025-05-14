@@ -335,7 +335,10 @@ function xForm3(o) {
 			case "time":
 			default:
 				if (!gid(id)) return null;
-				if (isset(value)) gidval(id, a.filter(field, value, true));
+				if (isset(value)) {
+					var v=a.filter(field, value, true);
+					gidval(id, (v === null?"":v));
+				}
 			}
 			return a.filter(field, a.formValue(id));
 		}
