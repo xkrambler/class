@@ -43,18 +43,26 @@ class xError {
 			"generic"=>"Ha ocurrido un error que ha sido registrado. Contacte al administrador de la aplicación para más detalles.",
 		],
 	];
-	protected $warnings=[E_DEPRECATED, E_WARNING];
+	protected $warnings=[E_WARNING, E_DEPRECATED, E_CORE_WARNING, E_COMPILE_WARNING, E_USER_WARNING];
 	protected $criticals=[E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR];
 	protected $error_types=[
-		self::ERR_APP  =>"APP",
-		self::ERR_DB   =>"DB",
-		E_ERROR        =>"Fatal",
-		E_PARSE        =>"Parse",
-		E_CORE_ERROR   =>"Core",
-		E_COMPILE_ERROR=>"Compile",
-		E_USER_ERROR   =>"User",
-		E_DEPRECATED   =>"Deprecated",
-		E_WARNING      =>"Warning",
+		self::ERR_APP      =>"APP",
+		self::ERR_DB       =>"DB",
+		E_ERROR            =>"Error",
+		E_WARNING          =>"Warning",
+		E_PARSE            =>"Parse",
+		E_NOTICE           =>'Notice',
+		E_CORE_ERROR       =>"Core Error",
+		E_CORE_WARNING     =>'Core Warning',
+		E_COMPILE_ERROR    =>"Compile Error",
+		E_COMPILE_WARNING  =>'Compile Warning',
+		E_USER_ERROR       =>"User Error",
+		E_USER_WARNING     =>'User Warning',
+		E_USER_NOTICE      =>'User Notice',
+		E_STRICT           =>'Strict',
+		E_RECOVERABLE_ERROR=>'Recoverable Error',
+		E_DEPRECATED       =>"Deprecated",
+		E_USER_DEPRECATED  =>'User Deprecated',
 	];
 
 	// constructor
@@ -66,7 +74,7 @@ class xError {
 		// access log
 		if (isset($_SERVER["HTTP_HOST"])) $this->log($this->accessEntry());
 
-		// disable critical errors
+		// disable reporting critical errors
 		$e=error_reporting();
 		foreach ($this->criticals as $c) $e&=~$c;
 		error_reporting($e);
@@ -97,8 +105,9 @@ class xError {
 		// php automatic compatibility support
 		$this->phpc=(isset($this->phpc) && $this->phpc?$this->phpc:(x::page("phpc")?x::page("phpc"):7));
 
-		// burst time
-		if (!$this->mail_bursttime) $this->mail_bursttime=60;
+		// initialize variables
+		if (!isset($this->log_post_limit)) $this->log_post_limit=64*1024;
+		if (!$this->mail_bursttime || $this->mail_bursttime < 1) $this->mail_bursttime=60;
 
 		// setup logs
 		$this->access($this->access);
@@ -122,13 +131,15 @@ class xError {
 						"trace"=>$this->trace(),
 						//"context"=>$context,
 					];
-					if (error_reporting()) $this->err($this->error, false);
+					$error_reporting=error_reporting()&~E_RECOVERABLE_ERROR;
+					if ($error_reporting) $this->err($this->error, false);
 				}
 			});
 
 			// capture critical errors
 			register_shutdown_function(function(){
-				if (error_reporting() && ($e=error_get_last())) {
+				$e=error_get_last();
+				if ($e && isset($e["type"]) && (error_reporting() & $e["type"])) {
 					if (in_array($e["type"], $this->criticals)) {
 						// split message and trace
 						$a=explode("\n", $e["message"]);
@@ -175,17 +186,27 @@ class xError {
 	// access entry
 	function accessEntry() {
 		return date("YmdHis")
-			." ".($_SERVER["HTTP_HOST"]?$_SERVER["HTTP_HOST"]:"-")
+			." ".(isset($_SERVER["HTTP_HOST"])?(string)$_SERVER["HTTP_HOST"]:"-")
 			." ".(($v=\x::remoteaddr())?$v:"-")
 			." ".(($v=session_id())?$v:"-")
 			." ".\x::request()."\n"
-			.($_POST?" POST ".substr(serialize($_POST), 0, 64*1024)."]\n":"")
+			.(isset($_POST) && $_POST?" POST ".($this->log_post_limit > 0?substr(serialize($_POST), 0, $this->log_post_limit):serialize($_POST))."]\n":"")
 		;
 	}
 
 	// log
 	function log($m) {
 		if ($f=$this->access) file_put_contents($f, (string)$m, FILE_APPEND);
+	}
+
+	// returns an array of error reporting types as string
+	function errorReporting($error_reporting=null) {
+		if ($error_reporting === null) $error_reporting=error_reporting();
+		$a=[];
+		foreach ($this->error_types as $e=>$s)
+			if ($e > 0 && $error_reporting & $e)
+				$a[]=$s;
+		return $a;
 	}
 
 	// convert first trace to file/line
