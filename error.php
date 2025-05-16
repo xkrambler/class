@@ -74,10 +74,8 @@ class xError {
 		// access log
 		if (isset($_SERVER["HTTP_HOST"])) $this->log($this->accessEntry());
 
-		// disable reporting critical errors
-		$e=error_reporting();
-		foreach ($this->criticals as $c) $e&=~$c;
-		error_reporting($e);
+		// set current error reporting
+		$this->errorReporting(error_reporting());
 
 		// set current perror instance
 		if (!self::$current) self::$current=$this;
@@ -131,7 +129,7 @@ class xError {
 						"trace"=>$this->trace(),
 						//"context"=>$context,
 					];
-					$error_reporting=error_reporting()&~E_RECOVERABLE_ERROR;
+					$error_reporting=$this->error_reporting&~E_RECOVERABLE_ERROR;
 					if ($error_reporting) $this->err($this->error, false);
 				}
 			});
@@ -139,7 +137,7 @@ class xError {
 			// capture critical errors
 			register_shutdown_function(function(){
 				$e=error_get_last();
-				if ($e && isset($e["type"]) && (error_reporting() & $e["type"])) {
+				if ($e && isset($e["type"]) && ($this->error_reporting & $e["type"])) {
 					if (in_array($e["type"], $this->criticals)) {
 						// split message and trace
 						$a=explode("\n", $e["message"]);
@@ -199,9 +197,17 @@ class xError {
 		if ($f=$this->access) file_put_contents($f, (string)$m, FILE_APPEND);
 	}
 
-	// returns an array of error reporting types as string
+	// get/set error reporting
 	function errorReporting($error_reporting=null) {
-		if ($error_reporting === null) $error_reporting=error_reporting();
+		if ($error_reporting === null) return $this->error_reporting;
+		$this->error_reporting=$e=error_reporting();
+		foreach ($this->criticals as $c) $e&=~$c;
+		return error_reporting($e);
+	}
+
+	// returns an array of error reporting types as an array
+	function errorReportingList($error_reporting=null) {
+		if ($error_reporting === null) $error_reporting=$this->error_reporting;
 		$a=[];
 		foreach ($this->error_types as $e=>$s)
 			if ($e > 0 && $error_reporting & $e)
