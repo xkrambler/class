@@ -105,6 +105,7 @@ class xImage {
 
 	// get file format
 	static function getFileFormat($filename) {
+		if (!file_exists($filename)) return false;
 		if ($f=(@fopen($filename, "r"))) {
 			$bytes=fread($f, 4);
 			fclose($f);
