@@ -129,7 +129,7 @@ class xError {
 						"trace"=>$this->trace(),
 						//"context"=>$context,
 					];
-					$error_reporting=$this->error_reporting&~E_RECOVERABLE_ERROR;
+					$error_reporting=error_reporting()&~E_RECOVERABLE_ERROR;
 					if ($error_reporting) $this->err($this->error, false);
 				}
 			});
