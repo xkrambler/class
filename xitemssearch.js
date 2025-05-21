@@ -554,8 +554,8 @@ function xItemsSearch(o) {
 		for (var j in a.data.data) {
 			c++;
 			var e=a.data.data[j];
-			var trclass=(n.trclass?n.trclass(e, i):"");
-			var trstyle=(n.trstyle?n.trstyle(e, i):"");
+			var trclass=(a.o.trclass?a.o.trclass(e, i):"");
+			var trstyle=(a.o.trstyle?a.o.trstyle(e, i):"");
 			a.ids[e[a.key]]=j;
 			h+="<tr class='xitemssearch_tr_item"
 					+(a.o.select?" xitemssearch_tr_item_selectable":(a.o.selectable?"":" xitemssearch_tr_item_noselectable"))
