@@ -554,16 +554,20 @@ function xItemsSearch(o) {
 		for (var j in a.data.data) {
 			c++;
 			var e=a.data.data[j];
+			var trclass=(n.trclass?n.trclass(e, i):"");
+			var trstyle=(n.trstyle?n.trstyle(e, i):"");
 			a.ids[e[a.key]]=j;
 			h+="<tr class='xitemssearch_tr_item"
 					+(a.o.select?" xitemssearch_tr_item_selectable":(a.o.selectable?"":" xitemssearch_tr_item_noselectable"))
 					+(a.o.dblclick?" xitemssearch_tr_item_dblclick":"")
 					+(a.o.tr_class_filter?" "+a.o.tr_class_filter(j,e):"")
 				 	+(a.selected[e[a.key]]?" xitemssearch_tr_item_active":"")
+				 	+(trclass?" "+trclass:"")
 					+"' id='"+a.o.id+"_tr_"+j+"'"
-				+(a.o.dblclick || a.o.select?" on"+(a.o.multiselect?"Dbl":"")+"Click='javascript:window.xItemsSearchs[\""+a.o.id+"\"].select("+j+");"+(a.o.dblclick?"window.xItemsSearchs[\""+a.o.id+"\"].clearBrowserSelection();":"return false;")+"'":"")
-				+(a.o.dblclick && !a.o.multiselect?" onDblClick='javascript:window.xItemsSearchs[\""+a.o.id+"\"].dblclick("+j+");window.xItemsSearchs[\""+a.o.id+"\"].clearBrowserSelection();return false;'":"")
-				+(a.o.multiselect?" onMouseDown='javascript:window.xItemsSearchs[\""+a.o.id+"\"].multiSelect(event,"+j+");if(event.shiftKey || event.ctrlKey)return false;"+(a.o.selectable?"":"return false;")+"'":"")
+					+(a.o.dblclick || a.o.select?" on"+(a.o.multiselect?"dbl":"")+"click='javascript:window.xItemsSearchs[\""+a.o.id+"\"].select("+j+");"+(a.o.dblclick?"window.xItemsSearchs[\""+a.o.id+"\"].clearBrowserSelection();":"return false;")+"'":"")
+					+(a.o.dblclick && !a.o.multiselect?" ondblclick='javascript:window.xItemsSearchs[\""+a.o.id+"\"].dblclick("+j+");window.xItemsSearchs[\""+a.o.id+"\"].clearBrowserSelection();return false;'":"")
+					+(a.o.multiselect?" onmousedown='javascript:window.xItemsSearchs[\""+a.o.id+"\"].multiSelect(event,"+j+");if(event.shiftKey || event.ctrlKey)return false;"+(a.o.selectable?"":"return false;")+"'":"")
+					 +(trstyle?" style='"+trstyle+"'":"")
 				+">";
 			for (var i in a.fields) {
 				var n=a.fields[i];
