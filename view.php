@@ -265,11 +265,11 @@ class View {
 
 	// bytes to string format
 	static function bytesToString($bytes) {
-		if ($bytes >= 1099511627776) return number_format(round($bytes/10995116277.76)/100,2,",",".")." TB";
-		if ($bytes >= 1073741824) return number_format(round($bytes/10737418.24)/100,2,",",".")." GB";
-		if ($bytes >= 1048576) return number_format(round($bytes/10485.76)/100,2,",",".")." MB";
-		if ($bytes >= 1024) return number_format(round($bytes/10.24)/100,2,",",".")." KB";
-		return (strlen($bytes)?($bytes?number_format($bytes,0,",","."):"0")." bytes":"");
+		if ($bytes >= 1099511627776) return number_format(round($bytes/10995116277.76)/100,2,",",".")."TB";
+		if ($bytes >= 1073741824) return number_format(round($bytes/10737418.24)/100,2,",",".")."GB";
+		if ($bytes >= 1048576) return number_format(round($bytes/10485.76)/100,2,",",".")."MB";
+		if ($bytes >= 1024) return number_format(round($bytes/10.24)/100,2,",",".")."KB";
+		return (strlen($bytes)?($bytes?number_format($bytes,0,",","."):"0"):"");
 	}
 
 	// returns formatted time
