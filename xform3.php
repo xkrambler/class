@@ -867,16 +867,17 @@ class xForm3 {
 				." id='".$id."'"
 				." name='".$name."'"
 				." class='".$class."'"
-			." type='".$f["type"]."'"
+				." type='".$f["type"]."'"
 				." value='".$this->entities($f["value"])."'"
 				.($f["disabled"]?" disabled":"")
 				.($f["readonly"]?" readonly":"")
-				.($f["placeholder"]?" placeholder='".$this->entities($f["placeholder"])."'":"")
-				.($f["title"]?" title='".$this->entities($f["title"])."'":"")
 				.($f["maxlength"]?" maxlength='".intval($f["maxlength"])."'":"")
 				.($f["size"]?" size='".intval($f["size"])."'":"")
+				.($f["step"]?" step='".$this->entities($f["step"])."'":"")
 				.(isset($f["datalist"])?" list='".(is_string($f["datalist"])?$f["datalist"]:$id."_datalist")."'":"")
 				.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
+				.($f["placeholder"]?" placeholder='".$this->entities($f["placeholder"])."'":"")
+				.($f["title"]?" title='".$this->entities($f["title"])."'":"")
 				.$common
 				.($styles?" style='".$styles."'":"")
 				.$f["extra"]
