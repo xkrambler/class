@@ -3,6 +3,8 @@
 class WS {
 
 	public $data;
+	public $json;
+	public $methods=["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
 	protected $o;
 
 	function __construct($o=[]) {
@@ -18,20 +20,30 @@ class WS {
 
 		// setup headers
 		header('Access-Control-Allow-Origin: *');
-		header("Allow: GET, POST, OPTIONS");
-		if ($_SERVER['REQUEST_METHOD'] == "OPTIONS") exit;
+		if ($this->methods) header("Allow: ".implode(", ", $this->methods));
+		if ($this->method() == "OPTIONS") exit;
 
 		// autoselect request type data
+		$this->json=null;
 		if (is_string($_REQUEST["action"])) {
-			$this->data=$_REQUEST;
+			$this->action=$_REQUEST["action"];
+			$this->json=$this->data=$_REQUEST;
+			unset($this->json["action"]);
+			$this->json=json_encode($this->json);
 		} else if ($this->action=$GLOBALS["ajax"]) {
 			$this->data=$GLOBALS["adata"];
+			$this->json=json_encode($this->data);
 		} else if (isset($_REQUEST["data"])) {
+			$this->json=(string)$_REQUEST["data"];
 			$this->data=json_decode($_REQUEST["data"], true);
 		} else {
-			$this->data=json_decode(file_get_contents('php://input'), true);
+			$this->json=file_get_contents('php://input');
+			$this->data=json_decode($this->json, true);
 		}
 		if (!isset($this->action) && $this->data) $this->action=$this->data["action"];
+
+		// register callback
+		if (isset($this->register) && is_callable($register=$this->register)) $register($this);
 
 		// ask for key
 		if (!($key=$this->key()) && isset($_REQUEST["askkey"])) {
@@ -70,6 +82,11 @@ class WS {
 		default: if (!$this->action) $this->out(["err"=>"action not defined."]);
 		}
 
+	}
+
+	// request method
+	function method() {
+		return $_SERVER['REQUEST_METHOD']??null;
 	}
 
 	// private: output CSV value
