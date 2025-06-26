@@ -17,7 +17,10 @@ class Crypt {
 	protected $error=false;
 
 	// init
-	function __construct($o=array()) {
+	function __construct($o=array()) { $this->setup($o); }
+
+	// setup & check for libraries availability
+	function setup($o) {
 		$this->openssl  =(isset($o["openssl"])?$o["openssl"]:false);
 		if (!isset($o["openssl"]) && function_exists("openssl_open")) $this->openssl=OPENSSL_RAW_DATA;
 		$this->filter   =(isset($o["filter"])?$o["filter"]:"base64uf");
@@ -26,11 +29,6 @@ class Crypt {
 		$this->unpadding=(isset($o["unpadding"])?$o["unpadding"]:true);
 		$this->algorithm=(isset($o["algorithm"])?$o["algorithm"]:($this->openssl?"aes-128":"blowfish"));
 		$this->iv       =(isset($o["iv"])?$o["iv"]:null);
-		$this->available();
-	}
-
-	// check for libraries availability
-	function available() {
 		if ($this->openssl && !function_exists("openssl_open")) return $this->error("OpenSSL module not available.");
 		else if (!$this->openssl && !function_exists("mcrypt_cbc")) return $this->error("MCrypt module not available.");
 		// get IV size
