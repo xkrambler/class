@@ -6,14 +6,14 @@
 */
 class Crypt {
 
-	protected $algorithm;
-	protected $mode;
-	protected $filter;
-	protected $iv;
-	protected $iv_size;
-	protected $key;
-	protected $openssl;
-	protected $unpadding;
+	public $algorithm="";
+	public $mode="cbc";
+	public $filter="base64uf";
+	public $iv;
+	public $iv_size;
+	public $key;
+	public $openssl;
+	public $unpadding;
 	protected $error=false;
 
 	// init
@@ -25,8 +25,14 @@ class Crypt {
 		$this->mode     =(isset($o["mode"])?$o["mode"]:"cbc");
 		$this->unpadding=(isset($o["unpadding"])?$o["unpadding"]:true);
 		$this->algorithm=(isset($o["algorithm"])?$o["algorithm"]:($this->openssl?"aes-128":"blowfish"));
-		// enabled modules
-		if (!$this->available()) return false;
+		$this->iv       =(isset($o["iv"])?$o["iv"]:null);
+		$this->available();
+	}
+
+	// check for libraries availability
+	function available() {
+		if ($this->openssl && !function_exists("openssl_open")) return $this->error("OpenSSL module not available.");
+		else if (!$this->openssl && !function_exists("mcrypt_cbc")) return $this->error("MCrypt module not available.");
 		// get IV size
 		$this->iv_size=($this->openssl
 			?openssl_cipher_iv_length($this->realAlgorithm()."-".$this->mode)
@@ -34,15 +40,10 @@ class Crypt {
 		);
 		// generate IV
 		$this->iv=(isset($o["iv"])
-			?str_pad("", $this->iv_size, $o["iv"])
+			?str_pad("", $this->iv_size, substr($o["iv"], 0, $this->iv_size))
 			:str_pad("", $this->iv_size, "\0")
 		);
-	}
-
-	// check for libraries availability
-	function available() {
-		if ($this->openssl && !function_exists("openssl_open")) return $this->error("OpenSSL module not available.");
-		else if (!$this->openssl && !function_exists("mcrypt_cbc")) return $this->error("MCrypt module not available.");
+		// all ok
 		return true;
 	}
 
@@ -73,22 +74,32 @@ class Crypt {
 		return $filter;
 	}
 
+	// cipher
+	function cipher($data) {
+		$r=($this->openssl
+			?openssl_encrypt($data, $this->realAlgorithm()."-".$this->mode, $this->key, $this->openssl, $this->iv)
+			:mcrypt_encrypt($this->realAlgorithm(), $this->key, $data, $this->mode, $this->iv)
+		);
+		return ($r === false?$this->error("Cannot cipher: ".($this->openssl?openssl_error_string():(($v=error_get_last()) && isset($v["message"])?$v["message"]:"Unknown"))):$r);
+	}
+
+	// decipher
+	function decipher($data) {
+		$r=($this->openssl
+			?openssl_decrypt($data, $this->realAlgorithm()."-".$this->mode, $this->key, $this->openssl, $this->iv)
+			:$this->unpadding(mcrypt_decrypt($this->realAlgorithm(), $this->key, $data, $this->mode, $this->iv))
+		);
+		return ($r === false?$this->error("Cannot decipher: ".($this->openssl?openssl_error_string():(($v=error_get_last()) && isset($v["message"])?$v["message"]:"Unknown"))):$r);
+	}
+
 	// encrypt
 	function encrypt($data) {
-		$r=($this->openssl
-			?$this->filterEncode($this->filter, openssl_encrypt($data, $this->realAlgorithm()."-".$this->mode, $this->key, $this->openssl, $this->iv))
-			:$this->filterEncode($this->filter, mcrypt_encrypt($this->realAlgorithm(), $this->key, $data, $this->mode, $this->iv))
-		);
-		return ($r === false?$this->error("Cannot encrypt: ".($this->openssl?openssl_error_string():(($v=error_get_last()) && isset($v["message"])?$v["message"]:"Unknown"))):$r);
+		return $this->filterEncode($this->filter, $this->cipher($data));
 	}
 
 	// decrypt
 	function decrypt($data) {
-		$r=($this->openssl
-			?openssl_decrypt($this->filterDecode($this->filter, $data), $this->realAlgorithm()."-".$this->mode, $this->key, $this->openssl, $this->iv)
-			:$this->unpadding(mcrypt_decrypt($this->realAlgorithm(), $this->key, $this->filterDecode($this->filter, $data), $this->mode, $this->iv))
-		);
-		return ($r === false?$this->error("Cannot decrypt: ".($this->openssl?openssl_error_string():(($v=error_get_last()) && isset($v["message"])?$v["message"]:"Unknown"))):$r);
+		return $this->decipher($this->filterDecode($this->filter, $data));
 	}
 
 	// remove padding
