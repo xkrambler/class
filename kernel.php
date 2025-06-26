@@ -635,7 +635,7 @@ class Kernel {
 			if ($o["len"]) header("Content-Length: ".$o["len"]);
 			header('Accept-Ranges: bytes');
 			if ($o["streamer"]) {
-				echo $o["streamer"](array_merge($o,array("all"=>true)));
+				echo $o["streamer"](array_merge($o, array("all"=>true)));
 			} else if ($o["data"]) {
 				echo $o["data"];
 			} else if ($o["file"]) {
