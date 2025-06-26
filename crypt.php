@@ -1,7 +1,7 @@
 <?php
 
 /*
-	Cryptography helper class 0.2b
+	Cryptography helper class 0.2c
 	Abstraction to MCrypt/OpenSSL libraries.
 */
 class Crypt {
