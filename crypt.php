@@ -17,10 +17,12 @@ class Crypt {
 	protected $error=false;
 
 	// init
-	function __construct($o=array()) { $this->setup($o); }
+	function __construct($o=array()) {
+		$this->available($o);
+	}
 
 	// setup & check for libraries availability
-	function setup($o) {
+	function available($o=array()) {
 		$this->openssl  =(isset($o["openssl"])?$o["openssl"]:false);
 		if (!isset($o["openssl"]) && function_exists("openssl_open")) $this->openssl=OPENSSL_RAW_DATA;
 		$this->filter   =(isset($o["filter"])?$o["filter"]:"base64uf");
