@@ -91,7 +91,7 @@ class xUploader {
 						case "end": $append=true; $ended=true; break; // append, end
 						case "complete": $ended=true; // overwrite, end (no break)
 						case "start": // overwrite and initialize session
-							if ($num==1) if (!$this->clear()) $this->ajax(array("cantclear"=>true, "err"=>"xuploader: Cannot clear session."));
+							if ($num == 1) if (!$this->clear()) $this->ajax(array("cantclear"=>true, "err"=>"xuploader: Cannot clear session."));
 							if (!$this->uploadStart($u, $o)) $this->ajax(array("cantstart"=>true, "err"=>"xuploader: Cannot start upload."));
 							break;
 						default:
@@ -105,7 +105,11 @@ class xUploader {
 							"ended"=>$ended,
 						);
 						if (!$upload=$this->uploadGet($u)) $this->ajax(array("nostart"=>true, "err"=>"xuploader: Upload not started."));
-						file_put_contents($upload["tmp"], file_get_contents($tmp), ($append?FILE_APPEND:0));
+						$u["content"]=file_get_contents($tmp);
+						$u["size"]=(file_exists($upload["tmp"])?filesize($upload["tmp"]):0);
+						if ($event=$o["onput"]) $event($this, $u, $o);
+						file_put_contents($upload["tmp"], $u["content"], ($append?FILE_APPEND:0));
+						unset($u["content"]);
 						$u["size"]=filesize($upload["tmp"]);
 						$upload=$this->uploadSet($u);
 					} else {
