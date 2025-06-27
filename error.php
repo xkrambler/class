@@ -396,7 +396,9 @@ class xError {
 
 		// AJAX
 		if ($GLOBALS["ajax"] && function_exists("ajax")) {
-			ajax(["err"=>$err["title"].": ".$err["text"], "code"=>$exit]);
+			$r=["err"=>$err["title"].": ".$err["text"]];
+			if (isset($err["code"])) $r["code"]=$err["code"];
+			ajax($r);
 		// CLI
 		} else if (!isset($_SERVER["HTTP_HOST"])) {
 			error_log("[".date("YmdHis")."] ".$err["title"].": ".$err["text"]);
