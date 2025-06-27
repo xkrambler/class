@@ -11,9 +11,9 @@ class Crypt {
 	public $filter="base64uf";
 	public $iv;
 	public $iv_size;
-	public $key;
+	public $key="";
 	public $openssl;
-	public $unpadding;
+	public $unpadding=true;
 	protected $error=false;
 
 	// init
@@ -23,14 +23,13 @@ class Crypt {
 
 	// setup & check for libraries availability
 	function available($o=array()) {
-		$this->openssl  =(isset($o["openssl"])?$o["openssl"]:false);
-		if (!isset($o["openssl"]) && function_exists("openssl_open")) $this->openssl=OPENSSL_RAW_DATA;
-		$this->filter   =(isset($o["filter"])?$o["filter"]:"base64uf");
-		$this->key      =(isset($o["key"])?$o["key"]:null);
-		$this->mode     =(isset($o["mode"])?$o["mode"]:"cbc");
-		$this->unpadding=(isset($o["unpadding"])?$o["unpadding"]:true);
-		$this->algorithm=(isset($o["algorithm"])?$o["algorithm"]:($this->openssl?"aes-128":"blowfish"));
-		$this->iv       =(isset($o["iv"])?$o["iv"]:null);
+		$this->openssl=(isset($o["openssl"])?$o["openssl"]:(function_exists("openssl_open")?OPENSSL_RAW_DATA:false));
+		if (isset($o["filter"]))    $this->filter=$o["filter"];
+		if (isset($o["mode"]))      $this->mode=$o["mode"];
+		if (isset($o["key"]))       $this->key=$o["key"];
+		if (isset($o["unpadding"])) $this->unpadding=$o["unpadding"];
+		if (isset($o["iv"]))        $this->iv=$o["iv"];
+		$this->algorithm=(isset($o["algorithm"])?$o["algorithm"]:($this->algorithm?$this->algorithm:($this->openssl?"aes-128":"blowfish")));
 		if ($this->openssl && !function_exists("openssl_open")) return $this->error("OpenSSL module not available.");
 		else if (!$this->openssl && !function_exists("mcrypt_cbc")) return $this->error("MCrypt module not available.");
 		// get IV size
@@ -76,6 +75,9 @@ class Crypt {
 
 	// cipher
 	function cipher($data) {
+		if (!strlen($this->realAlgorithm())) return $this->error("Cannot cipher: no algorithm.");
+		if (!strlen($this->mode)) return $this->error("Cannot cipher: no mode.");
+		if (!strlen($this->key)) return $this->error("Cannot cipher: no key.");
 		$r=($this->openssl
 			?openssl_encrypt($data, $this->realAlgorithm()."-".$this->mode, $this->key, $this->openssl, $this->iv)
 			:mcrypt_encrypt($this->realAlgorithm(), $this->key, $data, $this->mode, $this->iv)
@@ -85,6 +87,9 @@ class Crypt {
 
 	// decipher
 	function decipher($data) {
+		if (!strlen($this->realAlgorithm())) return $this->error("Cannot cipher: no algorithm.");
+		if (!strlen($this->mode)) return $this->error("Cannot cipher: no mode.");
+		if (!strlen($this->key)) return $this->error("Cannot cipher: no key.");
 		$r=($this->openssl
 			?openssl_decrypt($data, $this->realAlgorithm()."-".$this->mode, $this->key, $this->openssl, $this->iv)
 			:$this->unpadding(mcrypt_decrypt($this->realAlgorithm(), $this->key, $data, $this->mode, $this->iv))
