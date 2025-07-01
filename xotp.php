@@ -14,16 +14,17 @@ class xOTP {
 
 	protected $defaults=[
 		"version"=>"0.1",
-		"algorithm"=>"SHA1",
+		"algorithm"=>"sha1",
 		"algorithms"=>[
-			"SHA1"  =>["size"=>20],
-			"SHA256"=>["size"=>32],
-			"SHA512"=>["size"=>64],
+			"sha1"  =>["size"=>20],
+			"sha256"=>["size"=>32],
+			"sha512"=>["size"=>64],
 		],
 		"base32"=>'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567',
 		"digits"=>6,
 		"period"=>30,
 		"valid"=>0,
+		"window"=>1,
 	];
 	protected $error="";
 	protected $o;
@@ -35,7 +36,18 @@ class xOTP {
 	}
 	function __get($k) { return $this->o[$k]; }
 	function __set($k, $v) {
-		if ($k == "totp") $v=$this->trim($v);
+		if ($k == "algorithm") $v=strtolower($v);
+		else if ($k == "totp") $v=$this->trim($v);
+		else if ($k == "url") {
+			$ui=parse_url($v);
+			if ($ui["scheme"] == "otpauth" && $ui["host"] == "totp") {
+				$qs=[];
+				if ($ui["query"]) parse_str($ui["query"], $qs);
+				if ($ui["path"]) $this->label=substr(rawurldecode($ui["path"]), 1);
+				if (strlen($qs["issuer"])) $this->o["issuer"]=$qs["issuer"];
+				if (strlen($qs["secret"])) $this->secret($qs["secret"]);
+			}
+		}
 		$this->o[$k]=$v;
 		if ($k == "key") $this->key($v);
 	}
@@ -135,7 +147,7 @@ class xOTP {
 		if ($binsecret === false) return false;
 
 		// moment
-		$time=($this->time?$this->time:time());
+		$time=(($v=$o["time"])?$v:time());
 
 		// base time period
 		$base=floor($time/$this->period);
@@ -168,8 +180,13 @@ class xOTP {
 	// validate TOTP
 	function totpValidate(array $o=[]) {
 		$this->set($o);
-		if (($totp=$this->totpGenerate()) === false) return false;
-		return ($this->totp === $totp);
+		$time=(($v=$o["time"])?$v:time());
+		$this->window=abs($this->window);
+		for ($i=-$this->window; $i <= $this->window; $i++) {
+			if (($totp=$this->totpGenerate(["time"=>$time+($i*$this->period)])) === false) return false;
+			if ($this->totp === $totp) return true;
+		}
+		return false;
 	}
 
 	// generate TOTP URL
@@ -181,8 +198,8 @@ class xOTP {
 
 		// return generated link
 		return \x::link([
-			"secret"=>$this->secret,
 			"issuer"=>$this->issuer,
+			"secret"=>$this->secret,
 			"image"=>$this->image,
 			"algorithm"=>($this->algorithm == $this->defaults["algorithm"]?null:$this->algorithm),
 			"digits"=>($this->digits == $this->defaults["digits"]?null:$this->digits),
