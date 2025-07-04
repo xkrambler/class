@@ -4,11 +4,13 @@ class WS {
 
 	public $data;
 	public $json;
+	public $out;
 	public $methods=["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
 	protected $o;
 
 	function __construct($o=[]) {
 		$this->o=$o;
+		$this->out=$_REQUEST["out"];
 		$this->setup();
 	}
 	function __get($n) { return $this->o[$n]; }
@@ -98,15 +100,6 @@ class WS {
 		);
 	}
 
-	// private: plain text output
-	private function outPlain($d, $b=null) {
-		if ($b !== null) $b=$b.".";
-		foreach ($d as $n=>$v) {
-			if (is_array($v)) $this->outPlain($v, $b.$n);
-			else echo $b.$n."=".$v."\n";
-		}
-	}
-
 	// return all HTTP headers, no maters if function exists
 	function getAllHeaders() {
 		if (function_exists('getallheaders')) {
@@ -148,7 +141,7 @@ class WS {
 		$key=$this->key();
 
 		// key/keys authentication
-		if (is_string($key)) {
+		if (is_string($key) && strlen($key)) {
 			if (isset($this->key) && $key === $this->key) return;
 			else if (is_array($this->keys)) {
 				if ($this->keys[$key] === true) return;
@@ -159,43 +152,54 @@ class WS {
 		}
 
 		// not beyond this point
-		$this->out(["auth"=>"required", "err"=>"No authorization key was provided."]);
+		$this->out(["auth"=>"required", "err"=>"No authorization key was provided, but required."]);
 		exit; // fallback
 
 	}
 
 	// check parameters
 	function check(array $param) {
+		$nok=[];
 		foreach ($param as $p=>$t) {
-			if (!isset($this->data[$p])) $this->out(["err"=>"Required parameter (".$t."): ".implode(", ", array_keys($param)), "p"=>$p, "t"=>$t]);
-			else {
-				$nok=false;
-				switch ("".$t) {
+			if (!is_array($t)) $t=["type"=>(string)$t];
+			if (!$t["type"]) $t["type"]="string";
+			if (isset($this->data[$p])) {
+				switch ($t["type"]) {
 				case "json":
 					$this->data[$p]=@json_decode($this->data[$p], true);
 					break;
 				case "number":
 					if (is_numeric($this->data[$p])) $this->data[$p]=doubleval($this->data[$p]);
-					else $nok=true;
+					else $nok[$p]=true;
 					break;
 				case "email":
-					if (!filter_var($this->data[$p], FILTER_VALIDATE_EMAIL)) $nok=true;
+					if (!filter_var($this->data[$p], FILTER_VALIDATE_EMAIL)) $nok[$p]=true;
 					break;
 				case "array":
-					if (!is_array($this->data[$p])) $nok=true;
+					if (!is_array($this->data[$p])) $nok[$p]=true;
 					break;
 				case "date":
-					if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $this->data[$p], $v) || !checkdate($v[2], $v[3], $v[1])) $nok=true;
+					if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $this->data[$p], $v) || !checkdate($v[2], $v[3], $v[1])) $nok[$p]=true;
+					break;
+				case "required":
+					if (!($this->data[$p] || strlen((string)$this->data[$p]))) $nok[$p]=true;
 					break;
 				default: // se acepta todo
 				}
-				if ($nok) $this->out(["err"=>"Parameter ".$p." does not meet required type specification: ".$t,"p"=>$p]);
+				if ($nok[$p] === true) $nok[$p]="Parameter ".$p." does not meet required type specification: ".$t["type"];
+			} else {
+				$nok[$p]="Required ".$t["type"].".";
 			}
 		}
+		if ($nok) $this->out([
+			"err"=>"Parameters validation failed.",
+			"nok"=>$nok,
+			"required"=>array_keys($param),
+		]);
 	}
 
 	// output
-	function out($d=null) {
+	function out($d=null, $out=null) {
 		if ($d === null) exit; // empty
 		if (is_string($_GET["jsonp"])) {
 			// clean/protect data
@@ -207,7 +211,7 @@ class WS {
 			echo $_GET["jsonp"]."(".json_encode($data).",".json_encode($d).");\n";
 			exit;
 		} else {
-			switch ($_REQUEST["out"]) {
+			switch (isset($out)?$out:$this->out) {
 			case "html":
 				debug($d);
 				exit;
@@ -217,7 +221,11 @@ class WS {
 				exit;
 			case "plain":
 				header("Content-type: text/plain");
-				$this->outPlain($d);
+				if (is_array($d)) {
+					foreach ($d as $e) echo $e."\n";
+				} else {
+					echo (string)$d;
+				}
 				exit;
 			case "csv":
 				header("Content-type: text/plain");
@@ -264,8 +272,12 @@ class WS {
 	}
 
 	// dump database error
-	function dberr(dbbase $db) {
-		$this->out(["err"=>$db->driver()." #".$db->errnum().": ".$db->error()]);
+	function dberr(dbbase $db=null) {
+		if ($db === null) $db=$this->db;
+		$this->out(["err"=>($this->db instanceof dbbase
+			?$db->driver()." #".$db->errnum().": ".$db->error()
+			:"Database error"
+		)]);
 	}
 
 	// dump error
