@@ -1,4 +1,5 @@
 .xtabs {
+	position: relative;
 	display: block;
 }
 .xtab {
@@ -15,21 +16,21 @@
 .xtabs ul.xtabs_horizontal,
 .xtabs ul.xtabs_vertical {
 	list-style-type: none;
-	margin: 0px;
+	margin: 0;
 }
 .xtabs ul.xtabs_horizontal {
 	display: flex;
 	position: relative;
-	padding: 0px;
+	padding: 0;
 }
 .xtabs ul.xtabs_horizontal li {
 	position: relative;
-	padding: 0px 0px;
+	padding: 0 0;
 	margin-bottom: -1px;
 }
 .xtabs ul.xtabs_vertical {
 	position: absolute;
-	padding: 0px;
+	padding: 0;
 }
 .xtabs ul.xtabs_horizontal li,
 .xtabs ul.xtabs_vertical li {
