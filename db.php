@@ -387,56 +387,75 @@ abstract class dbbase {
 		return $this->adump($this->aquery($querynum));
 	}
 
-	// dump a resultset array as an HTML table
+	// dump a resultset
 	function adump($aquery) {
-		?><style>
-			.db_query_results {
-				font-family: 'bitstream vera sans','arial','sans','sans serif';
-				font-size: 11px;
-				border-collapse: collapse;
-				background-color: #FFF;
-			}
-			.db_query_results th,
-			.db_query_results td {
-				border: 1px solid #ddd;
-				padding: 1px 9px;
-			}
-			.db_query_results th {
-				border-bottom: 2px solid #ddd;
-				padding: 4px 9px;
-				color: #444;
-				background-color: #F8F8F8;
-			}
-		</style>
-		<table class='db_query_results'>
-		<thead><?php
-		if ($aquery) foreach ($aquery as $i=>$row) {
-			if (!$i) {
-				echo "<tr>";
-				foreach ($row as $field=>$value)
-					echo "<th>".$field."</th>";
-				?></tr>
-				</thead>
-				<tbody><?php
-			}
-			echo "<tr>\n";
-			foreach ($row as $value) {
-				switch (gettype($value)) {
-				case "string":  $s="color:#00F;text-align:left;"; break;
-				case "integer": $s="color:#F00;text-align:right;"; break;
-				case "double":  $s="color:#F80;text-align:right;"; break;
-				case "array":   $s="color:#080;text-align:center;"; break;
-				case "object":  $s="color:#06D;text-align:center;"; break;
-				case "null":
-				case "NULL":    $s="color:#F0F;text-align:center;"; $value="NULL"; break;
-				default:        $s="color:#444;text-align:left;"; break;
+		if ($GLOBALS["argv"]) {
+			if ($aquery) foreach ($aquery as $i=>$row) {
+				if (!$i) {
+					$c=0;
+					foreach ($row as $field=>$value) {
+						if (++$c) echo "\t";
+						echo $field;
+					}
+					echo PHP_EOL;
 				}
-				echo "<td style='".$s."' title='".gettype($value)."'>".$value."</td>\n";
+				$c=0;
+				foreach ($row as $field=>$value) {
+					if (++$c) echo "\t";
+					echo $value;
+				}
+				echo PHP_EOL;
 			}
-			echo "</tr>\n";
+		} else {
+			?><style>
+				.db_query_results {
+					font-family: 'bitstream vera sans','arial','sans','sans serif';
+					font-size: 11px;
+					border-collapse: collapse;
+					background-color: #FFF;
+				}
+				.db_query_results th,
+				.db_query_results td {
+					border: 1px solid #ddd;
+					padding: 1px 9px;
+				}
+				.db_query_results th {
+					border-bottom: 2px solid #ddd;
+					padding: 4px 9px;
+					color: #444;
+					background-color: #F8F8F8;
+				}
+			</style>
+			<table class='db_query_results'>
+			<thead><?php
+			if ($aquery) foreach ($aquery as $i=>$row) {
+				if (!$i) {
+					echo "<tr>";
+					foreach ($row as $field=>$value)
+						echo "<th>".$field."</th>";
+					?></tr>
+					</thead>
+					<tbody><?php
+				}
+				echo "<tr>\n";
+				foreach ($row as $value) {
+					switch (gettype($value)) {
+					case "string":  $s="color:#00F;text-align:left;"; break;
+					case "integer": $s="color:#F00;text-align:right;"; break;
+					case "double":  $s="color:#F80;text-align:right;"; break;
+					case "array":   $s="color:#080;text-align:center;"; break;
+					case "object":  $s="color:#06D;text-align:center;"; break;
+					case "null":
+					case "NULL":    $s="color:#F0F;text-align:center;"; $value="NULL"; break;
+					default:        $s="color:#444;text-align:left;"; break;
+					}
+					echo "<td style='".$s."' title='".gettype($value)."'>".$value."</td>\n";
+				}
+				echo "</tr>\n";
+			}
+			?></tbody>
+			</table><?php
 		}
-		?></tbody>
-		</table><?php
 	}
 
 	// is a name a keyword? default: false
