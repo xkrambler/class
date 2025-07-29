@@ -45,15 +45,16 @@ function xEditor(o) {
 			{"cmd":"fontsize+4","caption":"+4"},
 			{"cmd":"fontsize+5","caption":"+5"}
 		]},
-		{"cmd":"heading","caption":"Encabezado","select":[
-			{"cmd":"div","caption":"&lt;DIV&gt;"},
-			{"cmd":"p","caption":"&lt;P&gt;"},
-			{"cmd":"h1","caption":"&lt;H1&gt;"},
-			{"cmd":"h2","caption":"&lt;H2&gt;"},
-			{"cmd":"h3","caption":"&lt;H3&gt;"},
-			{"cmd":"h4","caption":"&lt;H4&gt;"},
-			{"cmd":"h5","caption":"&lt;H5&gt;"},
-			{"cmd":"h6","caption":"&lt;H6&gt;"}
+		{"cmd":"heading","caption":"Bloques","select":[
+			{"cmd":"div","caption":"&lt;div&gt;"},
+			{"cmd":"p","caption":"&lt;p&gt;"},
+			{"cmd":"h1","caption":"&lt;h1&gt;"},
+			{"cmd":"h2","caption":"&lt;h2&gt;"},
+			{"cmd":"h3","caption":"&lt;h3&gt;"},
+			{"cmd":"h4","caption":"&lt;h4&gt;"},
+			{"cmd":"h5","caption":"&lt;h5&gt;"},
+			{"cmd":"h6","caption":"&lt;h6&gt;"},
+			{"cmd":"blockquote","caption":"&lt;blockquote&gt;"}
 		]}
 	];
 
@@ -433,6 +434,7 @@ function xEditor(o) {
 		case "h4": document.execCommand("formatBlock", false, "<h4>"); break;
 		case "h5": document.execCommand("formatBlock", false, "<h5>"); break;
 		case "h6": document.execCommand("formatBlock", false, "<h6>"); break;
+		case "blockquote": document.execCommand("formatBlock", false, "<blockquote>"); break;
 		case "fontsize-2": if (selectionHTML) self.insert("<span style='font-size:0.5em;'>"+selectionHTML+"</span>"); break;
 		case "fontsize-1": if (selectionHTML) self.insert("<span style='font-size:0.8em;'>"+selectionHTML+"</span>"); break;
 		case "fontsize+1": if (selectionHTML) self.insert("<span style='font-size:1.2em;'>"+selectionHTML+"</span>"); break;

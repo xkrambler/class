@@ -27,6 +27,7 @@
 	display: none;
 	left: 0;
 	bottom: -1px;
+	z-index: 1;
 }
 /*.xeditor_toolbox_enabled */
 .xeditor_toolbox_cmd:hover .xeditor_toolbox_floatmenu {
@@ -35,8 +36,8 @@
 .xeditor_toolbox_select_grab {
 	position: absolute;
 	top: 0;
-	padding: 20px;
-	margin: -20px;
+	padding: 10px;
+	margin: -10px;
 }
 .xeditor_toolbox_select {
 	display: block;
