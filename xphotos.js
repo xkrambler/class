@@ -45,6 +45,7 @@ function xPhotos(o) {
 	self.o=o;
 	self._list=[];
 	// revisión de parámetros
+	if (!self.o.actual) self.o.actual=0;
 	if (!self.o.list) return false;
 	if (!self.o.margin) self.o.margin=10;
 	if (!self.o.maxScaleWidth) self.o.maxScaleWidth=1;
@@ -310,6 +311,9 @@ function xPhotos(o) {
 		// verificar rango
 		if (self.o.actual < 0) self.o.actual=0;
 		if (self.o.actual > self.o.list.length-1) self.o.actual=self.o.list.length-1;
+		// mostrar/ocultar botones si no hay más que una imagen
+		classEnable(self._body_prev, "xphotos_hide", (self.o.list.length > 1?false:true));
+		classEnable(self._body_next, "xphotos_hide", (self.o.list.length > 1?false:true));
 		// eventos
 		if (window.addEventListener) {
 			// inicializar
