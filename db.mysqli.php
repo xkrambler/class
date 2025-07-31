@@ -254,17 +254,23 @@ class dbMySQLi extends dbbase {
 
 	// begin transaction
 	function begin() {
-		return $this->query("BEGIN");
+		$r=$this->query("BEGIN");
+		$this->freequery();
+		return $r;
 	}
 
 	// commit transaction
 	function commit() {
-		return $this->query("COMMIT");
+		$r=$this->query("COMMIT");
+		$this->freequery();
+		return $r;
 	}
 
 	// rollback transaction
 	function rollback() {
-		return $this->query("ROLLBACK");
+		$r=$this->query("ROLLBACK");
+		$this->freequery();
+		return $r;
 	}
 
 	// return current date/time field
