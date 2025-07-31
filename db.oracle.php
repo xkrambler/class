@@ -115,9 +115,18 @@ class dbORACLE extends dbbase {
 		return $result;
 	}
 
-	// commit
-	function commit($querynum=null) {
-		return $this->query("COMMIT");
+	// commit transaction
+	function commit() {
+		$r=$this->query("COMMIT");
+		$this->freequery();
+		return $r;
+	}
+
+	// rollback transaction
+	function rollback() {
+		$r=$this->query("ROLLBACK");
+		$this->freequery();
+		return $r;
 	}
 
 	// execute a query (insert, update, alter, ...)
