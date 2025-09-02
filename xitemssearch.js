@@ -800,11 +800,12 @@ function xItemsSearch(o) {
 
 			// finder
 			var h="";
-			for (var i in visibleList)
+			for (var i=0; i < visibleList.length; i++) {
 				h+="<option value='"+visibleList[i]+"'"+(visibleList[i] == a.getVisible()?" selected":"")+">"
 						+(a.o.showCaption?a.o.showCaption:"Ver ")+visibleList[i]
 					+"</option>"
 				;
+			}
 			gidset(item_search, ""
 				+"<div class='xitemssearch_finder'>"
 					+(a.helpers["search"]
