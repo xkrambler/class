@@ -864,6 +864,7 @@ var xwidgets={
 						}
 					}
 				}
+				if (self.o.sort && self.o.selecteditems) self.o.selecteditems.sort(self.o.sort);
 				self.refreshItem(index);
 				self.refreshCaption();
 				if (self.o.editable && self.e.cmb_input) {
@@ -1246,6 +1247,17 @@ var xwidgets={
 			self.clear();
 			// add empty item (if defined)
 			if (self.o.empty && !self.o.multiple && !self.o.del) self.e.empty=self.add(null, null);
+			// sort items, if needed
+			if (self.o.sort) {
+				if (self.o.items) {
+					self.o.items=array_values(self.o.items);
+					self.o.items.sort(self.o.sort);
+				}
+				if (self.o.ajaxdata && self.o.ajaxdata.data) {
+					self.o.ajaxdata.data=array_values(self.o.self.o.ajaxdata.data);
+					self.o.ajaxdata.data.sort(self.o.sort);
+				}
+			}
 			// add items from array
 			if (self.o.items) for (index in self.o.items) {
 				var item=self.o.items[index];
@@ -1981,6 +1993,7 @@ var xwidgets={
 			self.refresh();
 			if (!self.o.item && (isset(self.o.index) || isset(self.o.keys) || isset(self.o.value))) self.update(); // if no item or no index/key/value is provided, no update is needed
 			else self.o.requested=true; // if not, mark as requested, to prevent automatic item selection
+			console.log(self.o);
 			self.firstselect();
 			// register self
 			xwidgets.widgets[self.o.id]=self;
