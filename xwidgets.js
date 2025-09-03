@@ -1197,9 +1197,12 @@ var xwidgets={
 			return false;
 		};
 
-		// refresh combobox caption
+		// refresh combobox caption & title
 		self.refreshCaption=function(){
-			if (self.e.cmb_caption) gidset(self.e.cmb_caption, self.renderCaption());
+			if (self.e.cmb_caption) {
+				gidset(self.e.cmb_caption, self.renderCaption());
+				gid(self.e.cmb_caption).title=self.e.cmb_caption.textContent || self.e.cmb_caption.innerText || "";
+			}
 		};
 
 		// refresh an item
