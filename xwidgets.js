@@ -1996,7 +1996,6 @@ var xwidgets={
 			self.refresh();
 			if (!self.o.item && (isset(self.o.index) || isset(self.o.keys) || isset(self.o.value))) self.update(); // if no item or no index/key/value is provided, no update is needed
 			else self.o.requested=true; // if not, mark as requested, to prevent automatic item selection
-			console.log(self.o);
 			self.firstselect();
 			// register self
 			xwidgets.widgets[self.o.id]=self;
