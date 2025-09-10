@@ -305,6 +305,20 @@ class xForm3 {
 		return false;
 	}
 
+	// store/delete files from field
+	function filesUpdate($field, $path=null) {
+		$f=$this->field($field);
+		if ($path === null) $path=$f["path"];
+		if (!strlen($path)) return null;
+		if ($files=$this->files($field)) foreach ($files as $file) {
+			if (!is_dir($path)) mkdir($path, 0775, true);
+			$filename=$path.basename($file["name"]);
+			if ($file["deleted"] && file_exists($filename)) unlink($filename);
+			else if ($file["uploaded"]) file_put_contents($filename, $file["data"]);
+		}
+		return true;
+	}
+
 	// sort file function
 	function fileSort($a, $b) {
 		if (isset($a["orden"]) && isset($b["orden"])) {
