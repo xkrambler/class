@@ -900,6 +900,7 @@ var xwidgets={
 			if (self.e.items)
 				for (var i in self.e.items)
 					self.refreshItem(i);
+			self.refreshCaption();
 		};
 
 		// returns if an item is selected by its index
