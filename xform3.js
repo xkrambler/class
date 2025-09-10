@@ -798,7 +798,7 @@ function xForm3(o) {
 			case "files":
 				// name=file.psd type=image/vnd.adobe.photoshop error=0 size=999 caption=file.psd
 				div.className="xform3_files_file";
-				div.innerHTML=a.icon("file-o")+" <a class='xform3_files_file_name' href='"+a.files.fileURL(o.field, o.index)+"' target='_blank'>"+o.item.name+"</a> <span class='xform3_files_file_size'>("+bytesToString(o.item.size)+")</span>";
+				div.innerHTML=a.icon("file-o")+" <a class='xform3_files_file_name' href='"+a.files.fileURL(o.field, o.index)+"' target='_blank'>"+o.item.name+"</a> <span class='xform3_files_file_size'>("+bytesToString(o.item.size)+")</span> ";
 				div.appendChild(a.files.htmlFileButton({"type":"trash", "id":a.id(o.field), "index":o.index, "action":a.files.del, "title":"Borrar"}));
 				a.data[o.field].container.appendChild(div);
 				break;

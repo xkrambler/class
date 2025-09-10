@@ -293,13 +293,18 @@ class xForm3 {
 	}
 
 	// store/delete file from field
-	function fileUpdate($field, $filename) {
-		if (!strlen($filename)) return null;
+	function fileUpdate($field, $filename=null) {
 		if ($file=$this->file($field)) {
-			$p=dirname($filename);
-			if (!is_dir($p)) mkdir($p, 0775, true);
-			if ($file["deleted"] && file_exists($filename)) unlink($filename);
-			else if ($file["uploaded"]) file_put_contents($filename, $file["data"]);
+			if ($filename === null) $filename=basename($file["name"]);
+			if (!strlen($filename)) return null;
+			$path=dirname($filename);
+			if (!is_dir($path)) mkdir($path, 0775, true);
+			if ($file["deleted"] && file_exists($filename)) {
+				unlink($filename);
+				@rmdir($path);
+			} else if ($file["uploaded"]) {
+				file_put_contents($filename, $file["data"]);
+			}
 			return true;
 		}
 		return false;
@@ -313,8 +318,12 @@ class xForm3 {
 		if ($files=$this->files($field)) foreach ($files as $file) {
 			if (!is_dir($path)) mkdir($path, 0775, true);
 			$filename=$path.basename($file["name"]);
-			if ($file["deleted"] && file_exists($filename)) unlink($filename);
-			else if ($file["uploaded"]) file_put_contents($filename, $file["data"]);
+			if ($file["deleted"] && file_exists($filename)) {
+				unlink($filename);
+				@rmdir($path);
+			} else if ($file["uploaded"]) {
+				file_put_contents($filename, $file["data"]);
+			}
 		}
 		return true;
 	}
