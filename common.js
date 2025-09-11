@@ -36,10 +36,11 @@ function gidenabled(id, enabled) {
 
 // foreach implementation for array or object
 function xforeach(a, f) {
-	var r;
+	var r, c=0;
 	if (typeof(a) == "object" && typeof(f) == "function") for (var i in a) {
-		r=f(a[i], i, a);
+		r=f(a[i], i, a, c);
 		if (typeof(r) != "undefined") return r;
+		i++;
 	}
 	return null;
 }
