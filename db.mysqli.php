@@ -254,22 +254,19 @@ class dbMySQLi extends dbbase {
 
 	// begin transaction
 	function begin() {
-		$r=$this->query("BEGIN");
-		$this->freequery();
+		if ($r=$this->query("BEGIN")) $r->freequery();
 		return $r;
 	}
 
 	// commit transaction
 	function commit() {
-		$r=$this->query("COMMIT");
-		$this->freequery();
+		if ($r=$this->query("COMMIT")) $r->freequery();
 		return $r;
 	}
 
 	// rollback transaction
 	function rollback() {
-		$r=$this->query("ROLLBACK");
-		$this->freequery();
+		if ($r=$this->query("ROLLBACK")) $r->freequery();
 		return $r;
 	}
 
@@ -376,7 +373,7 @@ class dbMySQLi extends dbbase {
 	function freequery($querynum=null) {
 		if (!$this->idcon) return false;
 		$querynum=$this->querynum($querynum);
-		if (method_exists($this->idquery[$querynum], "free")) $this->idquery[$querynum]->free();
+		if (is_object($this->idquery[$querynum]) && method_exists($this->idquery[$querynum], "free")) $this->idquery[$querynum]->free();
 		unset($this->idquery[$querynum]);
 		unset($this->lastqueryint[$querynum]);
 		unset($this->lastqid[$querynum]);
