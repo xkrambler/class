@@ -261,6 +261,7 @@ function newalertButton(button) {
 			+(button.target?" target='"+htmlspecialchars(button.target)+"'":"")
 			+(button.title?" target='"+htmlspecialchars(button.title)+"'":"")
 			+(button.onclick?" onclick='"+button.onclick+";'":"")
+			+(button.disabled?" disabled":"")
 		+">"
 			+(button.ico?"<span class='icon' style='background-image:url(\""+button.ico+"\")'>":"")
 				+button.caption
