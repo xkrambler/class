@@ -128,7 +128,8 @@
 .cmb[readonly],
 .txt[readonly],
 .area[readonly],
-.hsearch[readonly] {
+.hsearch[readonly],
+.widget_readonly {
 	background-color: #F4F4F4;
 }
 .widget_inverse .area[readonly],
@@ -147,7 +148,8 @@
 .widget_inverse .cmb[readonly],
 .widget_inverse .txt[readonly],
 .widget_inverse .area[readonly],
-.widget_inverse .hsearch[readonly] {
+.widget_inverse .hsearch[readonly],
+.widget_inverse .widget_readonly {
 	background-color: #333;
 }
 .area:focus,
