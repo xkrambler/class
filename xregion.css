@@ -12,5 +12,5 @@
 .xregion_building_hover { border: 3px solid #FF0; }
 .xregion_coord { border: 2px solid #888; }
 .xregion_coord_active { border: 2px solid #F00; }
-.xregion_point { border: 2px solid #444; }
-.xregion_point_active { border: 2px solid #000; }
+.xregion_point { border: 4px solid #444; }
+.xregion_point_active { border: 4px solid #000; }

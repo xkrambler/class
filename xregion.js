@@ -33,6 +33,11 @@ var xRegion={
 		// init
 		var a=this;
 		a.o=o;
+		a.data={
+			measure:{
+				points:{}
+			}
+		};
 
 		// ver si está deshabilitado temporalmente
 		if (isset(o.disabled)) a.disabled=o.disabled;
@@ -120,6 +125,10 @@ var xRegion={
 			a.c.fillText(caption, x, y+size);
 			a.c.fillStyle=(color?color:style.color);
 			a.c.fillText(caption, x, y);
+			var r=a.c.measureText(caption);
+			r.height=r.fontBoundingBoxAscent+r.fontBoundingBoxDescent;
+			r.textHeight=r.actualBoundingBoxAscent+r.actualBoundingBoxDescent;
+			return r;
 		};
 
 		// redraw canvas
@@ -319,7 +328,7 @@ var xRegion={
 							if (!o.onDrawPoint || o.onDrawPoint(a,rx,ry,i,p,selected)) {
 								// dibujar punto
 								a.c.beginPath();
-								a.c.lineWidth=(selected?a.styles.xregion_point_active.size:a.styles.xregion_point.size);
+								a.c.lineWidth=(selected?a.styles.xregion_point_active.size*a.scale:a.styles.xregion_point.size*a.scale);
 								a.c.strokeStyle=(selected?a.styles.xregion_point_active.color:(p.color?p.color:a.styles.xregion_point.color));
 								a.c.arc(rx,ry,a.grabSize,0,2*Math.PI,true);
 								//a.c.strokeRect(rx-a.grabSize, ry-a.grabSize, (a.grabSize<<1)+1, (a.grabSize<<1)+1);
@@ -331,7 +340,11 @@ var xRegion={
 								// dibujar texto
 								if (isset(p.caption)) {
 									a.c.textBaseline="top";
-									a.fillTextBorder(p.caption, rx, ry+(a.grabSize<<1), (p.color_caption?p.color_caption:false), a.styles.xregion_point_caption);
+									var px=rx, py=ry+a.grabSize+a.scale*a.grabSize;
+									if (!a.data.measure.points[i]) a.data.measure.points[i]={};
+									a.data.measure.points[i].caption=a.fillTextBorder(p.caption, px, py, (p.color_caption?p.color_caption:false), a.styles.xregion_point_caption);
+									a.data.measure.points[i].caption.x=px;
+									a.data.measure.points[i].caption.y=py;
 								}
 							}
 						}
@@ -351,7 +364,7 @@ var xRegion={
 					a.c.lineTo(rx,ry);
 					a.c.stroke();
 					// dibujar punto final
-					a.c.lineWidth=a.styles.xregion_point_active.size;
+					a.c.lineWidth=a.styles.xregion_point_active.size*a.scale;
 					a.c.strokeStyle=a.styles.xregion_point_active.color;
 					a.c.strokeRect(rx-a.grabSize, ry-a.grabSize, a.grabSize<<1, a.grabSize<<1);
 				}
@@ -802,7 +815,22 @@ var xRegion={
 					for (var i in o.points) {
 						var p=o.points[i];
 						var rx=p.x*a.scale,ry=p.y*a.scale;
-						if (x>=rx-a.grabSize && x<=rx+a.grabSize && y>=ry-a.grabSize && y<=ry+a.grabSize) {
+						var gs=a.grabSize*(a.scale > 1?a.scale:1);
+						if (x>=rx-gs && x<=rx+gs && y>=ry-gs && y<=ry+gs) {
+							if (!a.clicked) a.undoPush();
+							a.clicked={"point":i};
+							a.tmp.startMoveRegion=false;
+							a.tmp.startMovePoint=(o.editable && !p.readonly?true:false);
+							break;
+						}
+					}
+					// ver si se ha pulsado encima del caption de una coordenada
+					for (var i in o.points) {
+						var p=o.points[i];
+						var rx=p.x*a.scale,ry=p.y*a.scale;
+						var gs=a.grabSize*(a.scale > 1?a.scale:1);
+						var m=(a.data.measure.points[i]?a.data.measure.points[i].caption||false:null);
+						if (m && x >= m.x-a.dx && x<=m.x-a.dx+m.width && y>=m.y-a.dy && y<=m.y-a.dy+m.height) {
 							if (!a.clicked) a.undoPush();
 							a.clicked={"point":i};
 							a.tmp.startMoveRegion=false;
@@ -819,7 +847,8 @@ var xRegion={
 							for (var i in coords) {
 								var p=coords[i];
 								var rx=p.x*a.scale,ry=p.y*a.scale;
-								if (x>=rx-a.grabSize && x<=rx+a.grabSize && y>=ry-a.grabSize && y<=ry+a.grabSize) {
+								var gs=a.grabSize*(a.scale > 1?a.scale:1);
+								if (x>=rx-gs && x<=rx+gs && y>=ry-gs && y<=ry+gs) {
 									if (!a.clicked) a.undoPush();
 									a.clicked={
 										"region":region,
