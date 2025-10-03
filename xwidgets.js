@@ -1554,6 +1554,7 @@ var xwidgets={
 							}
 						}
 					}, a));
+					if (self.o.readonly) self.e.actions[index].setAttribute("disabled", "");
 					self.e.group.appendChild(self.e.actions[index]);
 				})(self.o.actions[i], i);
 			}
