@@ -120,6 +120,8 @@ function xEditor(o) {
 
 	// update tool box
 	self.toolboxUpdate=function(){
+		if (self.o.readonly) return;
+
 		self.toolbox_id="xeditor_toolbox";
 
 		// if not defined, create it
@@ -270,7 +272,7 @@ function xEditor(o) {
 		// if floating tool box, remove it
 		if (!self.o.toolbox) {
 			if (!self.cancelBlur) {
-				self.toolbox.parentNode.removeChild(self.toolbox);
+				if (self.toolbox) self.toolbox.parentNode.removeChild(self.toolbox);
 				if (self.toolbox_container) {
 					self.toolbox_container.parentNode.removeChild(self.toolbox_container);
 					delete self.toolbox_container
