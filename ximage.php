@@ -23,6 +23,7 @@
 class xImage {
 
 	public $im=null;
+	protected $format=false;
 
 	/**
 	 * Constructor.
@@ -88,7 +89,7 @@ class xImage {
 	}
 
 	// get mimetype by format
-	static function getMimeByFormat($format="jpg") {
+	static function getMimeByFormat($format) {
 		switch ($format) {
 		case "jpg": return "image/jpeg";
 		case "gif": return "image/gif";
@@ -120,6 +121,11 @@ class xImage {
 		return false;
 	}
 
+	// return active format
+	function formatActive($format){
+		return ($format?$format:($this->format?$this->format:"jpg"));
+	}
+
 	// create image from a string
 	function fromString($s) {
 		if ($imt=(@imagecreatefromstring($s))) $this->im=$imt;
@@ -128,7 +134,8 @@ class xImage {
 	}
 
 	// return image as a string
-	function toString($format="jpg", $quality=75){
+	function toString($format=null, $quality=75){
+		$format=$this->formatActive($format);
 		ob_start();
 		$this->output($format, $quality, false);
 		$s=ob_get_contents();
@@ -137,7 +144,8 @@ class xImage {
 	}
 
 	// return image as URI encoded
-	function uri($format="jpg", $quality=75) {
+	function uri($format=null, $quality=75) {
+		$format=$this->formatActive($format);
 		$s=$this->toString($format, $quality);
 		return "data:".$this->getMimeByMagic($s).";base64,".base64_encode($s);
 	}
@@ -146,8 +154,8 @@ class xImage {
 	function load($filename) {
 		$im=false;
 		$this->filename=$filename;
-		if ($format=$this->getFileFormat($filename)) {
-			switch ($format) {
+		if ($this->format=$this->getFileFormat($filename)) {
+			switch ($this->format) {
 			case "jpg": $im=imagecreatefromjpeg($filename); break;
 			case "gif": $im=imagecreatefromgif($filename); break;
 			case "png": $im=imagecreatefrompng($filename); break;
@@ -161,7 +169,8 @@ class xImage {
 	}
 
 	// output mime header
-	function outMime($format="jpg") {
+	function outMime($format=null) {
+		$format=$this->formatActive($format);
 		if ($mimetype=$this->getMimeByFormat($format)) {
 			header("Content-type: ".$mimetype);
 			return true;
@@ -170,7 +179,8 @@ class xImage {
 	}
 
 	// output image
-	function output($format="jpg", $quality=90, $withmime=true) {
+	function output($format=null, $quality=90, $withmime=true) {
+		$format=$this->formatActive($format);
 		if ($withmime) $this->OutMime($format);
 		switch ($format) {
 		case "jpg": return imagejpeg($this->im, null, $quality);
@@ -181,7 +191,8 @@ class xImage {
 	}
 
 	// save in disk
-	function save($format="jpg", $filename, $quality=90) {
+	function save($format=null, $filename, $quality=90) {
+		$format=$this->formatActive($format);
 		switch ($format) {
 		case "jpg": return imagejpeg($this->im, $filename, $quality);
 		case "gif": return imagegif($this->im, $filename);
@@ -263,7 +274,18 @@ class xImage {
 			?imagecolorallocate($imt, $c[0], $c[1], $c[2])
 			:false
 		);
-		imagealphablending($imt, ($color?true:false));
+		// if source is a GIF, copy and allocate transparent color
+		if ($this->format == "gif") {
+			$transparent_index=imagecolortransparent($this->im);
+			if ($transparent_index >= 0) {
+				$transparent_color=imagecolorsforindex($this->im, $transparent_index);
+				$transparent_index_new=imagecolorallocate($imt, $transparent_color[0], $transparent_color[1], $transparent_color[2]);
+				imagefill($imt, 0, 0, $transparent_index_new);
+				imagecolortransparent($imt, $transparent_index_new);
+			}
+		} else {
+			imagealphablending($imt, ($color?true:false));
+		}
 		if ($color) imagefilledrectangle($imt, 0, 0, $nw, $nh, $color);
 		// create new image with new scale
 		if ($resample) imagecopyresampled($imt, $this->im, $x, $y, 0, 0, $nw, $nh, $w, $h);
