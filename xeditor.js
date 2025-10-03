@@ -213,6 +213,14 @@ function xEditor(o) {
 		// set content editable
 		self.editor.contentEditable='true';
 
+		// prevent editing but keep arrows, select & copy functions
+		if (self.o.readonly) {
+			self.editor.oncut=
+			self.editor.onpaste=function(e){ return !self.o.readonly; };
+			self.editor.onbeforeinput=function(e){ e.preventDefault(); };
+			self.editor.onkeydown=function(e){ if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.length === 1) e.preventDefault(); };
+		}
+
 		// events
 		self.editor.oninput=function(){
 			if (self.o.oninput) self.o.oninput(self, self.editor.innerHTML);
