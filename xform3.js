@@ -242,10 +242,13 @@ function xForm3(o) {
 		var f=a.o.fields[field];
 		if (f) {
 			if (f.maxlength)   value=(""+(value === null?"":value)).substring(0, f.maxlength);
-			if (f.integer)     value=(value?parseInt(value):0);
-			if (f.number)      value=(value?parseInt(value):0);
-			if (f.positive)    value=(value?Math.abs(localeNumber(value)):0);
-			if (f.decimal)     value=(value?localeNumber(value):0);
+			if (f.nullifempty && value === "") value=null;
+			else {
+				if (f.integer)     value=(value?parseInt(value):0);
+				if (f.number)      value=(value?parseInt(value):0);
+				if (f.positive)    value=(value?Math.abs(localeNumber(value)):0);
+				if (f.decimal)     value=(value?localeNumber(value):0);
+			}
 			if (f.trim)        value=(value === null?"":trim(value));
 			if (f.nullifzero)  value=a.nullifzero(value);
 			if (f.nullifempty) value=a.nullifempty(value);

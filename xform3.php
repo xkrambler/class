@@ -512,11 +512,13 @@ class xForm3 {
 		if ($field["lowercase"] || $field["type"] == "email") $value=$this->strtolower($value);
 		if ($field["uppercase"]) $value=$this->strtoupper($value);
 		if ($field["capitalize"]) $value=$this->ucwords($this->strtolower($value));
-		if ($field["integer"]) $value=intval($value);
-		if ($field["number"]) $value=doubleval($value);
-		if ($field["decimal"]) $value=doubleval($value);
-		if ($field["positive"]) $value=abs(doubleval($value));
-		if ($field["nozero"] && !$value) $value="";
+		if ($field["nullifempty"] && !strlen((string)$value)) $value=null;
+		else {
+			if ($field["integer"]) $value=intval($value);
+			if ($field["number"] || $field["decimal"]) $value=doubleval($value);
+			if ($field["positive"]) $value=abs(doubleval($value));
+			if ($field["nozero"] && !$value) $value="";
+		}
 		// sanitize
 		$value=strip_tags(str_replace(array("<", ">"), array("&lt;", "&gt;"), $value));
 		// force a string
