@@ -57,7 +57,7 @@
 			"ajax":"upload", // "url":"otherurl.php?upload=1"
 			//"input":gid("files_id"),
 			//"name":"files",
-			//"chunked":data["chunk_size"],
+			//"chunked":data.chunk_size,
 			"chunked":true,
 			"multiple":true,
 			"post":{"name":"value"},
@@ -132,8 +132,8 @@ function xUploader(o) {
 		}
 		if (self.o.multiple) self.o.input.setAttribute('multiple', '');
 		var i=self.o.input.name.indexOf("[]");
-		if (self.o.input.multiple && i==-1) self.o.input.name+='[]';
-		if (!self.o.input.multiple && i!=-1) self.o.input.name=self.o.input.name.substring(0, i);
+		if (self.o.input.multiple && i == -1) self.o.input.name+='[]';
+		if (!self.o.input.multiple && i != -1) self.o.input.name=self.o.input.name.substring(0, i);
 
 	};
 
@@ -144,42 +144,17 @@ function xUploader(o) {
 
 	// get chunk
 	self.getChunk=function(blob, start, end, callback){
-
-		// Blob to ArrayBuffer (needed ex. on Android 4.0.4)
-		var str2ab_blobreader = function(str, callback) {
-			var blob;
-			var BlobBuilder = window.MozBlobBuilder || window.WebKitBlobBuilder || window.BlobBuilder;
-			if ( typeof (BlobBuilder) !== 'undefined') {
-				var bb = new BlobBuilder();
-				bb.append(str);
-				blob = bb.getBlob();
-			}	else {
-				blob = new Blob([str]);
-			}
-	
-			var f = new FileReader();
-			f.onload = function(e) {
-				var target = e.target ? e.target : e.srcElement;
-				callback(target.result);
-			};
-			f.readAsArrayBuffer(blob);
-		};
-
 		var chunk;
-		if (blob.webkitSlice) chunk = blob.webkitSlice(start, end);
-		else if (blob.mozSlice) chunk = blob.mozSlice(start, end);
-		else chunk = blob.slice(start, end);
-		// android default browser in version 4.0.4 has webkitSlice instead of slice()
-		//if (blob.webkitSlice) str2ab_blobreader(chunk, function(buf) { callback(buf); });
-		//else callback(chunk);
+		if (blob.webkitSlice) chunk=blob.webkitSlice(start, end);
+		else if (blob.mozSlice) chunk=blob.mozSlice(start, end);
+		else chunk=blob.slice(start, end);
 		callback(chunk);
-
 	};
 
 	// prepare Form Data
 	self.send=function(){
 
-		// check if browser is supported
+		// checks
 		if (!self.isBrowserSupported() || typeof(self.data.files) == "undefined") return false;
 
 		// form data
@@ -209,7 +184,7 @@ function xUploader(o) {
 						self.data.files[i].sent=true;
 					}
 					self.data.files[i].start=end;
-					self.data.files[i].sending=end - start;
+					self.data.files[i].sending=end-start;
 					// send chunk
 					(function() {
 						// get file chunk
@@ -234,7 +209,7 @@ function xUploader(o) {
 
 	// get/set chunk size or false/NaN if disabled
 	self.chunked=function(chunked){
-		if (isset(chunked)) self.o.chunked=chunked;
+		if (typeof(chunked) != "undefined") self.o.chunked=chunked;
 		if (self.o.chunked === true) return 1024*1024;
 		else if (self.o.chunked) return parseInt(self.o.chunked);
 		return false;
@@ -244,7 +219,7 @@ function xUploader(o) {
 	self.progress=function(r){
 		var loaded=0, total=0;
 		if (self.o.chunked) {
-			for (var i=0; i<self.o.files.length; i++) {
+			for (var i=0; i < self.o.files.length; i++) {
 				loaded+=self.data.files[i].start;
 				if (!self.data.files[i].sent) loaded+=self.data.files[i].sending;
 				total+=self.o.files[i].size;
@@ -285,7 +260,7 @@ function xUploader(o) {
 		self.xhr.upload.addEventListener("progress", function(r){
 			var o=self.progress(r);
 			o.response=r;
-			if (self.o.onprogress) self.o.onprogress(self, o);
+			if (!self.o.chunked && self.o.onprogress) self.o.onprogress(self, o);
 		}, false);
 		self.xhr.addEventListener("load", function(r){
 			//alert(adump(r));
@@ -306,7 +281,7 @@ function xUploader(o) {
 						if (self.o.onerror) self.o.onerror(self, o);
 						return;
 					}
-					for (var i=0; i<self.o.files.length; i++) {
+					for (var i=0; i < self.o.files.length; i++) {
 						if (!self.data.files[i].sent) {
 							self.send(); // continue with next chunk
 							return;
@@ -315,6 +290,7 @@ function xUploader(o) {
 				}
 				// no more chunks or not chunked, upload completed
 				self.o.oncomplete(self, o);
+				if (!o.data.ok && self.o.onerror) self.o.onerror(self, o);
 			}
 		}, false);
 		self.xhr.addEventListener("error", function(r){
@@ -336,6 +312,9 @@ function xUploader(o) {
 
 	// submit files
 	self.submit=function(){
+
+		// if autosubmit, if done, remove
+		delete self.o.autosubmit;
 
 		// check if browser is supported
 		if (!self.isBrowserSupported()) return false;
@@ -368,16 +347,22 @@ function xUploader(o) {
 
 	// event: input
 	self.inputEvent=function(event){
-		self.filesAdd(self.o.input.files, function(){
-			if (self.o.onselect) self.o.onselect(self, {"selected":self.o.input.files, "files":self.files()});
-			if (self.o.submit) self.submit();
+		self.filesAdd(self.o.input.files, {
+			"action":"input",
+			"event":event,
+			"callback":function(o){
+				if (self.o.onselect) self.o.onselect(self, {"selected":self.o.input.files, "files":self.files()});
+				if (self.o.autosubmit || self.o.submit) self.submit();
+			}
 		});
 	};
 
 	// add files
-	self.filesAdd=function(files, callback){
+	self.filesAdd=function(files, o){
+		var o=o||{};
 		var names={};
 		var scaling=(self.o.scale && window.ImageResizer);
+		if (self.o.scale && !window.ImageResizer) console.warn("No ImageResizer library loaded for image scaling.");
 		var async_scaling=false;
 		if (!self.o.repeat)
 			for (var i=0; i < self.o.files.length; i++)
@@ -409,11 +394,9 @@ function xUploader(o) {
 							returnFileObject: false
 						}, function(result){
 
-							//console.log(result);
 							result.name=file.name;
 							var result_file=new File([result], file.name, {type: result.type}); // return as file object
 
-							//console.log(result_file);
 							names[result_file.name]=true;
 							files[file_index]=result_file;
 							self.o.files.push(result_file);
@@ -424,31 +407,25 @@ function xUploader(o) {
 									all_processed=false;
 
 							if (all_processed) {
-								if (self.o.onfiles) self.o.onfiles(self, {"added":files, "files":self.o.files});
-								if (self.o.onscaled) self.o.onscaled(self);
-								if (callback) callback();
+								o.added=files;
+								o.files=self.o.files;
+								if (self.o.onfiles) self.o.onfiles(self, o);
+								if (self.o.onscaled) self.o.onscaled(self, o);
+								if (o.callback) o.callback(o);
 							}
-
-							/*
-							var image=new Image();
-							image.src=URL.createObjectURL(result_file);
-							//image.download=result_file.name;
-							image.style.maxWidth="100%";
-							gid('result').innerHTML="";
-							gid('result').appendChild(image);
-							*/
 
 						});
 					})(self, files[i], i);
-
 				} else {
 					self.o.files.push(files[i]);
 				}
 			}
 		}
 		if (!async_scaling) {
-			if (self.o.onfiles) self.o.onfiles(self, {"added":files, "files":self.o.files});
-			if (callback) callback();
+			o.added=files;
+			o.files=self.o.files;
+			if (self.o.onfiles) self.o.onfiles(self, o);
+			if (o.callback) o.callback(o);
 		}
 	};
 
@@ -510,7 +487,7 @@ function xUploader(o) {
 		if (!self.o.input) return false;
 
 		// submit event
-		if (isset(o.submit)) self.o.submit=o.submit;
+		if (isset(o.submit)) self.o.autosubmit=o.submit;
 
 		// launch browse
 		if (document.createEvent) {
@@ -557,10 +534,17 @@ function xUploader(o) {
 		if (self.o.ondragleave) self.o.ondragleave(self, {"zone":this, "id":this.id, "event":event});
 		if (self.o.ondrop) self.o.ondrop(self, {"zone":this, "id":this.id, "event":event, "files":files});
 		// prevent default
-		event.preventDefault();			
+		event.preventDefault();	
+		event.stopPropagation();		
 		// prepare upload
-		self.filesAdd(files, function(){
-			if (self.o.submit) self.submit();
+		self.filesAdd(files, {
+			"action":"drop",
+			"zone":this,
+			"id":this.id,
+			"event":event,
+			"callback":function(){
+				if (self.o.autosubmit || self.o.submit) self.submit();
+			}
 		});
 	};
 
@@ -574,13 +558,13 @@ function xUploader(o) {
 		// set event listeners
 		for (var i=0; i < self.o.drag.length; i++) {
 			var zone=gid(self.o.drag[i]);
-			if (zone) {
-				zone.addEventListener("dragover", self.ondragover, true);
+			if (zone && zone.addEventListener) {
+				zone.addEventListener("dragover",  self.ondragover,  true);
 				zone.addEventListener("dragleave", self.ondragleave, true);
-				zone.addEventListener("drop", self.ondrop, true);
+				zone.addEventListener("drop",      self.ondrop,      true);
 			}
 		}
-		// everything ok
+		// ok
 		return true;
 	};
 
@@ -590,13 +574,13 @@ function xUploader(o) {
 		// unregister
 		for (var i=0; i < self.o.drag.length; i++) {
 			var zone=gid(self.o.drag[i]);
-			if (zone) {
-				zone.removeEventListener("dragover", self.ondragover, true);
+			if (zone && zone.removeEventListener) {
+				zone.removeEventListener("dragover",  self.ondragover,  true);
 				zone.removeEventListener("dragleave", self.ondragleave, true);
-				zone.removeEventListener("drop", self.ondrop, true);
+				zone.removeEventListener("drop",      self.ondrop,      true);
 			}
 		}
-		// everything ok
+		// ok
 		return true;
 	};
 
