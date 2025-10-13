@@ -1517,6 +1517,7 @@ var xwidgets={
 			if (self.o.add) self.o.actions.push(array_merge({
 				"class":"cmd cmd_add",
 				"html":"+",
+				"readonlyhide":true,
 				"action":function(self, action, index){
 					if (self.o.disabled || self.o.readonly) return;
 					if (isset(self.o.onadd)) self.o.onadd(self, action, index);
@@ -1528,6 +1529,7 @@ var xwidgets={
 			if (self.o.del) self.o.actions.push(array_merge({
 				"class":"cmd cmd_del",
 				"html":"⨯",
+				"readonlyhide":true,
 				"action":function(self, action, index){
 					if (self.o.disabled || self.o.readonly) return;
 					self.unselect();
@@ -1544,7 +1546,7 @@ var xwidgets={
 					var a=array_copy(action);
 					a["class"]=(isset(action["class"])?action["class"]:"cmd");
 					delete a["action"];
-					self.e.actions[index]=newElement("button", array_merge({
+					var e=newElement("button", array_merge({
 						"attributes":{
 							"tabindex":(self.o.tabindex?self.o.tabindex+index+1:0),
 						},
@@ -1554,7 +1556,11 @@ var xwidgets={
 							}
 						}
 					}, a));
-					if (self.o.readonly) self.e.actions[index].setAttribute("disabled", "");
+					var disabled=(isset(action.disabled)?action.disabled:self.o.readonly);
+					if (disabled) e.setAttribute("disabled", "");
+					if (self.o.readonly?action.readonlyhide:false) e.style.display="none";
+					else e.style.display="";
+					self.e.actions[index]=e;
 					self.e.group.appendChild(self.e.actions[index]);
 				})(self.o.actions[i], i);
 			}
