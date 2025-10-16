@@ -76,6 +76,7 @@ class WebSocketClient {
 		// prepare data and parameters
 		$url["host"]=(($v=$url["host"])?$v:"127.0.0.1");
 		if ($url["port"] < 1) $url["port"]=($url["scheme"] == "https"?443:80);
+		if ($this->blocking === null) $this->blocking=true;
 		if ($this->timeout < 1) $this->timeout=10;
 		if ($this->maxheader < 1) $this->maxheader=4096;
 		$ssl=in_array($url["scheme"], ["https", "ssl"]);
@@ -90,7 +91,7 @@ class WebSocketClient {
 		if ($con === false) return $this->error("Unable to connect to websocket server #".$errno.": ".$errstr);
 
 		// set timeout
-		stream_set_timeout($con, $this->timeout);
+		stream_set_timeout($con, intval($this->timeout), ($this->timeout-floor($this->timeout))*1000000);
 
 		// websocket upgrade
 		if (!$this->persistant || ftell($con) === 0) {
@@ -113,12 +114,20 @@ class WebSocketClient {
 			// the key we send is returned, concatenate with "258EAFA5-E914-47DA-95CA-
 			// C5AB0DC85B11" and then base64-encoded. one can verify if one feels the need...
 
+			// set blocking
+			$this->blocking($this->blocking);
+
 		}
 
 		// return connection handler
 		$this->con=$con;
 		return $con;
 
+	}
+
+	// check if it's connected
+	function connected() {
+		return ($this->con?true:false);
 	}
 
 	// close connection
@@ -128,6 +137,21 @@ class WebSocketClient {
 			fclose($this->con);
 			unset($this->con);
 		}
+	}
+
+	// set stream timeout
+	function timeout(float $timeout) {
+		$this->timeout=$timeout;
+		if ($this->con) {
+			$s=floor($timeout);
+			stream_set_timeout($this->con, $s, ($timeout-$s)*1000000);
+		}
+	}
+
+	// set blocking
+	function blocking(bool $blocking=null) {
+		if ($blocking !== null) $this->blocking=$blocking;
+		return $this->blocking;
 	}
 
 	// send raw data
@@ -161,6 +185,7 @@ class WebSocketClient {
 	// read len size with buffering and error control
 	private function fread(int $len) {
 		if (!$this->con) return $this->error("No connection established");
+		//stream_set_blocking($this->con, true);
 		$st=microtime(true);
 		while (microtime(true) - $st < $this->timeout) {
 			if (strlen($this->buffer) >= $len) {
@@ -169,7 +194,13 @@ class WebSocketClient {
 				return $s;
 			}
 			$size=$len-strlen($this->buffer);
-			if ($size > 0) $this->buffer.=fread($this->con, $size);
+			if ($size > 0) {
+				//$r=fread($this->con, $size);
+				$r=stream_get_contents($this->con, $size);
+				if (feof($this->con)) { $this->close(); return false; }
+				if ($r === "") return null;
+				$this->buffer.=$r;
+			}
 		}
 		return null;
 	}
@@ -180,7 +211,13 @@ class WebSocketClient {
 		do {
 
 			// read header
-			if (!($header=$this->fread(2))) return $this->error("Reading header from websocket failed.");
+			if ($this->con && !$this->blocking) stream_set_blocking($this->con, false);
+			if (!($header=$this->fread(2))) {
+				if (!$this->con) return $this->error("Disconnected.");
+				if ($header === false) return $this->error("Reading header from websocket failed.");
+				return null;
+			}
+			stream_set_blocking($this->con, true);
 
 			// decode
 			$opcode=ord($header[0])&0x0F;
@@ -193,7 +230,7 @@ class WebSocketClient {
 			if ($payload_len >= 0x7E) {
 				$ext_len=2;
 				if ($payload_len == 0x7F) $ext_len=8;
-				if (!($header=$this->fread($ext_len))) return $this->error("Reading payload length from websocket failed.");;
+				if (!($header=$this->fread($ext_len))) return $this->error("Reading payload length from websocket failed.");
 				// set extented payload length
 				$payload_len=0;
 				for ($i=0; $i < $ext_len; $i++) $payload_len+=ord($header[$i])<<($ext_len-$i-1)*8;
@@ -201,13 +238,13 @@ class WebSocketClient {
 
 			// get mask key
 			if ($masked) {
-				if (!($mask=$this->fread(4))) return $this->error("Reading mask from websocket failed.");;
+				if (!($mask=$this->fread(4))) return $this->error("Reading mask from websocket failed.");
 			}
 
 			// get payload
 			$frame_data='';
 			while ($payload_len > 0) {
-				if (!($frame=$this->fread($payload_len))) return $this->error("Reading payload from websocket failed.");;
+				if (!($frame=$this->fread($payload_len))) return $this->error("Reading payload from websocket failed.");
 				$payload_len-=strlen($frame);
 				$frame_data.=$frame;
 			}
@@ -240,10 +277,12 @@ class WebSocketClient {
 
 	// read/send JSON data
 	function data($data=null) {
-		return ($data === null
-			?json_decode($this->recv(), true)
-			:$this->send(json_encode($data))
-		);
+		if ($data === null) {
+			$r=$this->recv();
+			return ($r === null || $r === false?$r:json_decode($r, true));
+		} else {
+			return $this->send(json_encode($data));
+		}
 	}
 
 	// get/set last error
