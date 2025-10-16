@@ -101,7 +101,13 @@ class WebSocketServer {
 	// create main loop (will never end)
 	function loop() {
 		while (true) {
-			if (!$this->iterate()) usleep($this->loopdelay); // delay to prevent active waiting and waste CPU
+			if ($this->iterate()) {
+				if (($event=$this->oniterate) && is_callable($event)) $event($this);
+			} else {
+				$r=null;
+				if (($event=$this->onloop) && is_callable($event)) $r=$event($this);
+				if ($r === null || $r === false) usleep($this->loopdelay); // delay to prevent active waiting and waste CPU
+			}
 		}
 	}
 
