@@ -32,10 +32,11 @@ class WebSocketClient {
 
 	public $con;
 	protected $o=[];
+	protected $buffer="";
 
 	// constructor/get/set/isset
 	function __construct(array $o=[]) { $this->o=$o; }
-	function __get($n) { return $this->o[$n]; }
+	function __get($n) { return $this->o[$n]??null; }
 	function __set($n, $v) { $this->o[$n]=$v; }
 	function __isset($n) { return isset($this->o[$n]); }
 
@@ -75,8 +76,8 @@ class WebSocketClient {
 		// prepare data and parameters
 		$url["host"]=(($v=$url["host"])?$v:"127.0.0.1");
 		if ($url["port"] < 1) $url["port"]=($url["scheme"] == "https"?443:80);
-		if ($this->timeout??0 < 1) $this->timeout=10;
-		if ($this->maxheader??0 < 1) $this->maxheader=4096;
+		if ($this->timeout < 1) $this->timeout=10;
+		if ($this->maxheader < 1) $this->maxheader=4096;
 		$ssl=in_array($url["scheme"], ["https", "ssl"]);
 		$address=($ssl?'ssl://':'').$url["host"].':'.$url["port"];
 		$flags=STREAM_CLIENT_CONNECT|($this->persistant?STREAM_CLIENT_PERSISTENT:0);
@@ -99,7 +100,11 @@ class WebSocketClient {
 			if (!$rc) return $this->error("Unable to send upgrade header to websocket server #".$errno.": ".$errstr);
 
 			// read response into an assotiative array of headers, fails if upgrade failes
-			$response_header=fread($con, $this->maxheader);
+			$this->buffer=fread($con, $this->maxheader);
+			if ($i=strpos($this->buffer, "\r\n\r\n")) {
+				$response_header=substr($this->buffer, 0, $i+2);
+				$this->buffer=substr($this->buffer, $i+4);
+			}
 
 			// status code 101 indicates that the WebSocket handshake has completed
 			if (stripos($response_header, ' 101 ') === false || stripos($response_header, 'Sec-WebSocket-Accept: ') === false)
@@ -119,6 +124,7 @@ class WebSocketClient {
 	// close connection
 	function close() {
 		if ($this->con) {
+			$this->buffer="";
 			fclose($this->con);
 			unset($this->con);
 		}
@@ -152,11 +158,20 @@ class WebSocketClient {
 
 	}
 
-	// read len size with error control
+	// read len size with buffering and error control
 	private function fread(int $len) {
 		if (!$this->con) return $this->error("No connection established");
-		$s=fread($this->con, $len);
-		return $s;
+		$st=microtime(true);
+		while (microtime(true) - $st < $this->timeout) {
+			if (strlen($this->buffer) >= $len) {
+				$s=substr($this->buffer, 0, $len);
+				$this->buffer=substr($this->buffer, $len);
+				return $s;
+			}
+			$size=$len-strlen($this->buffer);
+			if ($size > 0) $this->buffer.=fread($this->con, $size);
+		}
+		return null;
 	}
 
 	// receive raw message
