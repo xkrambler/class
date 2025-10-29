@@ -42,11 +42,11 @@ class xPager {
 		$this->update();
 	}
 
-	// actualizar por si alguno de los parámetros accesibles públicamente ha cambiado
+	// actualizar por si alguno de los parÃ¡metros accesibles pÃºblicamente ha cambiado
 	function update() {
 		$this->pagenum=ceil(intval($this->num)/$this->max);
 		// comprobar rangos
-		if (isset($this->num) && $this->page > $this->pagenum-1) $this->page=$this->pagenum-1; // no se limita si no se ha especificado número de elementos
+		if (isset($this->num) && $this->page > $this->pagenum-1) $this->page=$this->pagenum-1; // no se limita si no se ha especificado nÃºmero de elementos
 		if ($this->page < 0) $this->page=0;
 		$this->pagestart=$this->page-round($this->pageshow/2);
 		if ($this->pagestart < 0) $this->pagestart=0;
@@ -58,7 +58,7 @@ class xPager {
 		$this->single=($this->pagenum == 1?true:false);
 	}
 
-	// devolver número de página en HTML
+	// devolver nÃºmero de pÃ¡gina en HTML
 	function drpage($drawpage, $label="", $disabled=false) {
 		if ($drawpage==$this->page || $disabled) $t=array("span", $this->classes["actual"],false);
 		else $t=array("a", $this->classes["normal"],true);
@@ -68,7 +68,7 @@ class xPager {
 				." onKeyPress='javascript:if(event.keyCode==13)if(parseInt(this.value)!=NaN && parseInt(this.value)>0)location.href=\"".$pl.(strpos($pl, "?")?"&amp;":"?")."page=\"+(parseInt(this.value)-1)'"
 				." onFocus='javascript:this.select()'"
 				." onBlur='javascript:this.value=".($drawpage+1).";'"
-				." title='Página actual'"
+				." title='PÃ¡gina actual'"
 				." />";
 		return "<".$t[0]
 			." class='".($disabled?$this->classes["disabled"]:$t[1])."'"
@@ -84,13 +84,13 @@ class xPager {
 		// anterior
 		$html=$this->drpage($this->page-1,"&lt;",($this->page?false:true));
 
-		// primera página y puntos suspensivos
+		// primera pÃ¡gina y puntos suspensivos
 		if ($this->pagestart > 0) {
 			$html.=$this->drpage(0);
 			if ($this->pagestart > 1) $html.=" ... ";
 		}
 
-		// páginas intermedias
+		// pÃ¡ginas intermedias
 		if ($this->pagenum) {
 			for ($i=$this->pagestart; $i < ($this->pagestart+$this->pageshow); $i++) {
 				$html.=$this->drpage($i);
@@ -98,7 +98,7 @@ class xPager {
 			}
 		}
 
-		// puntos suspensivos y última página
+		// puntos suspensivos y Ãºltima pÃ¡gina
 		if ($i < $this->pagenum) {
 			if (($i+1) != $this->pagenum) $html.=" ... ";
 			$html.=$this->drpage($this->pagenum-1);
