@@ -828,9 +828,8 @@ var xRegion={
 					for (var i in o.points) {
 						var p=o.points[i];
 						var rx=p.x*a.scale,ry=p.y*a.scale;
-						var gs=a.grabSize*(a.scale > 1?a.scale:1);
 						var m=(a.data.measure.points[i]?a.data.measure.points[i].caption||false:null);
-						if (m && x >= m.x-a.dx && x<=m.x-a.dx+m.width && y>=m.y-a.dy && y<=m.y-a.dy+m.height) {
+						if (m && x >= m.x-a.dx-m.width/2 && x<=m.x-a.dx+m.width/2 && y>=m.y-a.dy && y<=m.y-a.dy+m.height) {
 							if (!a.clicked) a.undoPush();
 							a.clicked={"point":i};
 							a.tmp.startMoveRegion=false;
@@ -847,7 +846,7 @@ var xRegion={
 							for (var i in coords) {
 								var p=coords[i];
 								var rx=p.x*a.scale,ry=p.y*a.scale;
-								var gs=a.grabSize*(a.scale > 1?a.scale:1);
+								var gs=a.grabSize;
 								if (x>=rx-gs && x<=rx+gs && y>=ry-gs && y<=ry+gs) {
 									if (!a.clicked) a.undoPush();
 									a.clicked={
