@@ -360,11 +360,11 @@ var xRegion={
 					a.c.beginPath();
 					a.c.lineWidth=a.styles.xregion_newregion_line.size;
 					a.c.strokeStyle=a.styles.xregion_newregion_line.color;
-					a.c.moveTo(sx,sy);
-					a.c.lineTo(rx,ry);
+					a.c.moveTo(sx, sy);
+					a.c.lineTo(rx, ry);
 					a.c.stroke();
 					// dibujar punto final
-					a.c.lineWidth=a.styles.xregion_point_active.size*a.scale;
+					a.c.lineWidth=a.styles.xregion_point_active.size;
 					a.c.strokeStyle=a.styles.xregion_point_active.color;
 					a.c.strokeRect(rx-a.grabSize, ry-a.grabSize, a.grabSize<<1, a.grabSize<<1);
 				}
