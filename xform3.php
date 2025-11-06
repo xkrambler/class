@@ -504,7 +504,6 @@ class xForm3 {
 			}
 			return $value;
 		}
-		//if ($field["caption"] == "Código de Cuenta Contable") {var_dump($value);debug($field);}
 		// readonly resets value
 		if ($field["readonly"] && isset($field["value"])) $value=$field["value"];
 		// allowed filter for HTML
