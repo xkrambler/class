@@ -429,6 +429,10 @@ class xForm3 {
 	// parse out values for a field
 	function parseOutValue($f, $value) {
 		$field=$this->fields[$f];
+		if ($field["integer"]) return intval($value);
+		if ($field["number"]) return doubleval($value);
+		if ($field["decimal"]) return doubleval($value);
+		if ($field["positive"]) return abs(doubleval($value));
 		if ($field["string"]) return (string)$value;
 		if ($field["nullifempty"] && !strlen($value)) return null;
 		if ($field["nozero"] && !strlen($value)) return 0;
