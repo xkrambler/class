@@ -254,7 +254,7 @@ if (!function_exists("perror")) {
 				<head>
 					<meta http-equiv="Content-Type" content="text/html; charset=<?=x::charset()?>" />
 					<style>
-						._xerror { margin: 9px 0px; border: 2px solid #FD4; font-family: Open Sans, Segoe UI, Arial !important; font-size: 15px !important; box-shadow: 0px 3px 5px rgba(0,0,0,0.3); }
+						._xerror { margin: 9px 0px; border: 2px solid #FD4; font-family: Open Sans, Segoe UI, Sans, Arial !important; font-size: 15px !important; box-shadow: 0px 3px 5px rgba(0,0,0,0.3); }
 						._xerror_t { padding: 4px 12px; color: #822; background: #FD4; margin: 0px; font-size: inherit; }
 						._xerror_m { padding: 9px 12px; color: #000; background-color: #FFFDF4; }
 						._xerror_hr { background: #CCC; border: 0px; height: 1px; margin: 0px; }
@@ -348,40 +348,42 @@ if (class_exists("Conf") && isset($db) && $db) $conf=new Conf(array("db"=>$db));
 
 // dump variables for debug
 if (!function_exists("debug")) {
-	function debug(&$v, $level=0) {
+	function debug(&$v, $level=0, $level_limit=20) {
+		if ($level >= $level_limit) return;
 		if (isset($GLOBALS["argv"])) var_dump($v);
 		else {
-			$old=$v;
-			$v=$new=rand();
-			$vname=false;
-			foreach ($GLOBALS as $key=>$val)
-				if ($val === $new) {
-					$vname=$key;
+			if (!$level) {
+				$old=$v;
+				$v=$n=rand();
+				$vn="";
+				if (is_array($GLOBALS)) foreach ($GLOBALS as $k=>$s) if ($s === $n) {
+					$vn=$k." ";
 					break;
 				}
-			$v=$old;
-			if (!$level) echo "<div style='font-family:FiraSans,Arial;font-size:11px;line-height:12px;color:#333;background:#EEE;margin:1px;'><b>".$vname."</b> ";
+				$v=$old;
+				echo "<section style='font-family:Fira Sans,Sans,Arial;font-size:12px;line-height:13px;color:#333;background:#EEE;margin:1px;'><b>".$vn."</b>";
+			}
 			if (is_array($v)) {
 				echo "{<br>";
-				foreach ($v as $i=>$nv) {
-					echo "<span style='color:#23A;padding-left:".(20*($level+1))."px;'>".$i."</span>".(is_array($nv)?" ":"=");
-					debug($nv, $level+1);
-				}
+				foreach ($v as $k=>&$s) if ($s !== $GLOBALS) {
+					echo "<span style='color:#14A;padding-left:".(20*($level+1))."px;'>".$k."</span>".(is_array($s)?" ":"<span style='color:#888;'>=</span>");
+					debug($s, $level+1);
+				} unset($s);
 				echo "<span style='padding-left:".(20*$level)."px;'></span>}<br>";
 			} else {
-				if (
-					(!is_array($v))
-					&& (
-						(!is_object($v) && settype($v, 'string') !== false )
-						|| ( is_object($v) && method_exists($v, '__toString'))
-					)
-				) {
-					echo "<span style='color:#820;'>".$v."</span><br>";
+				$is_object_string=(is_object($v) && method_exists($v, '__toString'));
+				if ($is_object_string || (!is_object($v) && settype(($_v=$v), 'string') !== false)) {
+					if ($v === null) echo "<span style='color:#84F;'><b><i>null</i></b></span><br>";
+					else if ($v === true) echo "<span style='color:#490;'><b><i>true</i></b></span><br>";
+					else if ($v === false) echo "<span style='color:#F44;'><b><i>false</i></b></span><br>";
+					else if (is_integer($v)) echo "<span style='color:#A20;'>".$v."</span><br>";
+					else if (is_double($v)) echo "<span style='color:#B42;'>".$v."</span><br>";
+					else echo "<span".($is_object_string?" style='color:#611;'":"").">".(gettype($v) != "string"?"<span style='color:#A0F;'><b>".get_class($v)."()</b></span> ":"").\x::entities($v)."</span><br>";
 				} else {
-					echo "<span style='color:#A0F;'>class <b>".get_class($v)."()</b></span><br>";
+					echo "<span style='color:#A0F;'><b>".get_class($v)."()</b></span><br>";
 				}
 			}
-			if (!$level) echo "</div>";
+			if (!$level) echo "</section>";
 		}
 	}
 }
