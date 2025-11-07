@@ -549,7 +549,7 @@ class Kernel {
 			}
 
 			// close pipes
-			if (!isset($o["in"]) && !$in) @fclose($pipes[0]);
+			if (!isset($o["in"]) && !($in??null)) @fclose($pipes[0]);
 			@fclose($pipes[1]);
 			@fclose($pipes[2]);
 
