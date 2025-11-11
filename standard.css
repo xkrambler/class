@@ -1,4 +1,5 @@
 html {
+	all: unset;
 	font-size: 15px;
 	font-family: 'FreeSans', 'Segoe UI','Arial','Trebuchet MS','Helvetica','Sans Serif','sans-serif';
 	box-sizing: border-box;
