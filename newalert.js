@@ -1,6 +1,6 @@
 /*
 
-	newalert 0.1
+	newalert 0.1b
 	Creates modal dialogs using JS/HTML.
 	* requires: common.js
 
@@ -58,7 +58,7 @@ function newalert_ismobile() {
 		case "auto": default:
 		}
 	}
-	return (windowWidth()<_newalert.mobile); // auto
+	return (windowWidth() < _newalert.mobile); // auto
 }
 
 function newalert_open(id) {
@@ -71,17 +71,17 @@ function newalert_exec_button(id, i) {
 	if (activeElement != document.activeElement) newalerts[id].return_focus=false; // prevents action custom focus modification
 }
 
+function newalert_body_click(id, e) {
+	if (!e.stopPropagation) return;
+	e.stopPropagation();
+	if (newalerts[id] && newalerts[id].onclick) newalerts[id].onclick(id, e);
+}
+
 function newalert_back_close(id, e) {
 	if (!e.stopPropagation) return;
 	if (!newalerts[id]) return;
 	if (!newalerts[id].noclose) newalert_close(id);
 	e.stopPropagation();
-}
-
-function newalert_body_click(id, e) {
-	if (!e.stopPropagation) return;
-	e.stopPropagation();
-	if (newalerts[id] && newalerts[id].onclick) newalerts[id].onclick(id, e);
 }
 
 function newalert_change(o) {
@@ -94,7 +94,6 @@ function newalert_change(o) {
 
 function newalert_resize(o) {
 	var o=o||{};
-	//if (o.forced || _newalert.last_ismobile!=newalert_ismobile()) {
 	if (!o.noresize) {
 		_newalert.last_ismobile=newalert_ismobile();
 		var body_noscroll_windows=0;
@@ -130,16 +129,10 @@ function newalert_resize(o) {
 
 function newalert(o) {
 	var index_default=0;
-	if (typeof(o) == "string") {
-		var id="";
-		var msg=o;
-		var buttons=null;
-		var o={};
-	} else {
-		var id=(o.id?o.id:"");
-		var msg=(o.msg?o.msg:"");
-		var buttons=o.buttons;
-	}
+	if (typeof(o) == "string") o={"msg":o};
+	var id=(o.id?o.id:"");
+	var msg=(o.msg?o.msg:"");
+	var buttons=(o.buttons?o.buttons:null);
 	if (newalerts[id]) newalert_remove(id, true);
 	newalerts[id]=o;
 	if (buttons == null) buttons=[{"caption":newalert_T("accept")}];
@@ -150,21 +143,17 @@ function newalert(o) {
 	newalerts[id].return_focus=document.activeElement;
 	newalerts[id].return_function=o.func;
 	newalerts[id].buttons=[];
-	if (newalerts[id].transition_timer) {
-		clearTimeout(newalerts[id].transition_timer);
-		newalerts[id].transition_timer=null;
-	}
 	newalerts[id].active=true;
 	var b=document.createElement("div");
 	b.setAttribute("class", "newalert_background"+(o.class?" "+o.class:""));
 	b.setAttribute("id", _newalert.id+id+"_bg");
 	b.style.display="block";
 	var d=document.createElement("div");
-	d.setAttribute("class", "newalert_container"+(o.class?" "+o.class:""));
+	d.setAttribute("class", "newalert_container"+(o.class?" "+o.class:"")+(msg?" newalert_msg":" newalert_nomsg"));
 	d.setAttribute("id", _newalert.id+id);
 	var hasicon=(o.ico || o.icoclass);
 	var cols=(hasicon?"colspan='2'":"");
-	s="<table id='"+_newalert.id+id+"_back' class='"+newalerts[id].backClass()+"' cellpadding='0' cellspacing='0' width='100%' height='100%'><tr><td align='center' valign='middle' onClick='javascript:newalert_back_close(\""+id+"\", event);'>";
+	s="<table id='"+_newalert.id+id+"_back' class='"+newalerts[id].backClass()+"' cellpadding='0' cellspacing='0' width='100%' height='100%'><tr><td align='center' valign='middle' onclick='newalert_back_close(\""+id+"\", event);'>";
 	if (o.body) s+=o.body;
 	else {
 		s+="<table id='"+_newalert.id+id+"_table'"
@@ -173,9 +162,10 @@ function newalert(o) {
 				+(o.width?" width='"+o.width+"'":"")
 				+(o.height?" height='"+o.width+"'":"")
 				+(o.style?" style='"+o.style+"'":"")
-			+" onClick='javascript:newalert_body_click(\""+id+"\", event);'>"
+			+" onclick='newalert_body_click(\""+id+"\", event);'"
+		+">"
 			+(o.title == null?"":"<tr height='1'><th "+cols+" class='newalert_title'>"+(o.title?o.title:"")+"</th></tr>")
-			+"<tr>"
+			+"<tr height='100%'>"
 				+(hasicon
 					?"<td class='newalert_icon' id='"+_newalert.id+id+"_icon'>"
 					+(o.icoclass
@@ -195,24 +185,26 @@ function newalert(o) {
 			+"</tr>"
 		;
 		if (buttons.length) {
-			s+="<tr height='1'>"
+			s+="<tr>"
 					+"<td "+cols+" id='"+_newalert.id+id+"_cmds_td'>"
 						+"<div id='"+_newalert.id+id+"_cmds' "+cols+" class='newalert_cmds'>"
 			;
 			xforeach(buttons, function(button, i){
-				if (!button.id) button.id=_newalert.id+id+"_cmd_"+i;
-				if (button.default) index_default=i;
-				if (button.action || !button.href) {
-					button.onclick=(button.action
-						?(typeof(button.action) == "function"
-							?"newalert_exec_button(\""+id+"\","+i+");"
-							:button.action
-						)
-						:"newalert_close(\""+id+"\");"
-					);
+				if (button) {
+					if (!button.id) button.id=_newalert.id+id+"_cmd_"+i;
+					if (button.default) index_default=i;
+					if (button.action || !button.href) {
+						button.onclick=(button.action
+							?(typeof(button.action) == "function"
+								?"newalert_exec_button(\""+id+"\","+i+");"
+								:button.action
+							)
+							:"newalert_close(\""+id+"\");"
+						);
+					}
+					buttons[i]=button;
+					if (button.caption) s+="<span class='newalert_cmd'>"+newalertButton(button)+"</span>";
 				}
-				buttons[i]=button;
-				if (button.caption) s+=newalertButton(button);
 			});
 			newalerts[id].buttons=buttons;
 			s+"</div></td></tr>";
@@ -224,14 +216,14 @@ function newalert(o) {
 	document.body.appendChild(b);
 	document.body.appendChild(d);
 	try { if (msg instanceof HTMLElement) gid(_newalert.id+id+"_content").appendChild(msg); } catch(e) { console.error(e); }
-	if (o.notransition) {
+	if (o.notransition || !window.requestAnimationFrame) {
 		classAdd(_newalert.id+id+"_bg", "newalert_background_transition_none");
 		classAdd(_newalert.id+id, "newalert_container_transition_none");
 	} else {
-		newalerts[id].transition_timer=setTimeout(function(){
+		window.requestAnimationFrame(function(){
 			classAdd(_newalert.id+id+"_bg", "newalert_background_transition_in");
 			classAdd(_newalert.id+id, "newalert_container_transition_in");
-		}, 20);
+		})
 	}
 	_newalert.openWindows++;
 	// resize events
@@ -240,8 +232,8 @@ function newalert(o) {
 		window.addEventListener("resize", function(){ newalert_resize({"auto":true}); }, false);
 	}
 	newalert_resize({"forced":true});
-	gid(_newalert.id+id).addEventListener("transitionstart", function(){ newalert_resize({"force":true}); }, true);
-	gid(_newalert.id+id).addEventListener("transitionend", function(){ newalert_resize({"force":true}); }, true);
+	gid(_newalert.id+id).addEventListener("transitionstart", function(){ newalert_resize({"forced":true}); }, true);
+	gid(_newalert.id+id).addEventListener("transitionend", function(){ newalert_resize({"forced":true}); }, true);
 	// focus first button
 	try { gid(buttons[index_default].id).focus(); } catch(e) {}
 	// return window information
@@ -254,20 +246,19 @@ function newalert(o) {
 
 function newalertButton(button) {
 	var button_element=(button.href?"a":"button");
-	return " <"+button_element
-			+" id='"+button.id+"'"
-			+" class='cmd"+(button.class?" "+button.class:"")+"'"
-			+(button.href?" href='"+htmlspecialchars(button.href)+"'":"")
-			+(button.target?" target='"+htmlspecialchars(button.target)+"'":"")
-			+(button.title?" target='"+htmlspecialchars(button.title)+"'":"")
-			+(button.onclick?" onclick='"+button.onclick+";'":"")
-			+(button.disabled?" disabled":"")
-		+">"
-			+(button.ico?"<span class='icon' style='background-image:url(\""+button.ico+"\")'>":"")
-				+button.caption
-			+(button.ico?"</span>":"")
-		+"</"+button_element+">"
+	var b=document.createElement(button.href?"a":"button");
+	b.id=button.id;
+	b.className="cmd"+(button.class?" "+button.class:"");
+	b.innerHTML=""
+		+(button.ico?"<span class='icon' style='background-image:url(\""+button.ico+"\")'>":"")
+		+(button.ico?"</span>":"")
+		+button.caption
 	;
+	xforeach(["href", "target", "title", "onclick", "onmouseover", "onmousedown", "onmouseup", "onkeydown", "onkeyup"], function(attr){
+		if (button[attr]) b.setAttribute(attr, button[attr]);
+	});
+	if (typeof button.disabled != "undefined") b.disabled=button.disabled;
+	return b.outerHTML;
 }
 
 function newwait(o) {
@@ -278,24 +269,23 @@ function newwait(o) {
 	o.msg=(o.msg?o.msg:newalert_T("wait"));
 	if (!isset(o.icoclass)) o.icoclass="newalert_ico newalert_ico_busy";
 	if (!isset(o.buttons)) o.buttons=[];
-	newalert(o);
+	return newalert(o);
 }
 
 function newsimplewait() {
-	newalert({
+	return newalert({
 		"id":"wait",
 		"noclose":true,
 		"nomobile":true,
 		"noshadow":true,
-		"body":"<div class='newalert_simplewait'></div>",
-		"buttons":[]
+		"body":"<div class='newalert_simplewait'></div>"
 	});
 }
 
 function newalert_gen(kind, o, action) {
 	if (typeof o == "string") o={"msg":o};
 	_newalert.genc=(_newalert.genc?_newalert.genc:0)+1;
-	newalert(array_merge({
+	return newalert(array_merge({
 		"id":"newalert_gen_"+kind+_newalert.genc,
 		"icoclass":"newalert_ico newalert_ico_"+kind,
 		"buttons":[{"caption":newalert_T("accept")}],
@@ -303,27 +293,26 @@ function newalert_gen(kind, o, action) {
 	}, o));
 }
 
-function newok(o, action) { newalert_gen("ok", o, action); }
-function newwarn(o, action) { newalert_gen("warn", o, action); }
-function newerror(o, action) { newalert_gen("error", o, action); }
+function newok(o, action) { return newalert_gen("ok", o, action); }
+function newwarn(o, action) { return newalert_gen("warn", o, action); }
+function newerror(o, action) { return newalert_gen("error", o, action); }
 
 function newalert_remove(id, notransition) {
 	if (!id) var id="";
-	if (!newalerts[id]) return;
+	if (!newalerts[id]) return false;
 	newalerts[id].active=false;
 	if (newalerts[id].notransition) notransition=true;
 	if (gid(_newalert.id+id)) {
 		var s=document.createElement('p').style, supportsTransitions='transition' in s;
-		if (supportsTransitions && !notransition) {
-			newalerts[id].transition_timer=setTimeout(function(){
-				if (newalerts[id]) newalerts[id].transition_timer=null;
+		if (supportsTransitions && !notransition && window.requestAnimationFrame) {
+			window.requestAnimationFrame(function(){
 				if (gid(_newalert.id+id+"_bg")) {
 					classDel(_newalert.id+id+"_bg", "newalert_background_transition_in");
 					classAdd(_newalert.id+id+"_bg", "newalert_background_transition_out");
 					gid(_newalert.id+id+"_bg").addEventListener("transitionend", function(){
 						if (gid(_newalert.id+id+"_bg")) {
 							gid(_newalert.id+id+"_bg").parentNode.removeChild(gid(_newalert.id+id+"_bg"));
-							newalert_resize({"force":true});
+							newalert_resize({"forced":true});
 						}
 					}, true);
 				}
@@ -338,18 +327,15 @@ function newalert_remove(id, notransition) {
 						}
 					}, true);
 				}
-			}, 20);
+			});
 		} else {
-			if (newalerts[id].transition_timer) {
-				clearTimeout(newalerts[id].transition_timer);
-				delete newalerts[id].transition_timer;
-			}
 			delete newalerts[id];
 			if (gid(_newalert.id+id)) gid(_newalert.id+id).parentNode.removeChild(gid(_newalert.id+id));
 			if (gid(_newalert.id+id+"_bg")) gid(_newalert.id+id+"_bg").parentNode.removeChild(gid(_newalert.id+id+"_bg"));
 			newalert_resize({"forced":true});
 		}
 	}
+	return true;
 }
 
 function newalert_close(id) {
@@ -359,9 +345,9 @@ function newalert_close(id) {
 		if (newalerts[id].onclose) newalerts[id].onclose(id, newalerts[id]);
 		try { if (newalerts[id].return_function) newalerts[id].return_function(id); } catch(e) {};
 	}
-	newalert_remove(id);
+	return newalert_remove(id);
 }
 
 function newwait_close(id) {
-	newalert_close(id?id:'wait');
+	return newalert_close(id?id:'wait');
 }
