@@ -221,9 +221,11 @@ function newalert(o) {
 		classAdd(_newalert.id+id, "newalert_container_transition_none");
 	} else {
 		window.requestAnimationFrame(function(){
-			classAdd(_newalert.id+id+"_bg", "newalert_background_transition_in");
-			classAdd(_newalert.id+id, "newalert_container_transition_in");
-		})
+			window.requestAnimationFrame(function(){
+				classAdd(_newalert.id+id+"_bg", "newalert_background_transition_in");
+				classAdd(_newalert.id+id, "newalert_container_transition_in");
+			});
+		});
 	}
 	_newalert.openWindows++;
 	// resize events
@@ -277,7 +279,6 @@ function newsimplewait() {
 		"id":"wait",
 		"noclose":true,
 		"nomobile":true,
-		"noshadow":true,
 		"body":"<div class='newalert_simplewait'></div>"
 	});
 }
