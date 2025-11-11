@@ -35,13 +35,13 @@ var newalert_texts={
 		"accept":"Accept",
 		"cancel":"Cancel",
 		"close":"Close",
-		"wait":"Processing, please wait a moment..."
+		"wait":"Please, wait a moment..."
 	},
 	"es":{
 		"accept":"Aceptar",
 		"cancel":"Cancelar",
 		"close":"Cerrar",
-		"wait":"Proceso en curso, por favor espere..."
+		"wait":"Por favor, espere..."
 	}
 };
 
