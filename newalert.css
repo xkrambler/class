@@ -67,8 +67,8 @@
 	border-collapse: separate;
 }
 .newalert_mobile .newalert {
-	border: 0px;
-	border-radius: 0px;
+	border: 0;
+	border-radius: 0;
 	width: 100%;
 	height: 100%;
 	max-width: auto;
@@ -78,12 +78,12 @@
 .newalert_desktop .newalert {
 	border-radius: 6px;
 	max-width: 96%;
-	max-height: 90%;
+	max-height: 92%;
 }
 .newalert_full .newalert {
 	border-radius: 6px;
-	width: 96%;
-	height: 90%;
+	width: 100%;
+	height: 100%;
 }
 
 /* title */
@@ -105,7 +105,6 @@
 	padding-right: 15px;
 }
 .newalert_mobile .newalert_icon {
-	/*display: none;*/
 }
 
 /* body */
@@ -113,7 +112,7 @@
 	position: relative;
 }
 .newalert_body_nomsg {
-	padding-right: 0px;
+	padding-right: 0;
 }
 .newalert_desktop .newalert_body {
 	vertical-align: middle;
@@ -176,7 +175,7 @@
 	background: #FFF center center no-repeat;
 	padding: 32px;
 	border-radius: 48px;
-	box-shadow: 0px 0px 5px rgba(0,0,0,0.3);
+	box-shadow: 0 0 5px rgba(0,0,0,0.3);
 }
 .newalert_ico_busy,
 .newalert_simplewait {
