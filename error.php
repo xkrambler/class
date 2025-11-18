@@ -305,19 +305,21 @@ class xError {
 			"type"=>self::ERR_APP,
 			"message"=>$err,
 		]);
-		if (!isset($err["title"])) $err["title"]=(($et=$this->error_types[$err["type"]])?$et:"Error[".$err["type"]."]");
-		if (!isset($err["text"])) $err["text"]=strip_tags($err["message"]).($err["file"]?""
-			.(strpos($err["message"], "\n")?"\n ":"")
-			." - ".$err["file"]." line ".$err["line"]:"");
-		if (!isset($err["trace"])) $err["trace"]=$this->trace();
-		if ($err["trace"])
-			foreach ($err["trace"] as $t)
-				$err["text"].="\n  ".$t["message"];
-		$this->error=$err;
-		// error log
-		if ($f=$this->errors_path) {
-			$text=date("YmdHis ").str_replace("\n", "\n\t", $this->error["text"]);
-			file_put_contents($f, ($this->access?"":$this->accessEntry()).$text."\n", FILE_APPEND);
+		if (is_array($err)) {
+			if (!isset($err["title"])) $err["title"]=(($et=$this->error_types[$err["type"]])?$et:"Error[".$err["type"]."]");
+			if (!isset($err["text"])) $err["text"]=strip_tags($err["message"]).($err["file"]?""
+				.(strpos($err["message"], "\n")?"\n ":"")
+				." - ".$err["file"]." line ".$err["line"]:"");
+			if (!isset($err["trace"])) $err["trace"]=$this->trace();
+			if ($err["trace"])
+				foreach ($err["trace"] as $t)
+					$err["text"].="\n  ".$t["message"];
+			$this->error=$err;
+			// error log
+			if ($f=$this->errors_path) {
+				$text=date("YmdHis ").str_replace("\n", "\n\t", $this->error["text"]);
+				file_put_contents($f, ($this->access?"":$this->accessEntry()).$text."\n", FILE_APPEND);
+			}
 		}
 		// always returns false!
 		return false;
@@ -384,6 +386,8 @@ class xError {
 	// dump error
 	function dump($err) {
 
+		if (!is_array($err)) return false;
+
 		// use generic error message
 		if ($this->generic) $err=[
 			"type"=>$err["type"],
@@ -447,6 +451,8 @@ class xError {
 			</html><?php
 		}
 
+		return true;
+
 	}
 
 	// dump error
@@ -456,22 +462,26 @@ class xError {
 		if ($err !== null) $this->error($err);
 		$err=$this->error();
 
-		// send e-mail
-		if (($e=$this->mail) && method_exists("Kernel", "mailto"))
-			if ($this->burstCheck())
-				$this->mailed=\Kernel::mailto($this->emailData($err)+$e);
+		if (is_array($err)) {
 
-		// custom renderer (if display enabled or not set)
-		if (!isset($this->display) || $this->display) {
+			// send e-mail
+			if (($e=$this->mail) && method_exists("Kernel", "mailto"))
+				if ($this->burstCheck())
+					$this->mailed=\Kernel::mailto($this->emailData($err)+$e);
 
 			// custom renderer (if display enabled or not set)
-			if (is_callable($this->render)) {
-				$this->render($this, $err);
-			} else {
-				$this->dump($err);
-			}
+			if (!isset($this->display) || $this->display) {
 
-		} // display
+				// custom renderer (if display enabled or not set)
+				if (is_callable($this->render)) {
+					$this->render($this, $err);
+				} else {
+					$this->dump($err);
+				}
+
+			} // display
+
+		}
 
 		// return with exit code
 		if ($exit) exit($exit);
