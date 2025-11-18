@@ -504,8 +504,6 @@ class xForm3 {
 			}
 			return $value;
 		}
-		// readonly resets value
-		//if ($field["readonly"] && isset($field["value"])) $value=$field["value"];
 		// allowed filter for HTML
 		if ($field["trim"] && $field["type"] == "html") $value=$this->htmlTrim($value);
 		// if no purge enabled, return now
@@ -946,7 +944,7 @@ class xForm3 {
 					.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
 					.(($f["values"]?($f["value"] === $f["values"][1]):$f["value"])?" checked":"")
 					.($f["disabled"]?" disabled":"")
-					.($f["readonly"]?" readonly onclick='javascript:return false;'":"")
+					.($f["readonly"]?" readonly":"")
 					.$common
 					.($styles?" style='".$styles."'":"")
 					.$f["extra"]." />"
@@ -971,7 +969,7 @@ class xForm3 {
 							.($f["title"]?" title='".$this->entities($f["title"])."'":"")
 							.(is_array($f["value"]) && in_array($n, $f["value"])?" checked":"")
 							.($f["disabled"]?" disabled":"")
-							.($f["readonly"]?" readonly onclick='javascript:return false;'":"")
+							.($f["readonly"]?" readonly":"")
 							.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
 							.$common
 							.($styles?" style='".$styles."'":"")
@@ -1003,7 +1001,7 @@ class xForm3 {
 							.($f["title"]?" title='".$this->entities($f["title"])."'":"")
 							.((string)$n === $f["value"]?" checked":"")
 							.($f["disabled"]?" disabled":"")
-							.($f["readonly"]?" readonly onclick='javascript:return false;'":"")
+							.($f["readonly"]?" readonly":"")
 							.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
 							.$common
 							.($styles?" style='".$styles."'":"")

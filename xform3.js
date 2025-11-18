@@ -1145,6 +1145,11 @@ function xForm3(o) {
 		a.value(field, c);
 	};
 
+	// readonly event
+	a.readonlyEvent=function(event){
+		if (this.getAttribute("readonly") !== null) event.preventDefault();
+	};
+
 	// setup
 	a.init=function(o){
 		var o=o||{};
@@ -1159,6 +1164,14 @@ function xForm3(o) {
 					for (var n in o.set[f])
 						a.set(f, n, o.set[f][n]);
 				switch (field.type) {
+				case "checkbox":
+					var e=gid(id);
+					if (e) e.addEventListener("click", a.readonlyEvent);
+					break;
+				case "radio":
+				case "checkboxes":
+					for (var i=0, e=false; e=gid(id+"-"+i); i++) e.addEventListener("click", a.readonlyEvent);
+					break;
 				case "area":
 					if (field.autogrow) autogrow(id);
 					break;
