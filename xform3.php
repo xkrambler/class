@@ -505,7 +505,7 @@ class xForm3 {
 			return $value;
 		}
 		// readonly resets value
-		if ($field["readonly"] && isset($field["value"])) $value=$field["value"];
+		//if ($field["readonly"] && isset($field["value"])) $value=$field["value"];
 		// allowed filter for HTML
 		if ($field["trim"] && $field["type"] == "html") $value=$this->htmlTrim($value);
 		// if no purge enabled, return now
