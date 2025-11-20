@@ -363,24 +363,25 @@ if (!function_exists("debug")) {
 				$v=$old;
 				echo "<section style='font-family:Fira Sans,Sans,Arial;font-size:12px;line-height:13px;color:#333;background:#EEE;margin:1px;'><b>".$vn."</b>";
 			}
-			if (is_array($v)) {
-				echo "{<br>";
+			$is_object=is_object($v);
+			if (is_array($v) || ($is_object && !empty($vs=get_object_vars($v)))) {
+				echo ($is_object?"<span style='color:#A0F;'><b>".get_class($v)."</b></span> ".(method_exists($v, '__toString')?"<span style='color:#611;'>".(string)$v."</span> ":""):"")."{<br>";
 				foreach ($v as $k=>&$s) if ($s !== $GLOBALS) {
 					echo "<span style='color:#14A;padding-left:".(20*($level+1))."px;'>".$k."</span>".(is_array($s)?" ":"<span style='color:#888;'>=</span>");
 					debug($s, $level+1);
 				} unset($s);
 				echo "<span style='padding-left:".(20*$level)."px;'></span>}<br>";
 			} else {
-				$is_object_string=(is_object($v) && method_exists($v, '__toString'));
-				if ($is_object_string || (!is_object($v) && settype(($_v=$v), 'string') !== false)) {
-					if ($v === null) echo "<span style='color:#84F;'><b><i>null</i></b></span><br>";
+				$is_object_string=($is_object && method_exists($v, '__toString'));
+				if ($is_object_string || (!$is_object && settype(($_v=$v), 'string') !== false)) {
+					if ($v === null) echo "<span style='color:#F07;'><b><i>null</i></b></span><br>";
 					else if ($v === true) echo "<span style='color:#490;'><b><i>true</i></b></span><br>";
 					else if ($v === false) echo "<span style='color:#F44;'><b><i>false</i></b></span><br>";
 					else if (is_integer($v)) echo "<span style='color:#A20;'>".$v."</span><br>";
 					else if (is_double($v)) echo "<span style='color:#B42;'>".$v."</span><br>";
-					else echo "<span".($is_object_string?" style='color:#611;'":"").">".(gettype($v) != "string"?"<span style='color:#A0F;'><b>".get_class($v)."()</b></span> ":"").\x::entities($v)."</span><br>";
+					else echo "<span".($is_object_string?" style='color:#611;'":"").">".(gettype($v) != "string"?"<span style='color:#A0F;'><b>".get_class($v)."</b></span> ":"").\x::entities($v)."</span><br>";
 				} else {
-					echo "<span style='color:#A0F;'><b>".get_class($v)."()</b></span><br>";
+					echo "<span style='color:#A0F;'><b>".get_class($v)."</b></span><br>";
 				}
 			}
 			if (!$level) echo "</section>";
