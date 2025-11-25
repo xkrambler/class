@@ -122,7 +122,7 @@ class xImage {
 	}
 
 	// return active format
-	function formatActive($format){
+	function formatActive($format=null){
 		return ($format?$format:($this->format?$this->format:"jpg"));
 	}
 
