@@ -389,7 +389,7 @@ abstract class dbbase {
 
 	// dump a resultset
 	function adump($aquery) {
-		if ($GLOBALS["argv"]) {
+		if (isset($GLOBALS["argv"])) {
 			if ($aquery) foreach ($aquery as $i=>$row) {
 				if (!$i) {
 					$c=0;
