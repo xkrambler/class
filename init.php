@@ -373,7 +373,8 @@ if (!function_exists("debug")) {
 				echo "<span style='padding-left:".(20*$level)."px;'></span>}<br>";
 			} else {
 				$is_object_string=($is_object && method_exists($v, '__toString'));
-				if ($is_object_string || (!$is_object && settype(($_v=$v), 'string') !== false)) {
+				$_v=$v;
+				if ($is_object_string || (!$is_object && settype($_v, 'string') !== false)) {
 					if ($v === null) echo "<span style='color:#F07;'><b><i>null</i></b></span><br>";
 					else if ($v === true) echo "<span style='color:#490;'><b><i>true</i></b></span><br>";
 					else if ($v === false) echo "<span style='color:#F44;'><b><i>false</i></b></span><br>";
