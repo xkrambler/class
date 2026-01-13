@@ -1158,8 +1158,8 @@ class xForm3 {
 	function ajax() {
 
 		// required globals
-		$ajax=$GLOBALS["ajax"];
-		$adata=$GLOBALS["adata"];
+		$ajax=(isset($GLOBALS["ajax"])?$GLOBALS["ajax"]:null);
+		$adata=(isset($GLOBALS["adata"])?$GLOBALS["adata"]:[]);
 
 		// required fields can be used via GET/POST
 		if (!$adata["name"]) $adata["name"]=$_REQUEST["name"];
