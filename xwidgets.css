@@ -211,9 +211,10 @@
 	z-index: -1;
 }
 .checkbox>span, .radio>span {
+	display: inline-block;
 	padding: 0.1em 0.1em 0.1em 1.4em;
 	user-select: none;
-	background: 2px center no-repeat;
+	background: 0.1em center no-repeat;
 	background-size: 1em;
 }
 .checkbox>input:disabled+span, .radio>input:disabled+span {
