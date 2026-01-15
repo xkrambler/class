@@ -226,7 +226,10 @@
 	user-select: inherit;
 }
 .checkbox>span:empty, .radio>span:empty {
-	padding: 0.1em 0.1em 0.1em 1.1em;
+	padding: 0.1em 0.05em 0.1em 1em;
+}
+.checkbox>span:empty::before, .radio>span:empty::before {
+	content: "\00a0";
 }
 .checkbox>span {}
 .radio>span {}
