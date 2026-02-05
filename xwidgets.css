@@ -393,6 +393,9 @@
 
 /* group of inputs */
 .group {
+	display: flex;
+}
+span.group {
 	display: inline-flex;
 }
 .cmd_light,
