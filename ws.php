@@ -22,7 +22,7 @@ class WS {
 
 		// setup headers
 		header('Access-Control-Allow-Origin: *');
-		if ($this->methods) header("Allow: ".implode(", ", $this->methods));
+		if ($this->methods) header("Access-Control-Allow-Methods: ".implode(", ", $this->methods));
 		if ($this->method() == "OPTIONS") exit;
 
 		// autoselect request type data
