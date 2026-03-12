@@ -12,7 +12,7 @@ require_once(__DIR__."/init.php");
 			"access"=>"data/access.log", // set access log
 			"errors"=>true, // set error log (true=same as access)
 			"generic"=>false, // show a generic error message
-			"render"=>function($err){ print_r($err); }, // custom renderer
+			"render"=>function($error, $err){ print_r($err); }, // custom renderer
 			"display"=>true, // display errors
 			"args"=>true, // visible arguments if true, not only types (false), or disabled (null)
 			"mail"=>[ // set mailing on errors
