@@ -435,6 +435,12 @@ class dbMySQLi extends dbbase {
 		return $this->sqlfield($t);
 	}
 
+	// return filtered limit
+	function sqllimit($s) {
+		$s=(string)$s;
+		return (strlen($s) && preg_match('/^\b\d+(?:,\d+)?\b$/', $s)?$s:"");
+	}
+
 	// return server database version
 	function dbversion() {
 		$this->clear();
