@@ -42,7 +42,7 @@ class WS {
 			$this->json=file_get_contents('php://input');
 			$this->data=json_decode($this->json, true);
 		}
-		if (!isset($this->action) && $this->data) $this->action=$this->data["action"];
+		if (!isset($this->action) && is_array($this->data)) $this->action=$this->data["action"];
 
 		// register callback
 		if (isset($this->register) && is_callable($register=$this->register)) $register($this);
