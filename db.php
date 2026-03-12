@@ -506,7 +506,10 @@ abstract class dbbase {
 		$sql="";
 		if (is_array($keys)) {
 			foreach ($keys as $f=>$v)
-				$sql.=($sql?" AND ":"").$this->sqlfield($f).(is_null($v)?" IS NULL":"=".$this->sqlvalue($v));
+				$sql.=($sql?" AND ":"").(is_a($v, 'dbrawvalue')
+					?$v->value()
+					:$this->sqlfield($f).(is_null($v)?" IS NULL":"=".$this->sqlvalue($v))
+				);
 		} else if (is_string($keys)) {
 			$sql.=$keys;
 		}
