@@ -273,16 +273,15 @@ class WS {
 
 	// dump database error
 	function dberr(dbbase $db=null) {
-		if ($db === null) $db=$this->db;
-		$this->out(["err"=>($this->db instanceof dbbase
-			?$db->driver()." #".$db->errnum().": ".$db->error()
-			:"Database error"
-		)]);
+		if ($db === null && isset($this->db)) $db=$this->db;
+		$this->err($db instanceof dbbase?$db:"Database error");
 	}
 
 	// dump error
 	function err($error) {
-		$this->out(["err"=>$error]);
+		if (!is_array($error)) $error=["err"=>(string)$error];
+		if (($db=$error["err"]) instanceof dbbase) $error["err"]=$db->driver()." #".$db->errnum().": ".$db->error();
+		$this->out($error);
 	}
 
 }
