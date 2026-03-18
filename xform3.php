@@ -300,11 +300,17 @@ class xForm3 {
 			if (!strlen($filename)) return null;
 			$path=dirname($filename);
 			if (!is_dir($path)) mkdir($path, 0775, true);
-			if ($file["deleted"] && file_exists($filename)) {
-				unlink($filename);
-				@rmdir($path);
+			if ($file["deleted"] && file_exists($file["file"])) {
+				unlink($file["file"]);
+				@rmdir(dirname($file["file"]));
 			} else if ($file["uploaded"]) {
+				if (file_exists($file["file"])) {
+					unlink($file["file"]);
+					@rmdir(dirname($file["file"]));
+				}
 				file_put_contents($filename, $file["data"]);
+			} else if ($file["renamed"] && $file["file"]) {
+				rename($file["file"], $filename);
 			}
 			return true;
 		}
@@ -319,11 +325,17 @@ class xForm3 {
 		if ($files=$this->files($field)) foreach ($files as $file) {
 			if (!is_dir($path)) mkdir($path, 0775, true);
 			$filename=$path.basename($file["name"]);
-			if ($file["deleted"] && file_exists($filename)) {
-				unlink($filename);
-				@rmdir($path);
+			if ($file["deleted"] && file_exists($file["file"])) {
+				unlink($file["file"]);
+				@rmdir(dirname($file["file"]));
 			} else if ($file["uploaded"]) {
+				if (file_exists($file["file"])) {
+					unlink($file["file"]);
+					@rmdir(dirname($file["file"]));
+				}
 				file_put_contents($filename, $file["data"]);
+			} else if ($file["renamed"] && $file["file"]) {
+				rename($file["file"], $filename);
 			}
 		}
 		return true;
@@ -1210,6 +1222,17 @@ class xForm3 {
 					));
 					// finished
 					exit;
+
+				case "xform3.file.name":
+					$this->ssid($adata["ssid"]);
+					// mark as renamed
+					$index=($adata["index"]?intval($adata["index"]):0);
+					$svalue=$this->svalue($field);
+					$svalue["files"][$index]["name"]=$svalue["files"][$index]["caption"]=$adata["newname"];
+					$svalue["files"][$index]["renamed"]=true;
+					$this->svalue($field, $svalue);
+					// everything ok
+					ajax(array("ok"=>true));
 
 				case "xform3.file.del":
 					$this->ssid($adata["ssid"]);

@@ -754,6 +754,7 @@ function xForm3(o) {
 				div.setAttribute("data-index", o.index);
 				var buttons=document.createElement("div");
 				buttons.className="xform3_files_item_buttons";
+				if (field.rename) buttons.appendChild(a.files.htmlImageButton({"type":"edit", "id":a.id(o.field), "index":o.index, "action":a.files.rename}));
 				buttons.appendChild(a.files.htmlImageButton({"type":"trash", "id":a.id(o.field), "index":o.index, "action":a.files.del}));
 				//buttons.appendChild(a.files.htmlImageButton({"type":"search", "id":a.id(o.field), "index":o.index, "action":a.files.zoom, "href":a.files.fileURL(o.field, o.index)}));
 				div.onclick=function(){
@@ -828,6 +829,10 @@ function xForm3(o) {
 			a.data[field].container.className="xform3_files_container";
 
 			// add container to HTML field element
+			if (!gid(a.id(field))) {
+				console.error("No puedo renderizar campo", field, "id no encontrado", a.id(field));
+				return;
+			}
 			gid(a.id(field)).appendChild(a.data[field].container);
 
 			// generate file listing
@@ -933,6 +938,55 @@ function xForm3(o) {
 			var limit=a.files.getLimit(field);
 			classEnable(a.id(field)+"_item_upload", "xform3_files_item_hide", (limit && a.files.count(field) >= limit));
 
+		},
+
+		"rename":function(field, index){
+			var f=a.o.fields[field];
+			var item_id=a.id(field)+"_item_"+index;
+			var file=a.data[field].files[index];
+			var p=(file.name?file.name.lastIndexOf("."):-1);
+			var name=(p != -1?file.name.substring(0, p):file.name);
+			var ext=(p != -1?file.name.substring(p):"");
+			var input;
+			var dorename=function(){
+				var newname=trim(input.value)+ext;
+				ajax("xform3.file.name",{
+					"ssid":a.o.ssid,
+					"name":a.o.name,
+					"newname":newname,
+					"field":field,
+					"index":index,
+					"nocache":a.nocache()
+				},function(){
+					newwait_close();
+				},function(r){
+					if (r.data.err) newerror(r.data.err);
+					if (r.data.ok) newalert_close("xform3_files_rename");
+				});
+				a.data[field].files[index].name=a.data[field].files[index].caption=newname;
+				a.files.refresh(field);
+			};
+			newalert({
+				"id":"xform3_files_rename",
+				"title":"Cambiar nombre",
+				"msg":""
+					+"<span class='group'>"
+						+"<input id='xform3_files_rename_name' class='txt' type='text' size='30' />"
+						+"<span class='label'>"+htmlentities(ext)+"</span>"
+					+"</span>"
+				,
+				"buttons":[
+					{"caption":a.icon("check")+" Renombrar","action":function(id){
+						dorename();
+					}},
+					{"caption":a.icon("times")+" Cancelar"}
+				]
+			});
+			input=gid("xform3_files_rename_name");
+			input.onkeypress=function(e){ if (e.keyCode == 13) dorename(); };
+			input.value=name;
+			input.focus();
+			input.select();
 		},
 
 		// delete file

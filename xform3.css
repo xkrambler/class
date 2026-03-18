@@ -168,8 +168,8 @@
 }
 .xform3_files_item_number {
 	position: absolute;
-	top: 0px;
-	left: 0px;
+	top: 0;
+	left: 0;
 	background: rgba(0,0,0,0.5);
 	color: #FFF;
 	padding: 2px 7px;
@@ -178,8 +178,13 @@
 }
 .xform3_files_item_buttons {
 	position: absolute;
-	top: 0px;
-	right: 0px;
+	top: 0;
+	right: 0;
+	opacity: 0;
+}
+.xform3_files_item:focus .xform3_files_item_buttons,
+.xform3_files_item:hover .xform3_files_item_buttons {
+	opacity: 1;
 }
 .xform3_files_item_button {
 	cursor: pointer;
@@ -204,9 +209,9 @@
 .xform3_files_upload_caption {
 	position: absolute;
 	display: block;
-	bottom: 0px;
-	left: 0px;
-	right: 0px;
+	bottom: 0;
+	left: 0;
+	right: 0;
 	background: rgba(0,0,0,0);
 	color: #FFF;
 	text-align: center;
@@ -259,6 +264,15 @@ a.xform3_files_file_button {
 }
 .xform3_files_item_image {
 	display: none;
+}
+@media (max-width: 1000px) or (hover: none){
+	.xform3_files_upload_caption {
+		background: rgba(0,0,0,0.7);
+		height: 1.8em;
+	}
+	.xform3_files_item_buttons {
+		opacity: 1;
+	}
 }
 @media print {
 	.xform3_files_item_buttons,
