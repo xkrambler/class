@@ -866,7 +866,7 @@ var xRegion={
 					// si se ha empezado a definir una región, definir punto
 					if (a.tmp.startRegion) {
 						// ver si se ha terminado la región, o si hay que añadir un punto
-						if (a.clicked && a.clicked.region==a.tmp.startRegion && a.clicked.coord===0) {
+						if (a.clicked && a.clicked.region == a.tmp.startRegion && a.clicked.coord === 0) {
 							//a.undoPush();
 							a.clicked=false;
 							a.tmp.startMoveRegion=false;
@@ -876,7 +876,7 @@ var xRegion={
 							a.setCursor();
 						} else {
 							a.undoPush();
-							o.regions[a.tmp.startRegion].coords.push({"x":x/a.scale,"y":y/a.scale});
+							o.regions[a.tmp.startRegion].coords.push({"x":x/a.scale, "y":y/a.scale});
 							a.computeRegion(a.tmp.startRegion);
 						}
 					} else {
@@ -887,41 +887,43 @@ var xRegion={
 										a.tmp.startMoveRegion=false;
 										a.tmp.startMoveCoord=false;
 										if (!isset(a.clicked.coord))
-											o.onRegionDblClick(x/a.scale,y/a.scale,a.clicked.region,o.regions[a.clicked.region]);
+											o.onRegionDblClick(x/a.scale, y/a.scale, a.clicked.region, o.regions[a.clicked.region]);
 									}
 								if (a.clicked.point)
 									if (o.onPointDblClick) {
 										a.tmp.startMovePoint=false;
-										o.onPointDblClick(x/a.scale,y/a.scale,a.clicked.point,o.points[a.clicked.point]);
+										o.onPointDblClick(x/a.scale, y/a.scale, a.clicked.point, o.points[a.clicked.point]);
 									}
 							} else {
 								// evento doble click
-								if (o.onMapDblClick)
-									o.onMapDblClick(x/a.scale,y/a.scale,mouse);
+								if (o.onMapDblClick) {
+									a.clicked=true;
+									o.onMapDblClick(x/a.scale, y/a.scale, mouse);
+								}
 							}
 						} else {
 							if (a.clicked) {
 								if (isset(a.clicked.region) && o.onRegionClick)
-									if (!o.onRegionClick(x/a.scale,y/a.scale,a.clicked.region,o.regions[a.clicked.region],mouse)) {
+									if (!o.onRegionClick(x/a.scale, y/a.scale, a.clicked.region, o.regions[a.clicked.region], mouse)) {
 										a.tmp.startMoveRegion=false;
 										a.tmp.startMoveCoord=false;
 									}
 								if (a.clicked && isset(a.clicked.point) && o.onPointClick)
-									if (!o.onPointClick(x/a.scale,y/a.scale,a.clicked.point,o.points[a.clicked.point],a)) {
+									if (!o.onPointClick(x/a.scale, y/a.scale, a.clicked.point, o.points[a.clicked.point], a)) {
 										a.tmp.startMovePoint=false;
 									}
 							} else {
-								// evento click simple
-								if (o.onMapClick)
-									o.onMapClick(x/a.scale,y/a.scale,mouse);
+								if (o.onMapClick) {
+									a.clicked=true;
+									o.onMapClick(x/a.scale, y/a.scale, mouse);
+								}
 							}
 						}
 					}
 					// redibujar si no deshabilitado
 					if (!o.nomouseredraw) a.redraw();
 					// si no se hace nada importante, mover :D
-					if (!a.clicked && !a.tmp.startRegion)
-						a.tmp.startMove=true;
+					if (!a.clicked && !a.tmp.startRegion) a.tmp.startMove=true;
 				} else {
 					a.tmp.startMove=true;
 				}
