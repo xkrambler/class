@@ -583,7 +583,21 @@ class xForm3 {
 			// rest of verifications
 			if (!isset($f["verify"]) || $r === null) {
 				// required field
-				if ($f["required"] && !strlen(trim((string)$v))) $this->errorsFieldAdd($field, (is_string($f["required"])?$f["required"]:$prefix."Campo requerido."), "required");
+				if ($f["required"]) {
+					switch ($f["type"]) {
+					case "image":
+					case "images":
+					case "file":
+					case "files":
+						$files_count=0;
+						if ($files=$this->files($field)) foreach ($files as &$file) { if (!$file["deleted"]) $files_count++; } unset($file);
+						$check=($files_count?true:false);
+						break;
+					default:
+						$check=(strlen(trim((string)$v))?true:false);
+					}
+					if (!$check) $this->errorsFieldAdd($field, (is_string($f["required"])?$f["required"]:$prefix."Campo requerido."), "required");
+				}
 				// if not required, and not is set, ignore next validations
 				if (!$f["required"] && !isset($v)) continue;
 				// type verifies
