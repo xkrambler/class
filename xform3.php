@@ -598,8 +598,8 @@ class xForm3 {
 						$this->errorsFieldAdd($field, $prefix."El e-mail no es válido");
 					break;
 				case "date":
-					if (strlen((string)$v) && !(preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', (string)$v, $m) && checkdate($m[2], $m[3], $m[1])))
-						$this->errorsFieldAdd($field, $prefix."La fecha no es válida.");
+					if (strlen((string)$v) && !(preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', (string)substr($v, 0, 10), $m) && checkdate($m[2], $m[3], $m[1])))
+						$this->errorsFieldAdd($field, $prefix."La fecha no es válida[".$v."].");
 					break;
 				case "time":
 					if (strlen((string)$v) && !(preg_match('/^([01]\d|2[0-3])(:[0-5]\d){1,2}$/', (string)$v, $m)))
