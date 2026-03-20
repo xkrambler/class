@@ -598,15 +598,15 @@ class xForm3 {
 						$this->errorsFieldAdd($field, $prefix."El e-mail no es válido");
 					break;
 				case "date":
-					if (strlen((string)$v) && !(preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', (string)substr($v, 0, 10), $m) && checkdate($m[2], $m[3], $m[1])))
+					if (strlen((string)$v) && !(preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', substr((string)$v, 0, 10), $m) && checkdate($m[2], $m[3], $m[1])))
 						$this->errorsFieldAdd($field, $prefix."La fecha no es válida[".$v."].");
 					break;
 				case "time":
-					if (strlen((string)$v) && !(preg_match('/^([01]\d|2[0-3])(:[0-5]\d){1,2}$/', (string)$v, $m)))
+					if (strlen((string)$v) && !(preg_match('/^([01]\d|2[0-3])(:[0-5]\d){1,2}$/', substr((string)$v, 0, 8), $m)))
 						$this->errorsFieldAdd($field, $prefix."La hora no es válida.");
 					break;
 				case "datetime":
-					if (strlen((string)$v) && !(preg_match('/^(\d{4})-(\d{2})-(\d{2}) ([01]\d|2[0-3])(:[0-5]\d){1,2}$/', (string)$v, $m) && checkdate($m[2], $m[3], $m[1])))
+					if (strlen((string)$v) && !(preg_match('/^(\d{4})-(\d{2})-(\d{2}) ([01]\d|2[0-3])(:[0-5]\d){1,2}$/', substr((string)$v, 0, 19), $m) && checkdate($m[2], $m[3], $m[1])))
 						$this->errorsFieldAdd($field, $prefix."La fecha/hora no es válida.");
 					break;
 				}
