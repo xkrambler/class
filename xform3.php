@@ -583,6 +583,8 @@ class xForm3 {
 			}
 			// rest of verifications
 			if (!isset($f["verify"]) || $r === null) {
+				// match regexp
+				if ($v !== null && ($regexp=$f["regexp"]) && !preg_match($regexp, (string)$v)) $this->errorsFieldAdd($field, $prefix."El campo no cumple el formato requerido.");
 				// required field
 				if ($f["required"]) {
 					switch ($f["type"]) {

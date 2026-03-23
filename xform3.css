@@ -117,13 +117,16 @@
 	position: relative;
 	float: left;
 	border-sizing: border-box;
-	margin: 9px;
+	margin: 4px;
 	border: 1px solid #CCC;
 	box-shadow: 0px 3px 5px rgba(0,0,0,0.2);
-	width: 170px;
-	height: 128px;
 	background: #FFF no-repeat center center;
 	background-size: contain;
+}
+.xform3_files_item,
+.xform3_image_upload {
+	width: 166px;
+	height: 124px;
 }
 .xform3_files_item:hover {
 	opacity: 0.9;
@@ -146,10 +149,6 @@
 		border: 0px;
 		opacity: 0;
 	}
-}
-.xform3_image_upload {
-	width: 170px;
-	height: 128px;
 }
 .xform3_image_upload,
 .xform3_files_upload {
