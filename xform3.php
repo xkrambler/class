@@ -240,7 +240,7 @@ class xForm3 {
 		case "images":
 			return null;
 		case "checkboxes":
-			if (!is_array($f["value"])) return [];
+			if (!is_array($f["value"])) return array();
 		}
 		return $f["value"];
 	}
@@ -268,7 +268,7 @@ class xForm3 {
 	// check if a field has value
 	function fieldHasValue($field) {
 		if (!is_array($field)) $field=$this->fields[$field];
-		if (!isset($field["value"]) && !$field["required"]) return false;
+		if (!array_key_exists("value", $field) && !$field["required"]) return false;
 		if ($field) switch ($field["type"]) {
 		case "":
 		case "files":
@@ -428,6 +428,7 @@ class xForm3 {
 	// parse in values for a field
 	function parseInValue($f, $value) {
 		$field=$this->fields[$f];
+		if ($field["nullifempty"] && !strlen((string)$value)) return null;
 		switch ($field["type"]) {
 		case "integer": return intval($value);
 		case "number": return doubleval($value);
@@ -442,12 +443,12 @@ class xForm3 {
 	// parse out values for a field
 	function parseOutValue($f, $value) {
 		$field=$this->fields[$f];
+		if ($field["nullifempty"] && !strlen($value)) return null;
 		if ($field["integer"]) return intval($value);
 		if ($field["number"]) return doubleval($value);
 		if ($field["decimal"]) return doubleval($value);
 		if ($field["positive"]) return abs(doubleval($value));
 		if ($field["string"]) return (string)$value;
-		if ($field["nullifempty"] && !strlen($value)) return null;
 		if ($field["nozero"] && !strlen($value)) return 0;
 		if ($field["base64"]) $value=base64_encode($value);
 		return $value;
