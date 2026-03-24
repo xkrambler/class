@@ -566,7 +566,7 @@ function xItemsSearch(o) {
 						+(s?" style='"+s+"'":"")
 					+">"
 					+(n.nosort?"<span class='xitemsearch_thc'>":"<a class='xitemsearch_thc' onclick='window.xItemsSearchs[\""+a.o.id+"\"].swapsort(\""+i+"\");' title='"+t+"'>")
-						+"<span class='xitemsearch_caption'>"+(n.caption?n.caption:"")+"</span><span class='xitemsearch_caption_ln'>&nbsp;</span>"
+						+"<span class='xitemsearch_caption'>"+(n.caption?n.caption:"")+"</span><span class='xitemsearch_caption xitemsearch_caption_ln'>&nbsp;</span>"
 					+(n.nosort?"</span>":"</a>")
 					+"</th>"
 				;
