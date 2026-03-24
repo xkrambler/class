@@ -78,9 +78,12 @@ h6 { font-size: 12px; margin: 12px 0; font-weight: normal; }
 .uppercase { text-transform: uppercase; }
 .lowercase { text-transform: lowercase; }
 .flex { display: flex; }
+.flex-wrap { flex-wrap: wrap; }
 .flex-around { justify-content: space-around; }
 .flex-between { justify-content: space-between; }
+.flex-items-start { align-items: flex-start; }
 .flex-items-center { align-items: center; }
+.flex-items-end { align-items: flex-end; }
 .fill { flex: 1; }
 .full { width: 100%; }
 .mtable {
