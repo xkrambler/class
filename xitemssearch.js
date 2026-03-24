@@ -347,6 +347,22 @@ function xItemsSearch(o) {
 		if (gid(a.o.id+"_search_txt")) gidfocus(a.o.id+"_search_txt");
 	};
 
+	// ensure is a valid style width
+	a.ensureStyleWidth=function(w, s){
+		if (typeof(w) == "undefined" || w === 1) return "";
+		var w=(""+w).trim();
+		var r=""+(/^\d+$/.test(w)?w+"px":w);
+		return (typeof(s) != "undefined"?s+":"+r+";":r);
+	};
+
+	// ensure is a valid cell width attribute
+	a.isCellWidth=function(w){
+		if (/^\d+$/.test(w)) return true;
+		const el=document.createElement("th");
+		el.style.width=w;
+		return (el.style.width !== "");
+	};
+
 	// devolver información de paginación
 	a.pagerInfo=function(){
 		var mostrar=a.pagerNum;
@@ -372,11 +388,11 @@ function xItemsSearch(o) {
 		if (!page) return "";
 		if (i == a.page) {
 			return "<input class='txt xitemsearch_page_input xitemsearch_page_input_length_"+(""+page).length+(o.input_alone?" xitemsearch_page_input_alone":"")+"' type='text' value='"+page+"' onFocus='this.select();'"
-				+" size='"+(o.pages?(""+o.pages).length:"")+"' onKeyPress='javascript:if(event.keyCode == 13){ window.xItemsSearchs[\""+a.o.id+"\"].go(parseInt(this.value)-1, {\"down\":"+(o.down?"true":"false")+"}); }' />"
+				+" size='"+(o.pages?(""+o.pages).length:"")+"' onKeyPress='if(event.keyCode == 13){ window.xItemsSearchs[\""+a.o.id+"\"].go(parseInt(this.value)-1, {\"down\":"+(o.down?"true":"false")+"}); }' />"
 		}
 		return ""
 			+"<span class='noselect xitemsearch_page xitemsearch_page_enabled'"
-				+" onClick='javascript:void(window.xItemsSearchs[\""+a.o.id+"\"].go("+i+",{\"down\":"+(o.down?"true":"false")+"}))'"
+				+" onclick='window.xItemsSearchs[\""+a.o.id+"\"].go("+i+",{\"down\":"+(o.down?"true":"false")+"});'"
 			+">"
 				+page
 			+"</span>"
@@ -391,7 +407,7 @@ function xItemsSearch(o) {
 		var enabled=(page > 1);
 		return ""
 			+"<span class='noselect xitemsearch_page "+(enabled?"xitemsearch_page_enabled":"xitemsearch_page_disabled")+"'"
-				+(page > 1?" onClick='javascript:void(window.xItemsSearchs[\""+a.o.id+"\"].go("+(page-2)+", {\"down\":"+(o.down?"true":"false")+"}))'":"")
+				+(page > 1?" onclick='window.xItemsSearchs[\""+a.o.id+"\"].go("+(page-2)+", {\"down\":"+(o.down?"true":"false")+"});'":"")
 			+">&lt;<span class='nomobile'> Anterior</span></span>"
 		;
 	};
@@ -404,7 +420,7 @@ function xItemsSearch(o) {
 		var enabled=(page < o.pages);
 		return ""
 			+"<span class='noselect xitemsearch_page "+(enabled?"xitemsearch_page_enabled":"xitemsearch_page_disabled")+"'"
-				+(page < o.pages?" onClick='javascript:void(window.xItemsSearchs[\""+a.o.id+"\"].go("+page+", {\"down\":"+(o.down?"true":"false")+"}))'":"")
+				+(page < o.pages?" onclick='window.xItemsSearchs[\""+a.o.id+"\"].go("+page+", {\"down\":"+(o.down?"true":"false")+"});'":"")
 			+"><span class='nomobile'>Siguiente </span>&gt;</span>"
 		;
 	};
@@ -536,14 +552,22 @@ function xItemsSearch(o) {
 		for (var i in a.fields) if (!a.fields[i].disabled) {
 			var n=a.fields[i];
 			if (!n.disabled) {
-				var thstyle=(n.nowrap?"white-space:nowrap;":"");
-				var title=htmlentities(n.title?n.title:(n.caption?n.caption:""));
-				h+="<th"+(n.class?" class='"+n.class+"'":"")+(n.nosort?" title='"+title+"'":"")+(thstyle?" style='"+thstyle+"'":"")+">"
-					+(n.nosort?"":"<a href='javascript:window.xItemsSearchs[\""+a.o.id+"\"].swapsort(\""+i+"\");' title='"+title+"'>")
-					+"<span class='"+(a.o.sort && isset(a.o.sort[i])?(a.o.sort[i]?"sortdesc":"sortasc"):"")+(default_sort?"_default":"")+"'>"
-					+(n.caption?n.caption:"")
-					+"</span>"
-					+(n.nosort?"":"</a>")
+				var s=(n.style?n.style+";":"");
+				s+=a.ensureStyleWidth(n.minwidth, "min-width");
+				s+=a.ensureStyleWidth(n.maxwidth, "max-width");
+				s+=a.ensureStyleWidth(n.width, "width"); // if (a.ensureStyleWidth(n.width)) s+="min-width:"+a.ensureStyleWidth(n.width)+";";
+				if (n.nowrap) s+="white-space:nowrap;";
+				var t=htmlentities(n.title?n.title:(n.caption?n.caption:""));
+				var c=(a.o.sort && isset(a.o.sort[i])?(a.o.sort[i]?"xitemssearch_sortdesc":"xitemssearch_sortasc")+(default_sort?"_default":""):"xitemssearch_unsort");
+				h+="<th class='xitemssearch_th "+c+(n.class?" "+n.class:"")+(n.width === 1?" xitemsearch_auto":"")+"'"
+						+(n.align?" align='"+n.align+"'":"")
+						+(a.isCellWidth(n.width)?" width='"+n.width+"'":"")
+						+(t?" title='"+t+"'":"")
+						+(s?" style='"+s+"'":"")
+					+">"
+					+(n.nosort?"<span class='xitemsearch_thc'>":"<a class='xitemsearch_thc' onclick='window.xItemsSearchs[\""+a.o.id+"\"].swapsort(\""+i+"\");' title='"+t+"'>")
+						+"<span class='xitemsearch_caption'>"+(n.caption?n.caption:"")+"</span><span class='xitemsearch_caption_ln'>&nbsp;</span>"
+					+(n.nosort?"</span>":"</a>")
 					+"</th>"
 				;
 			}
@@ -558,15 +582,15 @@ function xItemsSearch(o) {
 			var trstyle=(a.o.trstyle?a.o.trstyle(e, i):"");
 			a.ids[e[a.key]]=j;
 			h+="<tr class='xitemssearch_tr_item"
-					+(a.o.select?" xitemssearch_tr_item_selectable":(a.o.selectable?"":" xitemssearch_tr_item_noselectable"))
-					+(a.o.dblclick?" xitemssearch_tr_item_dblclick":"")
-					+(a.o.tr_class_filter?" "+a.o.tr_class_filter(j,e):"")
-				 	+(a.selected[e[a.key]]?" xitemssearch_tr_item_active":"")
-				 	+(trclass?" "+trclass:"")
+						+(a.o.select?" xitemssearch_tr_item_selectable":(a.o.selectable?"":" xitemssearch_tr_item_noselectable"))
+						+(a.o.dblclick?" xitemssearch_tr_item_dblclick":"")
+						+(a.o.tr_class_filter?" "+a.o.tr_class_filter(j,e):"")
+					 	+(a.selected[e[a.key]]?" xitemssearch_tr_item_active":"")
+					 	+(trclass?" "+trclass:"")
 					+"' id='"+a.o.id+"_tr_"+j+"'"
-					+(a.o.dblclick || a.o.select?" on"+(a.o.multiselect?"dbl":"")+"click='javascript:window.xItemsSearchs[\""+a.o.id+"\"].select("+j+");"+(a.o.dblclick?"window.xItemsSearchs[\""+a.o.id+"\"].clearBrowserSelection();":"return false;")+"'":"")
-					+(a.o.dblclick && !a.o.multiselect?" ondblclick='javascript:window.xItemsSearchs[\""+a.o.id+"\"].dblclick("+j+");window.xItemsSearchs[\""+a.o.id+"\"].clearBrowserSelection();return false;'":"")
-					+(a.o.multiselect?" onmousedown='javascript:window.xItemsSearchs[\""+a.o.id+"\"].multiSelect(event,"+j+");if(event.shiftKey || event.ctrlKey)return false;"+(a.o.selectable?"":"return false;")+"'":"")
+					+(a.o.dblclick || a.o.select?" on"+(a.o.multiselect?"dbl":"")+"click='window.xItemsSearchs[\""+a.o.id+"\"].select("+j+");"+(a.o.dblclick?"window.xItemsSearchs[\""+a.o.id+"\"].clearBrowserSelection();":"return false;")+"'":"")
+					+(a.o.dblclick && !a.o.multiselect?" ondblclick='window.xItemsSearchs[\""+a.o.id+"\"].dblclick("+j+");window.xItemsSearchs[\""+a.o.id+"\"].clearBrowserSelection();return false;'":"")
+					+(a.o.multiselect?" onmousedown='window.xItemsSearchs[\""+a.o.id+"\"].multiSelect(event,"+j+");if(event.shiftKey || event.ctrlKey)return false;"+(a.o.selectable?"":"return false;")+"'":"")
 					 +(trstyle?" style='"+trstyle+"'":"")
 				+">";
 			for (var i in a.fields) {
@@ -583,10 +607,9 @@ function xItemsSearch(o) {
 					var link=(n.link?n.link(e[i], i, e, c-1, n):null);
 					h+="<td"
 							+(tdclass || n.class?" class='"+(n.class?n.class:"")+(tdclass?" "+tdclass:"")+"'":"")
-							+(n.width?" width='"+n.width+"'":"")
 							+(n.align?" align='"+n.align+"'":"")
 							+(n.valign?" valign='"+n.valign+"'":"")
-							+" style='"+(n.minwidth?"min-width:"+n.minwidth+";":"")+(n.maxwidth?"max-width:"+n.maxwidth+";":"")+(n.style?n.style+";":"")+(n.color?"color:"+n.color+";":"")+(n.nowrap?"white-space:nowrap;":"")+tdstyle+"'"
+							+" style='"+(n.style?n.style+";":"")+(n.color?"color:"+n.color+";":"")+(n.nowrap?"white-space:nowrap;":"")+tdstyle+"'"
 						+" title='"+tdtitle+"'"
 						+tdextra+">"
 						+(n.cut?"<div style='position:relative;"+(n.width && n.width.indexOf && n.width.indexOf("px") != -1?"width:"+n.width+";":"")+"overflow:hidden;'><div style='position:absolute;white-space:nowrap;'>":"")
@@ -604,7 +627,7 @@ function xItemsSearch(o) {
 			h+="</tr>";
 		}
 		if (!a.o.noempty) for (j=0; j < (a.data.visible-c); j++) {
-			h+="<tr class='xitemssearch_tr_none' onMouseDown='javascript:window.xItemsSearchs[\""+a.o.id+"\"].clearSelection();return false;'>";
+			h+="<tr class='xitemssearch_tr_none' onMouseDown='window.xItemsSearchs[\""+a.o.id+"\"].clearSelection();return false;'>";
 			for (var i in a.fields)
 				if (!a.fields[i].disabled) 
 					h+="<td><div style='visibility:hidden;'>&nbsp;</div></td>"
