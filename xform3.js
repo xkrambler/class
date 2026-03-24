@@ -96,8 +96,7 @@ function xForm3(o) {
 	a.focusfirst=a.focusFirst=function(){
 		var f=a.first();
 		if (f) {
-			a.focus(f);
-			a.select(f);
+			a.correct(f);
 			return true;
 		}
 		return false;
