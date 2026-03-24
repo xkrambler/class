@@ -541,8 +541,8 @@ function xItemsSearch(o) {
 				for (var pager=0; pager < 2; pager++)
 					a.renderPager(array_merge(pi, {"id":a.o.id+"_pager"+(pager+1), "down":(pager?true:false)}));
 			} else {
-				hide(a.o.id+"_pager1");
-				hide(a.o.id+"_pager2");
+				if (gid(a.o.id+"_pager1")) hide(a.o.id+"_pager1");
+				if (gid(a.o.id+"_pager2")) hide(a.o.id+"_pager2");
 			}
 		}
 
