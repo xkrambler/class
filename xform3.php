@@ -362,7 +362,7 @@ class xForm3 {
 		if ($f=$this->fields[$field]) {
 			$limit=$this->filesLimit[$f["type"]];
 			if (isset($limit)) {
-				$svalue=$this->svalue($field);
+				$svalue=$svalue_last=$this->svalue($field);
 				$svalue_store=!$svalue; // if in session, mark to save it
 				// if files specified, assign
 				if ($files) {
@@ -372,6 +372,7 @@ class xForm3 {
 					foreach ($files as $f) {
 						if (is_string($f)) $f=["file"=>$f];
 						if (file_exists($f["file"]) || $f["data"]) {
+							if (!$svalue_last["files"]) $svalue_store=true;
 							if ($f["file"]) {
 								if (!$f["name"]) $f["name"]=basename($f["file"]);
 								if (!$f["ext"] && (($j=strrpos($f["name"], ".")) !== false)) $f["ext"]=substr($f["name"], $j+1);
