@@ -380,7 +380,7 @@ if (!function_exists("debug")) {
 					else if ($v === false) echo "<span style='color:#F44;'><b><i>false</i></b></span><br>";
 					else if (is_integer($v)) echo "<span style='color:#A20;'>".$v."</span><br>";
 					else if (is_double($v)) echo "<span style='color:#B42;'>".$v."</span><br>";
-					else echo "<span".($is_object_string?" style='color:#611;'":"").">".(gettype($v) != "string"?"<span style='color:#A0F;'><b>".get_class($v)."</b></span> ":"").\x::entities($v)."</span><br>";
+					else echo "<span".($is_object_string?" style='color:#611;'":"").">".(gettype($v) != "string"?"<span style='color:#A0F;'><b>".(is_object($v)?get_class($v):gettype($v))."</b></span> ":"").\x::entities($v)."</span><br>";
 				} else {
 					echo "<span style='color:#A0F;'><b>".get_class($v)."</b></span><br>";
 				}
