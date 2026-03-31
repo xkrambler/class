@@ -95,8 +95,8 @@ class xImage {
 		case "gif": return "image/gif";
 		case "png": return "image/png";
 		case "heic": return "image/heic";
-		default: return false;
 		}
+		return false;
 	}
 
 	// get mimetype by magic bytes
@@ -123,12 +123,13 @@ class xImage {
 
 	// return active format
 	function formatActive($format=null){
-		return ($format?$format:($this->format?$this->format:"jpg"));
+		return ($format?$format:($this->format?$this->format:""));
 	}
 
 	// create image from a string
 	function fromString($s) {
 		if ($imt=(@imagecreatefromstring($s))) $this->im=$imt;
+		$this->format=$this->getFormatByMagic($s);
 		@imagesavealpha($this->im, true);
 		return ($imt?true:false);
 	}
@@ -159,6 +160,7 @@ class xImage {
 			case "jpg": $im=imagecreatefromjpeg($filename); break;
 			case "gif": $im=imagecreatefromgif($filename); break;
 			case "png": $im=imagecreatefrompng($filename); break;
+			default: return false;
 			}
 			if ($im) {
 				imagesavealpha($im, true);
