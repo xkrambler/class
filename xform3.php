@@ -71,7 +71,7 @@ class xForm3 {
 	protected $trimHTML=["&#9;", "&#10;", "&#13;", "&nbsp;"];
 
 	// constructor and default values
-	function __construct($o) {
+	function __construct($o=array()) {
 		self::$sid++;
 		$default_class=array(
 			"tel"=>"txt",
@@ -103,7 +103,7 @@ class xForm3 {
 		$this->o=$o;
 		if (is_array($this->o["ssid"])) $this->o["ssid"]=\x::base().\x::link($this->o["ssid"]);
 		if (!isset($this->o["ssid"])) $this->o["ssid"]=\x::base().\x::link();
-		$this->fields($o["fields"]); unset($this->o["fields"]);
+		if (is_array($o["fields"])) $this->fields($o["fields"]); unset($this->o["fields"]);
 		// si no es petición AJAX, se asume limpieza de sesión
 		if (!$this->isajax()) $this->sstart($this->o["ssid"]);
 		// asignar valores iniciales, si especificado
@@ -258,7 +258,7 @@ class xForm3 {
 				}
 		// get values
 		$values=array();
-		foreach ($this->fields as $f=>$field) if ($this->fieldHasValue($field)) {
+		if (is_array($this->fields)) foreach ($this->fields as $f=>$field) if ($this->fieldHasValue($field)) {
 			$value=$this->value($f);
 			$values[$f]=($parse?$this->parseOutValue($f, $value):$value);
 		}
@@ -354,7 +354,7 @@ class xForm3 {
 	function files($field=null, $files=null) {
 		if ($field === null) {
 			$a=array();
-			if ($this->fields)
+			if (is_array($this->fields))
 				foreach ($this->fields as $f=>$v)
 					$a[$f]=$this->files($f);
 			return $a;
@@ -475,8 +475,9 @@ class xForm3 {
 
 	// purge all fields values
 	function purge() {
-		foreach ($this->fields as $f=>$field)
-			$this->fields[$f]["value"]=$this->purgeFieldValue($f, $field["value"]);
+		if (is_array($this->fields))
+			foreach ($this->fields as $f=>$field)
+				$this->fields[$f]["value"]=$this->purgeFieldValue($f, $field["value"]);
 	}
 
 	// check if value purge is enabled in a field
@@ -568,7 +569,7 @@ class xForm3 {
 		// clean
 		$this->errorsClear();
 		// verify all fields
-		if ($this->fields) foreach ($this->fields as $field=>$f) {
+		if (is_array($this->fields)) foreach ($this->fields as $field=>$f) {
 			// labeled prefix
 			$prefix=($f["caption"]?$f["caption"].": ":($f["label"]?$f["label"].": ":""));
 			// value
@@ -703,8 +704,9 @@ class xForm3 {
 			"fields"=>array(),
 		);
 		if (isset($this->o["chunksize"])) $info["chunksize"]=$this->o["chunksize"];
-		foreach ($this->fields as $field=>&$f)
-			$info["fields"][$field]=$this->jsfield($field);
+		if (is_array($this->fields))
+			foreach ($this->fields as $field=>&$f)
+				$info["fields"][$field]=$this->jsfield($field);
 		unset($f);
 		return $info;
 	}
@@ -718,8 +720,9 @@ class xForm3 {
 	// get all field identifiers
 	function ids() {
 		$ids=array();
-		foreach ($this->fields as $field=>$f)
-			$ids[]=$this->id($field);
+		if (is_array($this->fields))
+			foreach ($this->fields as $field=>$f)
+				$ids[]=$this->id($field);
 		return $ids;
 	}
 
@@ -741,15 +744,17 @@ class xForm3 {
 	// get field names
 	function fieldNames() {
 		$names=array();
-		foreach ($this->fields as $field=>$f)
-			$names[]=$this->fieldName($field);
+		if (is_array($this->fields))
+			foreach ($this->fields as $field=>$f)
+				$names[]=$this->fieldName($field);
 		return $names;
 	}
 
 	// get first field identifier
 	function firstid() {
-		foreach ($this->fields as $field=>$f)
-			return $this->id($field);
+		if (is_array($this->fields))
+			foreach ($this->fields as $field=>$f)
+				return $this->id($field);
 		return false;
 	}
 
@@ -1147,7 +1152,7 @@ class xForm3 {
 		// primero limpiar
 		$this->sclean();
 		// inicializar campos con sesión
-		foreach ($this->fields as $field=>$f) {
+		if (is_array($this->fields)) foreach ($this->fields as $field=>$f) {
 			if ($f["file"]) $this->file($field, $f["file"]);
 			if ($f["files"]) $this->files($field, $f["files"]);
 		}
@@ -1163,29 +1168,37 @@ class xForm3 {
 		}
 	}
 
-	// scale image (requires: ximage)
-	function imageScale($o=array()) {
-		$w=intval($o["w"]); if ($w < 1 || $w > 10240) $w=0;
-		$h=intval($o["h"]); if ($h < 1 || $h > 10240) $h=0;
-		$q=($o["q"]?$o["q"]:90);
-		if (!$w || !$h) return ""; // can't scale
+	// ximage instance (requires: ximage)
+	function filexImage($o=array()) {
+		if ($o["xi"]) return $o["xi"];
 		// required classes
 		require_once(__DIR__."/ximage.php");
 		// create image, clean or from file
 		$xi=($o["file"]?new xImage($o["file"]):new xImage());
 		// if content data specified, load from it
-		if ($o["data"]) {
-			$xi->fromString($o["data"]);
-			if (!$o["f"]) $o["f"]=$xi->getFormatByMagic($o["data"]);
-		} else {
-			if (!$o["f"]) $o["f"]=$xi->getFileFormat($o["file"]);
+		if ($xi && $o["data"]) $xi->fromString($o["data"]);
+		// return ximage
+		return $xi;
+	}
+
+	// scale image (requires: ximage)
+	function imageScale($o=array()) {
+		$w=intval($o["w"]); if ($w < 1 || $w > 10240) $w=0;
+		$h=intval($o["h"]); if ($h < 1 || $h > 10240) $h=0;
+		if (!$w || !$h) return null; // can't scale
+		// instance ximage
+		if (!($xi=$this->filexImage($o))) return false;
+		// if format supported
+		if ($o["f"]=$xi->formatActive()) {
+			// fix orientation
+			$xi->fixOrientation();
+			// scale only if dimensions exceeds threshold
+			if ($xi->width() > $w || $xi->height() > $h) $xi->scale($w, $h);
+			// return image scaled
+			return $xi;
 		}
-		// fix orientation
-		$xi->fixOrientation();
-		// scale only if dimensions exceeds threshold
-		if ($xi->width() > $w || $xi->height() > $h) $xi->scale($w, $h);
-		// return content data image
-		return $xi->toString(($o["f"]?$o["f"]:"jpg"), $q);
+		// unsupported
+		return null;
 	}
 
 	// AJAX actions
@@ -1203,7 +1216,7 @@ class xForm3 {
 		if (!$adata["name"] || ($adata["name"] != $this->o["name"])) return true;
 
 		// iterate fields
-		foreach ($this->fields as $field=>$f) if ($adata["field"] == $field) {
+		if (is_array($this->fields)) foreach ($this->fields as $field=>$f) if ($adata["field"] == $field) {
 
 			// if field has upload limit...
 			$limit=$this->filesLimit[$f["type"]];
@@ -1221,14 +1234,16 @@ class xForm3 {
 					if (!$file["type"]) $file["type"]=$this->mimeByMagic(substr($file["data"], 0, 16));
 					// scale, if requested
 					if (($w=intval($_REQUEST["w"])) && ($h=intval($_REQUEST["h"])) && $file["type"]) {
-						$file["data"]=$this->imageScale(array_merge(($f["scale"]?$f["scale"]:array()), array(
+						$xi=$this->imageScale(array_merge(($f["scale"]?$f["scale"]:array()), array(
 							"file"=>$file["file"],
 							"data"=>$file["data"],
 							"w"=>$w,
 							"h"=>$h
 						)));
+						$xi->output(null, ($o["q"]?$o["q"]:90));
+						exit;
 					}
-					// dump file to HTTP (required: kernel)
+					// dump file (required: kernel)
 					require_once(__DIR__."/kernel.php");
 					Kernel::httpOutput(array(
 						"type"=>$file["type"],
@@ -1272,6 +1287,7 @@ class xForm3 {
 						"_f"=>$f,
 						"_xf"=>$this,
 						"_limit"=>$limit,
+						"_warns"=>[],
 						"oncomplete"=>function($uploader, $upload, $o){ // at the end of a completed upload
 							//$field=$o["_field"];
 							$f=$o["_f"];
@@ -1294,7 +1310,10 @@ class xForm3 {
 								"type"=>$upload["type"],
 							);
 							// check file, if check callback
-							if (($check=$f["check"]) && is_callable($check) && !$check($f, $file)) ajax(["err"=>"No se permite subir el fichero especificado."]);
+							if (($check=$f["check"]) && is_callable($check) && !$check($f, $file)) {
+								$this->_warns[]="No se permite subir el fichero especificado.";
+								return;
+							}
 							// check if extensions is in allowed list
 							if ($exts=$f["allowedext"]) {
 								$ext=strtolower($file["ext"]);
@@ -1302,26 +1321,43 @@ class xForm3 {
 									$ext=false;
 									break;
 								}
-								if ($ext) ajax(array("err"=>"La extensión .".$file["ext"]." no está permitida, sólo se permite".(count($exts) == 1?"":"s")." <b>".implode(", ", $exts)."</b>."));
+								if ($ext) {
+									$this->_warns[]="La extensión .".$file["ext"]." no está permitida, sólo se permite".(count($exts) == 1?"":"s")." <b>".implode(", ", $exts)."</b>.";
+									return;
+								}
 							}
 							// automatic name assignment based on filename
 							if ($f["filecaption"]) $file["caption"]=$upload["name"];
+							// check if valid image
+							switch ($f["type"]) {
+							case "image":
+							case "images":
+								$xi=false;
+								if (($file["data"] && !$this->mimeByMagic(substr($file["data"], 0, 16))) || !($xi=$this->filexImage(array("file"=>$upload["tmp"]))) || !$xi->formatActive()) {
+									$this->_warns[]="La imagen ".$file["name"]." no tiene formato correcto.";
+									return;
+								}
+								break;
+							}
 							// prepare content data, scale if required
 							if ($f["scale"] && ($w=$f["scale"]["w"]) && ($h=$f["scale"]["h"])) {
-								$file["scaled"]=true;
-								$file["data"]=$this->imageScale(array("file"=>$upload["tmp"])+$f["scale"]);
+								if ($xi=$this->imageScale(array("xi"=>$xi, "file"=>$upload["tmp"])+$f["scale"])) {
+									$file["scaled"]=true;
+									$file["data"]=$xi->toString(null, ($o["q"]?$o["q"]:90));
+								} else {
+									$this->_warns[]="La imagen ".$file["name"]." no ha podido ser escalada.";
+								}
 							} else {
 								$file["data"]=file_get_contents($upload["tmp"]);
 							}
 							// update size
 							$file["size"]=strlen($file["data"]);
-							// save
-							$svalue["files"][$index]=$file;
 							// save in session
+							$svalue["files"][$index]=$file;
 							$o["_xf"]->svalue($o["_field"], $svalue);
 						},
 						"onupload"=>function($uploader, $uploads, $o){ // at the end of all uploads
-							// session value for field
+							// get session
 							$svalue=$o["_xf"]->svalue($o["_field"]);
 							// construct empty array
 							$files=array_map(function($file){
@@ -1331,6 +1367,7 @@ class xForm3 {
 							// return upload information
 							ajax(array(
 								"files"=>$files,
+								"warn"=>($this->_warns?implode("<br/>\n", $this->_warns):null),
 								"ok"=>true
 							));
 						},

@@ -508,9 +508,15 @@ function xForm3(o) {
 			},
 			"oncomplete":function(uploader, r){
 				newwait_close();
-				if (!r.data) newalert(adump(r));
-				if (r.data.err) newerror(r.data.err);
-				if (r.data.ok) if (onok) onok(uploader, r);
+				if (r.data) {
+					if (r.data.err) newerror(r.data.err);
+					if (r.data.ok) if (onok) {
+						if (r.data.warn) newwarn(r.data.warn);
+						onok(uploader, r);
+					}
+				} else {
+					newalert(adump(r));
+				}
 			},
 			"oncancel":function(uploader){
 				newwait_close();
@@ -519,8 +525,7 @@ function xForm3(o) {
 			},
 			"onerror":function(uploader, r){
 				newwait_close();
-				newerror("Error en subida"+(r.data && r.data.err?": "+r.data.err:(r.text?": "+r.text:"")));
-				//alert(adump(r));
+				if (!r.data) newerror("Error en subida"+(r.text?": "+r.text:""));
 			},
 			"browse":true
 		}, o));
@@ -744,13 +749,21 @@ function xForm3(o) {
 			return e;
 		},
 
-		// add file element
+		// generate file/image element
 		"add":function(o){
+
 			var field=a.o.fields[o.field];
+			if (!field) return false;
+
+			var item=a.data[o.field].files[o.index];
+			if (!item) return false;
+
+			var index_id=a.id(o.field)+"_item_"+o.index;
+			var last=gid(index_id);
 
 			var div=document.createElement("div");
 			div.setAttribute("data-index", o.index);
-			div.id=a.id(o.field)+"_item_"+o.index;
+			div.id=index_id;
 
 			// render depending on field type
 			switch (field.type) {
@@ -777,9 +790,9 @@ function xForm3(o) {
 					a.files.zoom(field, index);
 				};
 				div.appendChild(buttons);
-				if (o.item.caption) {
-					div.title=o.item.caption;
-					div.appendChild(a.files.htmlImageCaption({"caption":o.item.caption}));
+				if (item.caption) {
+					div.title=item.caption;
+					div.appendChild(a.files.htmlImageCaption({"caption":item.caption}));
 				}
 				if (field.numbered) {
 					var number=document.createElement("div");
@@ -793,7 +806,34 @@ function xForm3(o) {
 				var w=div.offsetWidth;
 				var h=div.offsetHeight;
 				div.parentNode.removeChild(div);
-				a.data[o.field].container.appendChild(div);
+				break;
+
+			case "file":
+			case "files":
+				// name=file.psd type=image/vnd.adobe.photoshop error=0 size=999 caption=file.psd
+				div.className="xform3_files_file";
+				div.innerHTML=a.icon("file-o")+" <a class='xform3_files_file_name' href='"+a.files.fileURL(o.field, o.index)+"' target='_blank'>"+item.name+"</a> <span class='xform3_files_file_size'>("+bytesToString(item.size)+")</span> ";
+				div.appendChild(a.files.htmlFileButton({"type":"trash", "id":a.id(o.field), "index":o.index, "action":a.files.del, "title":"Borrar"}));
+				break;
+
+			}
+
+			// update/add before upload button
+			if (last) {
+				last.parentNode.replaceChild(div, last);
+			} else {
+				var item_upload=gid(a.id(o.field)+"_item_upload");
+				if (item_upload) {
+					a.data[o.field].container.insertBefore(div, item_upload);
+				} else {
+					a.data[o.field].container.appendChild(div);
+				}
+			}
+
+			// render depending on field type
+			switch (field.type) {
+			case "image":
+			case "images":
 				// get capture URL
 				var url=a.files.fileThumbnail(o.field, o.index, {"w":w, "h":h});
 				div.style.backgroundImage="url("+url+")";
@@ -803,17 +843,7 @@ function xForm3(o) {
 				})); // render image as img element for printable devices
 				break;
 
-			case "file":
-			case "files":
-				// name=file.psd type=image/vnd.adobe.photoshop error=0 size=999 caption=file.psd
-				div.className="xform3_files_file";
-				div.innerHTML=a.icon("file-o")+" <a class='xform3_files_file_name' href='"+a.files.fileURL(o.field, o.index)+"' target='_blank'>"+o.item.name+"</a> <span class='xform3_files_file_size'>("+bytesToString(o.item.size)+")</span> ";
-				div.appendChild(a.files.htmlFileButton({"type":"trash", "id":a.id(o.field), "index":o.index, "action":a.files.del, "title":"Borrar"}));
-				a.data[o.field].container.appendChild(div);
-				break;
-
 			}
-
 			// if requested, event to send the element generated to filter
 			if (a.o.fields[o.field].onelement) a.o.fields[o.field].onelement(a, div, o);
 
@@ -840,17 +870,6 @@ function xForm3(o) {
 			}
 			gid(a.id(field)).appendChild(a.data[field].container);
 
-			// generate file listing
-			for (var index in a.data[field].files) {
-				var item=a.data[field].files[index];
-				if (item.deleted) continue;
-				a.files.add({
-					"index":index,
-					"item":item,
-					"field":field
-				});
-			}
-
 			// prepare upload button
 			var div=document.createElement("div");
 			div.id=a.id(field)+"_item_upload";
@@ -865,7 +884,7 @@ function xForm3(o) {
 			if (!isset(f.upload)) {
 				switch (f.type) {
 
-				case "image": limit=1; // no break
+				case "image":
 				case "images":
 					var limit=a.files.getLimit(field);
 					div.className="xform3_files_item"
@@ -875,13 +894,12 @@ function xForm3(o) {
 					div.onclick=action_upload;
 					div.title=(limit == 1?"Subir imágen":"Subir imágenes");
 					div.appendChild(a.files.htmlImageCaption({"caption":div.title}));
-					//gid(a.id(field)).appendChild(div);
-					a.data[field].container.appendChild(div);
 					break;
 
-				case "file": limit=1; // no break
+				case "file":
 				case "files":
 				default:
+					var limit=a.files.getLimit(field);
 					div.className="xform3_files_file xform3_files_file_upload xform3_files_file_upload_link xform3_files_nosort";
 					var span=document.createElement("span");
 					span.className="a xform3_files_file_upload_caption";
@@ -890,17 +908,21 @@ function xForm3(o) {
 					span.title=(limit == 1?"Subir archivo":"Subir archivos");
 					span.innerHTML=a.icon("upload")+" "+span.title;
 					div.appendChild(span);
-					//gid(a.id(field)).appendChild(div);
-					a.data[field].container.appendChild(div);
 					break;
 
 				}
+				a.data[field].container.appendChild(div);
 			}
 
-			// clear
-			var div=document.createElement("div");
-			div.className="xform3_clear";
-			gid(a.id(field)).appendChild(div);
+			// generate file listing
+			for (var index in a.data[field].files) {
+				var item=a.data[field].files[index];
+				if (item.deleted) continue;
+				a.files.add({
+					"field":field,
+					"index":index
+				});
+			}
 
 			// if sortable, setup using any available library
 			if (f.sortable) {
@@ -1022,7 +1044,10 @@ function xForm3(o) {
 					if (r.data.ok) newalert_close("xform3_files_rename");
 				});
 				a.data[field].files[index].name=a.data[field].files[index].caption=newname;
-				a.files.refresh(field);
+				a.files.add({
+					"field":field,
+					"index":index
+				});
 			};
 			newalert({
 				"id":"xform3_files_rename",
@@ -1161,19 +1186,28 @@ function xForm3(o) {
 				"multiple":(a.files.getLimit(field) == 1?false:true)
 			}, function(uploader, r){
 				var files=uploader.files();
-				for (var i in files) {
+				
+				//alert(adump(r.data.files));console.log(files);
+
+				xforeach(r.data.files, function(file, index){
+					if (!a.data[field].files[index]) {
+						a.data[field].files[index]=file;
+						a.files.add({
+							"field":field,
+							"index":index
+						});
+					}
+				});
+				//a.files.refresh(field);
+
+				/*for (var i in files) {
 					var item=files[i];
 					if (!a.data[field].files) a.data[field].files=[];
 					var index=a.data[field].files.length;
 					var limit=a.files.getLimit(field);
 					if (limit && (index+1 > limit)) index=limit-1;
 					a.data[field].files[index]=item;
-					a.files.add({
-						"index":index,
-						"item":item,
-						"field":field
-					});
-				}
+				}*/
 			});
 		},
 

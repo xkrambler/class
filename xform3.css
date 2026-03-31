@@ -226,6 +226,7 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
+.xform3_files_item_captioned .xform3_files_upload_caption,
 .xform3_files_item:hover .xform3_files_upload_caption {
 	background: rgba(0,0,0,0.7);
 	height: 1.8em;
