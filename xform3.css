@@ -106,18 +106,23 @@
 }
 
 /* xform3: files */
+.xform3_files {
+	position: relative;
+}
 .xform3_files_container {
+	position: relative;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
 	list-style-type: none;
-	margin: 0px;
-	padding: 0px;
+	margin: 0;
+	padding: 0;
 }
 /* type=images */
 .xform3_files_item {
 	cursor: pointer;
 	position: relative;
-	float: left;
 	border-sizing: border-box;
-	margin: 4px;
 	border: 1px solid #CCC;
 	box-shadow: 0px 3px 5px rgba(0,0,0,0.2);
 	background: #FFF no-repeat center center;
@@ -176,26 +181,27 @@
 	font-weight: bold;
 }
 .xform3_files_item_buttons {
+	display: flex;
 	position: absolute;
 	top: 0;
 	right: 0;
 	opacity: 0;
+	transition: 0.2s all ease-in-out;
 }
 .xform3_files_item:focus .xform3_files_item_buttons,
 .xform3_files_item:hover .xform3_files_item_buttons {
 	opacity: 1;
+	transition: 0.1s all ease-in-out;
 }
 .xform3_files_item_button {
 	cursor: pointer;
-	float: left;
 	box-sizing: content-box;
-	display: block;
 	background: #EEE center center no-repeat;
 	border: 1px solid #CCC;
-	border-top: 0px;
-	border-right: 0px;
-	width: 16px;
-	height: 16px;
+	border-top: 0;
+	border-right: 0;
+	text-align: center;
+	min-width: 1.2em;
 	padding: 5px 7px;
 	transition: 0.3s all ease-in-out;
 }
@@ -214,8 +220,7 @@
 	background: rgba(0,0,0,0);
 	color: #FFF;
 	text-align: center;
-	dpadding: 6px 9px;
-	height: 0px;
+	height: 0;
 	transition: 0.4s all ease-in-out;
 	line-height: 1.8em;
 	overflow: hidden;

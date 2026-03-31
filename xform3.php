@@ -1054,7 +1054,7 @@ class xForm3 {
 			return "<div"
 				." id='".$id."'"
 				." class='".$class."'"
-				." src='".$f["default"]."'"
+				.(isset($f["default"])?" src='".$f["default"]."'":"")
 				.($f["title"]?" title='".$this->entities($f["title"])."'":"")
 				.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
 				.($styles?" style='".$styles."'":"")
@@ -1065,7 +1065,6 @@ class xForm3 {
 			return "<div"
 				." id='".$id."'"
 				." class='".$class."'"
-				." src='".$f["default"]."'"
 				.($f["title"]?" title='".$this->entities($f["title"])."'":"")
 				.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
 				.($styles?" style='".$styles."'":"")

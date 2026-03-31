@@ -1,14 +1,11 @@
 // xForm3: form client class support, v3
 function xForm3(o) {
-	if (!o) o={};
 	var a=this;
-	a.o=array_merge({
-		"thumbnail":{"w":170, "h":128}
-	}, o);
+	a.o=o||{};
 	a.data={};
 
 	// xForm3 declaration
-	a.xForm3=true;
+	a.xForm3="xForm3";
 
 	// nocache token
 	a.nocache=function(){ return (new Date().getTime()); };
@@ -36,6 +33,11 @@ function xForm3(o) {
 	a.gid=function(f){ return (a.id(f)?gid(a.id(f)):null); };
 	a.gidval=function(f, value){ return (a.id(f)?gidval(a.id(f), value):null); }; // DEPRECATED
 	a.gidfocus=function(f){ gidfocus(a.id(f)); }; // DEPRECATED
+
+	// console log/warn/error
+	a.consoleLog=function(msg){ console.log(a.xForm3+"("+a.name()+"):", msg); };
+	a.consoleWarn=function(msg){ console.warn(a.xForm3+"("+a.name()+"):", msg); };
+	a.consoleError=function(msg){ console.error(a.xForm3+"("+a.name()+"):", msg); };
 
 	// get field by its identifier
 	a.fieldById=function(id){
@@ -137,6 +139,13 @@ function xForm3(o) {
 			else e.setAttribute(attribute, value);
 		}
 		return e.getAttribute(attribute);
+	};
+
+	// get best available sortable library
+	a.sortableLibrary=function(){
+		if (typeof(Sortable) != "undefined") return "sortablejs";
+		if (typeof($) != "undefined" && typeof($.fn) != "undefined" && typeof($.fn.sortable) != "undefined" && $.fn.sortable) return "jqueryui";
+		return null;
 	};
 
 	// get all fields values from a form
@@ -347,7 +356,7 @@ function xForm3(o) {
 	// filter color value
 	a.colorValue=function(c){
 		var c=c.replace("#", "");
-    if (c.charAt(0) == 'r') {
+		if (c.charAt(0) == 'r') {
 			c=c.replace('rgb(','').replace('rgba(','').replace(')','').split(',');
 			var r=parseInt(c[0], 10).toString(16);
 			var g=parseInt(c[1], 10).toString(16);
@@ -748,7 +757,7 @@ function xForm3(o) {
 			case "image":
 			case "images":
 				// asignar clase y botones
-				div.className="xform3_files_item";
+				div.className="xform3_files_item"+(field.filecaption?" xform3_files_item_captioned":"");
 				div.setAttribute("data-id", a.id(o.field));
 				div.setAttribute("data-index", o.index);
 				var buttons=document.createElement("div");
@@ -779,22 +788,19 @@ function xForm3(o) {
 					number.innerHTML=(parseInt(o.index)+1);
 					div.appendChild(number);
 				}
-				// get width/height of a thumbnail (it's done this way because if in hidden field it does not calculate it properly)
+				// get width/height of a thumbnail
 				document.body.appendChild(div);
 				var w=div.offsetWidth;
 				var h=div.offsetHeight;
 				div.parentNode.removeChild(div);
 				a.data[o.field].container.appendChild(div);
 				// get capture URL
-				var url=a.files.fileThumbnail(o.field, o.index, {
-					"w":(w?w:a.o.thumbnail.w),
-					"h":(h?h:a.o.thumbnail.h)
-				});
+				var url=a.files.fileThumbnail(o.field, o.index, {"w":w, "h":h});
 				div.style.backgroundImage="url("+url+")";
 				div.appendChild(newElement("img", {
 					"class":"xform3_files_item_image",
 					"properties":{"src":url}
-				})); // for printer
+				})); // render image as img element for printable devices
 				break;
 
 			case "file":
@@ -824,7 +830,7 @@ function xForm3(o) {
 			gidset(a.id(field),"");
 
 			// create list
-			a.data[field].container=document.createElement("ul");
+			a.data[field].container=document.createElement("div");
 			a.data[field].container.className="xform3_files_container";
 
 			// add container to HTML field element
@@ -863,19 +869,20 @@ function xForm3(o) {
 				case "images":
 					var limit=a.files.getLimit(field);
 					div.className="xform3_files_item"
-						+" xform3_files_upload"
+						+" xform3_files_upload xform3_files_nosort"
 						+(f.type == "images"?" xform3_files_upload_images":" xform3_files_upload_files")
 					;
 					div.onclick=action_upload;
 					div.title=(limit == 1?"Subir imágen":"Subir imágenes");
 					div.appendChild(a.files.htmlImageCaption({"caption":div.title}));
-					gid(a.id(field)).appendChild(div);
+					//gid(a.id(field)).appendChild(div);
+					a.data[field].container.appendChild(div);
 					break;
 
 				case "file": limit=1; // no break
 				case "files":
 				default:
-					div.className="xform3_files_file xform3_files_file_upload xform3_files_file_upload_link";
+					div.className="xform3_files_file xform3_files_file_upload xform3_files_file_upload_link xform3_files_nosort";
 					var span=document.createElement("span");
 					span.className="a xform3_files_file_upload_caption";
 					span.setAttribute("data-id", a.id(field));
@@ -883,7 +890,8 @@ function xForm3(o) {
 					span.title=(limit == 1?"Subir archivo":"Subir archivos");
 					span.innerHTML=a.icon("upload")+" "+span.title;
 					div.appendChild(span);
-					gid(a.id(field)).appendChild(div);
+					//gid(a.id(field)).appendChild(div);
+					a.data[field].container.appendChild(div);
 					break;
 
 				}
@@ -894,24 +902,40 @@ function xForm3(o) {
 			div.className="xform3_clear";
 			gid(a.id(field)).appendChild(div);
 
-			// if sortable, setup
+			// if sortable, setup using any available library
 			if (f.sortable) {
-				a.data[field].sortable=$(a.data[field].container).sortable({
-					cancel:".xform3_files_upload",
-					//handle: ".admin_slide_nipZone",
-					//placeholder: "admin_slide_placeholder",
-					opacity: 0.8,
-					deactivate: function(){
-						a.files.refreshField(field);
-					},
-					stop: function(event, ui){
-						var distance=(Math.sqrt(
-							  Math.pow(ui.position.top - ui.originalPosition.top, 2)
-							+ Math.pow(ui.position.left - ui.originalPosition.left, 2)
-						));
-						if (distance >= 10) a.cancelSortableClick=true;
-					}
-				});
+				switch (a.sortableLibrary()) {
+				case "sortablejs":
+					a.data[field].sortable=Sortable.create(gid(a.data[field].container), {
+						animation: 200,
+						dataIdAttr: 'data-index',
+						sort: true,
+						filter: ".xform3_files_nosort",
+						onSort:function(e){
+							a.files.refreshField(field);
+						}
+					});
+					break;
+				case "jqueryui":
+					a.data[field].sortable=$(a.data[field].container).sortable({
+						cancel:".xform3_files_nosort",
+						opacity: 0.8,
+						deactivate: function(){
+							a.files.refreshField(field);
+						},
+						stop: function(event, ui){
+							var distance=(Math.sqrt(
+									Math.pow(ui.position.top - ui.originalPosition.top, 2)
+								+ Math.pow(ui.position.left - ui.originalPosition.left, 2)
+							));
+							if (distance >= 10) a.cancelSortableClick=true;
+						}
+					});
+					break;
+				default:
+					a.consoleWarn("Field "+field+" sorting not enabled: no sorting library loaded");
+				}
+
 			}
 
 			// refresh field
@@ -923,14 +947,49 @@ function xForm3(o) {
 		"refreshField":function(field){
 			var f=a.o.fields[field];
 
-			// update numeration (if numbered)
-			if (isset(f.numbered) && f.numbered && a.data[field].sortable) {
-				var sortedIDs=$(a.data[field].container).sortable("toArray");
-				var count=0;
-				for (var i in sortedIDs) {
-					var index=parseInt(gid(sortedIDs[i]).getAttribute("data-index"));
-					if (!a.data[field].files[index].deleted) gidset(a.id(field)+"_number_"+index, ++count);
+			// if sortable & enabled
+			if (f.sortable && a.data[field].sortable) {
+
+				// update order
+				switch (a.sortableLibrary()) {
+				case "sortablejs":
+					var order=a.data[field].sortable.toArray();
+					for (var orden in order) {
+						var index=order[orden];
+						if (a.data[field].files[index] && !a.data[field].files[index].deleted) a.data[field].files[index].orden=parseInt(orden);
+					}
+					break;
+				case "jqueryui":
+					var sortedIDs=$(a.data[field].container).sortable("toArray");
+					for (var i in sortedIDs) {
+						var index=parseInt(gid(sortedIDs[i]).getAttribute("data-index"));
+						if (a.data[field].files[index]) a.data[field].files[index].orden=i;
+					}
+					break;
 				}
+
+				// update numeration (if numbered)
+				if (isset(f.numbered) && f.numbered) {
+					// get index-order pair
+					var orden_indexes=[];
+					for (var index in a.data[field].files) {
+						var file=a.data[field].files[index];
+						if (file && !file.deleted) orden_indexes.push([index, file.orden]);
+					}
+					// order indexes
+					orden_indexes=orden_indexes.sort(function(a,b){
+						if (a[1] > b[1]) return 1;
+						else if (a[1] < b[1]) return -1;
+						return 0;
+					});
+					// render numbers
+					for (var number=0; number < orden_indexes.length; number++) {
+						var index=orden_indexes[number][0];
+						var file=a.data[field].files[index];
+						if (!file.deleted) gidset(a.id(field)+"_number_"+index, number+1);
+					}
+				}
+
 			}
 
 			// update visibility of upload button
@@ -1142,13 +1201,6 @@ function xForm3(o) {
 		"value":function(field, value){
 			if (a.data[field] && a.data[field].uploader && a.data[field].uploader.value) return a.data[field].uploader.value(value);
 			var f=a.o.fields[field];
-			if (f.sortable) {
-				var sortedIDs=$(a.data[field].container).sortable("toArray");
-				for (var i in sortedIDs) {
-					var index=parseInt(gid(sortedIDs[i]).getAttribute("data-index"));
-					a.data[field].files[index].orden=i;
-				}
-			}
 			if (f.onvalues) a.data[field].files=f.onvalues(a, a.data[field].files);
 			return (a.data[field]?a.data[field].files:[]);
 		},
