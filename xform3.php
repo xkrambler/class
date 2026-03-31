@@ -1287,9 +1287,14 @@ class xForm3 {
 						"_f"=>$f,
 						"_xf"=>$this,
 						"_limit"=>$limit,
-						"_warns"=>[],
+						"_warns"=>function($o, $warn){
+							$svalue=$o["_xf"]->svalue($o["_field"]);
+							if (!$svalue["warns"]) $svalue["warns"]=[];
+							$svalue["warns"][]=$warn;
+							$o["_xf"]->svalue($o["_field"], $svalue);
+							return null;
+						},
 						"oncomplete"=>function($uploader, $upload, $o){ // at the end of a completed upload
-							//$field=$o["_field"];
 							$f=$o["_f"];
 							$limit=$o["_limit"];
 							// session value for field
@@ -1310,10 +1315,7 @@ class xForm3 {
 								"type"=>$upload["type"],
 							);
 							// check file, if check callback
-							if (($check=$f["check"]) && is_callable($check) && !$check($f, $file)) {
-								$this->_warns[]="No se permite subir el fichero especificado.";
-								return;
-							}
+							if (($check=$f["check"]) && is_callable($check) && !$check($f, $file)) return $o["_warns"]($o, "No se permite subir el fichero especificado.");
 							// check if extensions is in allowed list
 							if ($exts=$f["allowedext"]) {
 								$ext=strtolower($file["ext"]);
@@ -1321,10 +1323,7 @@ class xForm3 {
 									$ext=false;
 									break;
 								}
-								if ($ext) {
-									$this->_warns[]="La extensión .".$file["ext"]." no está permitida, sólo se permite".(count($exts) == 1?"":"s")." <b>".implode(", ", $exts)."</b>.";
-									return;
-								}
+								if ($ext) return $o["_warns"]($o, "La extensión .".$file["ext"]." no está permitida, sólo se permite".(count($exts) == 1?"":"s")." <b>".implode(", ", $exts)."</b>.");
 							}
 							// automatic name assignment based on filename
 							if ($f["filecaption"]) $file["caption"]=$upload["name"];
@@ -1334,8 +1333,7 @@ class xForm3 {
 							case "images":
 								$xi=false;
 								if (($file["data"] && !$this->mimeByMagic(substr($file["data"], 0, 16))) || !($xi=$this->filexImage(array("file"=>$upload["tmp"]))) || !$xi->formatActive()) {
-									$this->_warns[]="La imagen ".$file["name"]." no tiene formato correcto.";
-									return;
+									return $o["_warns"]($o, "La imagen ".$file["name"]." no tiene formato correcto.");
 								}
 								break;
 							}
@@ -1345,7 +1343,7 @@ class xForm3 {
 									$file["scaled"]=true;
 									$file["data"]=$xi->toString(null, ($o["q"]?$o["q"]:90));
 								} else {
-									$this->_warns[]="La imagen ".$file["name"]." no ha podido ser escalada.";
+									return $o["_warns"]($o, "La imagen ".$file["name"]." no ha podido ser escalada.");
 								}
 							} else {
 								$file["data"]=file_get_contents($upload["tmp"]);
@@ -1359,6 +1357,11 @@ class xForm3 {
 						"onupload"=>function($uploader, $uploads, $o){ // at the end of all uploads
 							// get session
 							$svalue=$o["_xf"]->svalue($o["_field"]);
+							// remove warnings from session
+							if ($warns=$svalue["warns"]) {
+								unset($svalue["warns"]);
+								$o["_xf"]->svalue($o["_field"], $svalue);
+							}
 							// construct empty array
 							$files=array_map(function($file){
 								unset($file["data"]);
@@ -1367,7 +1370,7 @@ class xForm3 {
 							// return upload information
 							ajax(array(
 								"files"=>$files,
-								"warn"=>($this->_warns?implode("<br/>\n", $this->_warns):null),
+								"warn"=>($warns?implode("<br/>\n", $warns):null),
 								"ok"=>true
 							));
 						},
