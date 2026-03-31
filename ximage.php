@@ -38,10 +38,14 @@ class xImage {
 	 */
 	function __construct($first=null, $second=null) {
 		if ($first) {
-			if ($second) $this->im=imagecreatetruecolor($first, $second);
-			else {
+			if ($second) {
+				$this->im=imagecreatetruecolor($first, $second);
+			} else {
 				if (is_object($first)) $this->copy($first);
-				if (is_string($first)) $this->load($first);
+				if (is_string($first)) {
+					if ($this->getFormatByMagic($first)) $this->fromString($first);
+					else if (file_exists($first)) $this->load($first);
+				}
 			}
 		}
 	}
