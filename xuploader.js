@@ -313,7 +313,7 @@ function xUploader(o) {
 	// submit files
 	self.submit=function(){
 
-		// if autosubmit, if done, remove
+		// if autosubmit, is done, remove
 		delete self.o.autosubmit;
 
 		// check if browser is supported
@@ -325,11 +325,16 @@ function xUploader(o) {
 		for (var i=0; i < self.o.files.length; i++)
 			self.data.files[i]={"start":0, "sending":0, "sent":false};
 
-		// run onstart callback, when file browsing closed
-		if (self.o.onstart) self.o.onstart(self, {"files":self.o.files});
+		// if i have files to send
+		if (self.data.files.length > 0) {
 
-		// start to send
-		self.send();
+			// run onstart callback, when file browsing closed
+			if (self.o.onstart) self.o.onstart(self, {"files":self.o.files});
+
+			// start to send
+			self.send();
+
+		}
 
 		// all ok
 		return true;
@@ -361,8 +366,8 @@ function xUploader(o) {
 	self.filesAdd=function(files, o){
 		var o=o||{};
 		var names={};
-		var scaling=(self.o.scale && window.ImageResizer);
-		if (self.o.scale && !window.ImageResizer) console.warn("No ImageResizer library loaded for image scaling.");
+		var scaling=(self.o.scale && window.xImage);
+		if (self.o.scale && !window.xImage) console.warn("No xImage library loaded for image scaling.");
 		var async_scaling=false;
 		if (!self.o.repeat)
 			for (var i=0; i < self.o.files.length; i++)
@@ -375,47 +380,59 @@ function xUploader(o) {
 				if (scaling) {
 					if (self.o.onscale && !async_scaling) {
 						async_scaling=true;
-						self.o.onscale(self);
+						self.o.onscale(self, files);
 					}
-					(function(self, file, file_index){
-						// resize image with ImageResizer
-						ImageResizer.resizeImage(file, {
-							debug:            true,
-							//resize:           false,
-							//convertToJpg:     true,
-							//convertToJpgBgColor: "#FFFFFF"
-							renameFile:       false,
-							upscale:          false,
-							pngToJpg:         false,
-							sharpen:          (self.o.scale.s || 0.15),
-							maxWidth:         (self.o.scale.w || null),
-							maxHeight:        (self.o.scale.h || null),
-							jpgQuality:       (self.o.scale.q || 0.95),
-							returnFileObject: false
-						}, function(result){
-
-							result.name=file.name;
-							var result_file=new File([result], file.name, {type: result.type}); // return as file object
-
-							names[result_file.name]=true;
-							files[file_index]=result_file;
-							self.o.files.push(result_file);
-
-							var all_processed=true;
-							for (var n in names)
-								if (!names[n])
-									all_processed=false;
-
-							if (all_processed) {
-								o.added=files;
-								o.files=self.o.files;
-								if (self.o.onfiles) self.o.onfiles(self, o);
-								if (self.o.onscaled) self.o.onscaled(self, o);
-								if (o.callback) o.callback(o);
+					var checkProgress=function(){
+						var c=0;
+						for (var n in names)
+							if (!names[n])
+								c++;
+						return c;
+					}
+					var checkAllProcessed=function(name){
+						names[name]=true;
+						for (var n in names)
+							if (!names[n])
+								return false;
+						o.added=files;
+						o.files=self.o.files;
+						if (self.o.onscaled) self.o.onscaled(self, o);
+						if (self.o.onfiles) self.o.onfiles(self, o);
+						if (o.callback) o.callback(o);
+						return true;
+					}
+					var progressCount=checkProgress();
+					var xi=new xImage();
+					(function(self, xi, file, file_index){
+						xi.load({
+							"file":file,
+							"onerror":function(xi, ev){
+								console.error("ximage", xi.error());
+								checkAllProcessed(xi.file.name);
+							},
+							"onload":function(xi, image){
+								self.o.onscale(self, files, file, file_index, (progressCount > 0?(progressCount-checkProgress())/progressCount:1));
+								xi.scale({
+									"width":(self.o.scale.w || null),
+									"height":(self.o.scale.h || null),
+									"quality":(self.o.scale.q || null),
+									"sharpen":(self.o.scale.s || null),
+									"onblob":function(xi, blob) {
+										if (blob) {
+											console.log('scale.onblob', xi.width+"x"+xi.height, 'Tiempo:', xi.time, blob);
+											blob.name=xi.file.name;
+											var result_file=new File([blob], file.name, {type: blob.type}); // return as file object
+											files[file_index]=result_file;
+											self.o.files.push(result_file);
+										} else {
+											console.error(xi.error());
+										}
+										checkAllProcessed(xi.file.name);
+									}
+								});
 							}
-
 						});
-					})(self, files[i], i);
+					})(self, xi, files[i], i);
 				} else {
 					self.o.files.push(files[i]);
 				}
