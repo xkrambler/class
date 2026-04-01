@@ -131,11 +131,11 @@ function newElement(element, o) {
 	if (o) {
 		if (o.id) e.id=o.id;
 		if (o.class) e.className=o.class;
-		if (o.html) e.innerHTML=o.html;
-		if (o.type) e.type=o.type;
-		if (o.title) e.title=o.title;
-		if (o.style) e.style=o.style;
-		if (o.value) e.value=o.value;
+		if (typeof(o.html) != "undefined") e.innerHTML=o.html;
+		if (typeof(o.type) != "undefined") e.type=o.type;
+		if (typeof(o.title) != "undefined") e.title=o.title;
+		if (typeof(o.style) != "undefined") e.style=o.style;
+		if (typeof(o.value) != "undefined") e.value=o.value;
 		if (o.attributes)
 			for (var i in o.attributes)
 				if (o.attributes[i]!==null)
