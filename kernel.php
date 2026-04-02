@@ -38,7 +38,7 @@ class Kernel {
 
 	// register generic autoloader, base path as an option
 	static function autoload($base=null) {
-		spl_autoload_register(function($c){
+		spl_autoload_register(function($c) use ($base) {
 			if (!isset($base) || $base === null) $base=getcwd();
 			$f=$base.(substr($base, -1, 1) != "/"?"/":"").strtolower(str_replace('\\', '/', $c)).".php";
 			if (file_exists($f)) require_once($f);
