@@ -47,6 +47,8 @@ class x {
 	// load module/s css/js/php
 	static public function module($_module) {
 		global $css, $js;
+		if (!is_array($css)) $css=[];
+		if (!is_array($js)) $js=[];
 		$_modulec=0;
 		if (is_array($_module)) {
 			foreach ($_module as $_m) $_modulec+=self::module($_m);
