@@ -109,14 +109,20 @@
 .xform3_files {
 	position: relative;
 }
+.xform3_images_container,
 .xform3_files_container {
 	position: relative;
-	display: flex;
 	flex-wrap: wrap;
 	gap: 8px;
 	list-style-type: none;
 	margin: 0;
 	padding: 0;
+}
+.xform3_images_container {
+	display: flex;
+}
+.xform3_files_container {
+	display: block;
 }
 /* type=images */
 .xform3_files_item {
@@ -181,13 +187,17 @@
 	font-weight: bold;
 }
 .xform3_files_item_buttons {
+	opacity: 0.3;
+	transition: 0.2s all ease-in-out;
+}
+.xform3_files_item .xform3_files_item_buttons {
 	display: flex;
 	position: absolute;
 	top: 0;
 	right: 0;
-	opacity: 0;
-	transition: 0.2s all ease-in-out;
 }
+.xform3_files_file:focus .xform3_files_item_buttons,
+.xform3_files_file:hover .xform3_files_item_buttons,
 .xform3_files_item:focus .xform3_files_item_buttons,
 .xform3_files_item:hover .xform3_files_item_buttons {
 	opacity: 1;
@@ -233,9 +243,6 @@
 	transition: 0.2s all ease-in-out;
 }
 /* type=files */
-.xform3_files_file_upload_caption * {
-	vertical-align: baseline;
-}
 .xform3_files_file {
 	background: left top no-repeat;
 }
@@ -261,10 +268,12 @@ a.xform3_files_file_button {
 .xform3_files_file_button:hover {
 	opacity: 1;
 }
-.xform3_files_file_upload {
+.xform3_files_file_upload_button {
+	display: inline-block;
 	cursor: pointer;
+	dpadding: 4px 0;
 }
-.xform3_files_file_upload:hover {
+.xform3_files_file_upload_button:hover {
 	opacity: 0.7;
 }
 .xform3_files_item_image {

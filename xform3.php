@@ -1066,18 +1066,9 @@ class xForm3 {
 				.$f["extra"]."></div>"
 			;
 
-		case "image":
-			return "<div"
-				." id='".$id."'"
-				." class='".$class."'"
-				.($f["title"]?" title='".$this->entities($f["title"])."'":"")
-				.($f["tabindex"]?" tabindex='".$this->entities($f["tabindex"])."'":"")
-				.($styles?" style='".$styles."'":"")
-				.$f["extra"]."></div>"
-			;
-
 		case "file":
 		case "files":
+		case "image":
 		case "images":
 			return "<div"
 				." id='".$id."'"

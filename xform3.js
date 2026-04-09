@@ -656,6 +656,30 @@ function xForm3(o) {
 
 	};
 
+	// return if field is an image/images type
+	a.isImages=function(field){
+		var f=a.o.fields[field];
+		switch (f.type) {
+		case "image":
+		case "images":
+			return true;
+		}
+		return false;
+	};
+
+	// return if field is a file/files type
+	a.isFiles=function(field){
+		var f=a.o.fields[field];
+		switch (f.type) {
+		case "file":
+		case "files":
+		case "image":
+		case "images":
+			return true;
+		}
+		return false;
+	};
+
 	// files actions
 	a.files={
 
@@ -814,7 +838,12 @@ function xForm3(o) {
 				// name=file.psd type=image/vnd.adobe.photoshop error=0 size=999 caption=file.psd
 				div.className="xform3_files_file";
 				div.innerHTML=a.icon("file-o")+" <a class='xform3_files_file_name' href='"+a.files.fileURL(o.field, o.index)+"' target='_blank'>"+item.name+"</a> <span class='xform3_files_file_size'>("+bytesToString(item.size)+")</span> ";
-				div.appendChild(a.files.htmlFileButton({"type":"trash", "id":a.id(o.field), "index":o.index, "action":a.files.del, "title":"Borrar"}));
+
+				var buttons=document.createElement("span");
+				buttons.className="xform3_files_item_buttons";
+				buttons.appendChild(a.files.htmlFileButton({"type":"trash", "id":a.id(o.field), "index":o.index, "action":a.files.del, "title":"Borrar"}));
+
+				div.appendChild(buttons);
 				break;
 
 			}
@@ -862,7 +891,7 @@ function xForm3(o) {
 
 			// create list
 			a.data[field].container=document.createElement("div");
-			a.data[field].container.className="xform3_files_container";
+			a.data[field].container.className=(a.isImages(field)?"xform3_images_container":"xform3_files_container");
 
 			// add container to HTML field element
 			if (!gid(a.id(field))) {
@@ -903,7 +932,7 @@ function xForm3(o) {
 					var limit=a.files.getLimit(field);
 					div.className="xform3_files_file xform3_files_file_upload xform3_files_file_upload_link xform3_files_nosort";
 					var span=document.createElement("span");
-					span.className="a xform3_files_file_upload_caption";
+					span.className="xform3_files_file_upload_button";
 					span.setAttribute("data-id", a.id(field));
 					span.onclick=action_upload;
 					span.title=(limit == 1?"Subir archivo":"Subir archivos");
