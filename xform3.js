@@ -1,7 +1,7 @@
 // xForm3: form client class support, v3
 function xForm3(o) {
 	var a=this;
-	a.o=o||{};
+	a.o=array_copy(o||{});
 	a.data={};
 
 	// xForm3 declaration
