@@ -24,6 +24,7 @@ class xImage {
 
 	public $im=null;
 	protected $format=false;
+	protected $filename=false;
 
 	/**
 	 * Constructor.
@@ -197,7 +198,8 @@ class xImage {
 	}
 
 	// save in disk
-	function save($format=null, $filename, $quality=90) {
+	function save($format=null, $filename=null, $quality=90) {
+		if ($filename === null) return false;
 		$format=$this->formatActive($format);
 		switch ($format) {
 		case "jpg": return imagejpeg($this->im, $filename, $quality);
