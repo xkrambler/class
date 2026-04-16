@@ -477,7 +477,8 @@ class xForm3 {
 	function purge() {
 		if (is_array($this->fields))
 			foreach ($this->fields as $f=>$field)
-				$this->fields[$f]["value"]=$this->purgeFieldValue($f, $field["value"]);
+				if ($this->fieldHasValue($f))
+					$this->fields[$f]["value"]=$this->purgeFieldValue($f, $field["value"]);
 	}
 
 	// check if value purge is enabled in a field
