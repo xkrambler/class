@@ -38,9 +38,8 @@ function gidenabled(id, enabled) {
 function xforeach(a, f) {
 	var r, c=0;
 	if (typeof(a) == "object" && typeof(f) == "function") for (var i in a) {
-		r=f(a[i], i, c, a);
+		r=f(a[i], i, c++, a);
 		if (typeof(r) != "undefined") return r;
-		i++;
 	}
 	return null;
 }
