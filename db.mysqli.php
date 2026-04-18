@@ -413,7 +413,7 @@ class dbMySQLi extends dbbase {
 	// escape string to be used in query
 	function escape($s) {
 		if ($this->delayed && !($this->idcon > 0) && !$this->rconnect() || $this->idcon->connect_errno) return false;
-		return $this->idcon->real_escape_string($s);
+		return (string)$this->idcon->real_escape_string($s);
 	}
 
 	// check if a word is a keyword
