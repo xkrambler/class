@@ -1216,11 +1216,11 @@ function xForm3(o) {
 				"multiple":(a.files.getLimit(field) == 1?false:true)
 			}, function(uploader, r){
 				var files=uploader.files();
-				
-				//alert(adump(r.data.files));console.log(files);
-
+				//alert(adump(a.data[field].files));
+				//alert(adump(files));
+				//alert(adump(r.data.files));
 				xforeach(r.data.files, function(file, index){
-					if (!a.data[field].files[index]) {
+					if ((a.data[field].files[index] && a.data[field].files[index].deleted && !file.deleted) || !a.data[field].files[index]) {
 						a.data[field].files[index]=file;
 						a.files.add({
 							"field":field,
@@ -1228,16 +1228,6 @@ function xForm3(o) {
 						});
 					}
 				});
-				//a.files.refresh(field);
-
-				/*for (var i in files) {
-					var item=files[i];
-					if (!a.data[field].files) a.data[field].files=[];
-					var index=a.data[field].files.length;
-					var limit=a.files.getLimit(field);
-					if (limit && (index+1 > limit)) index=limit-1;
-					a.data[field].files[index]=item;
-				}*/
 			});
 		},
 
