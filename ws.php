@@ -279,7 +279,7 @@ class WS {
 
 	// dump error
 	function err($error) {
-		if (!is_array($error)) $error=["err"=>(string)$error];
+		if (!is_array($error)) $error=["err"=>$error];
 		if (($db=$error["err"]) instanceof dbbase) $error["err"]=$db->driver()." #".$db->errnum().": ".$db->error();
 		$this->out($error);
 	}
