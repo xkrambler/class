@@ -17,7 +17,10 @@ var xwidgets={
 		return id;
 	},
 
-	// tabs
+	/*
+		xwidgets.tabs (in development, undocumented)
+		Simple tabbed HTML content.
+	*/
 	tabs:function(o) {
 		var self=this;
 
@@ -31,13 +34,12 @@ var xwidgets={
 
 			for (i=0; i < self.o.tabs.length; i++) {
 				var tab=self.o.tabs[i];
-				var content=tab.body;
 				var active=(i == self.o.index);
 				var tab_hide=(!tab.tab.getAttribute("data-hide")?false:true);
 				classEnable(tab.tab, "tabs_active", active);
 				classEnable(tab.tab, "tabs_hide", tab_hide);
-				if (content) classEnable(content, "tabs_hide", (!active || tab_hide));
-				if (active) content.scrollTop="0px";
+				if (tab.body) classEnable(tab.body, "tabs_hide", (!active || tab_hide));
+				if (active) tab.body.scrollTop="0px";
 			}
 
 			if (self.o.index >= 0 && n != -1) {
@@ -220,7 +222,7 @@ var xwidgets={
 			var tabs=gid(self.o.id).getElementsByClassName("tab");
 
 			if (self.o.ul) self.o.ul.parentNode.removeChild(self.o.ul);
-			self.o.ul=newElement("ul", {"class":"tabs_tabs"})
+			self.o.ul=newElement("ul", {"class":"tabs_tabs"});
 
 			var autoheight=false, autoparent=false;
 			for (var i=0; i < tabs.length; i++) {
@@ -275,7 +277,7 @@ var xwidgets={
 
 			self.o=o;
 			self.o.tab=null;
-			self.o.content=null;
+			if (!isset(self.o.fast)) self.o.fast=true;
 			if (self.o.save === true) self.o.save=location.href+"#"+gid(self.o.id).id;
 
 			if (!self.o.id) return self.error("id required not specified");
