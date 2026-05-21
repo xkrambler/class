@@ -326,15 +326,15 @@ function xUploader(o) {
 			self.data.files[i]={"start":0, "sending":0, "sent":false};
 
 		// if i have files to send
-		if (self.data.files.length > 0) {
+		//if (self.data.files.length > 0) {
 
-			// run onstart callback, when file browsing closed
-			if (self.o.onstart) self.o.onstart(self, {"files":self.o.files});
+		// run onstart callback, when file browsing closed
+		if (self.o.onstart) self.o.onstart(self, {"files":self.o.files});
 
-			// start to send
-			self.send();
+		// start to send
+		self.send();
 
-		}
+		//}
 
 		// all ok
 		return true;
