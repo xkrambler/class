@@ -1006,9 +1006,12 @@ function autogrowcheck(id) {
 // textarea autogrowing
 function autogrow(id) {
 	var e=gid(id);
-	e.style.resize='none';
-	e.addEventListener("input", function(){ autogrowcheck(id); });
-	autogrowcheck(id);
+	if (e) {
+		e.style.resize='none';
+		e.addEventListener("input", function(){ autogrowcheck(id); });
+		autogrowcheck(id);
+		if (window.requestAnimationFrame) window.requestAnimationFrame(function(){ autogrowcheck(id); });
+	}
 }
 
 // trim all spaces from start and end of an string
