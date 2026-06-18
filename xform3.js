@@ -473,8 +473,8 @@ function xForm3(o) {
 			"multiple":false,
 			"scale":o.field.scale,
 			"onscale":function(uploader, files, file, index, progress){
-				if (file) gidset("xform3_upload_scaling", "Escalando... "+Math.round(progress*100)+"%");
-				else newwait("<div class='xform3_upload_scaling' id='xform3_upload_scaling'>Escalando...</div>");
+				if (file) gidset("xform3_upload_progress", "Escalando... "+Math.round(progress*100)+"%");
+				else newwait("<div class='xform3_upload_scaling' id='xform3_upload_progress'>Escalando...</div>");
 			},
 			"onscaled":function(uploader, files){
 				newwait_close();
@@ -496,7 +496,7 @@ function xForm3(o) {
 				gidset("xform3_upload_progress",""
 					+"<div class='xform3_upload_caption'><span>Subiendo "
 						+(r.index?r.index+" de ":"")
-						+r.count+" fichero"+(r.count==1?"":"s")+"...</span> "+sizeString(r.total)+"</div>"
+						+r.count+" fichero"+(r.count == 1?"":"s")+"...</span> "+sizeString(r.total)+"</div>"
 					+"<div class='xform3_upload_files' id='xform3_upload_scroll'>"
 						+"<ul class='xform3_upload_files_list'>"+h+"</ul>"
 					+"</div>"
@@ -505,7 +505,7 @@ function xForm3(o) {
 						+"<div class='xform3_upload_progress_text'>"+r.progress+"%</div>"
 					+"</div>"
 				);
-				if (index) gid("xform3_upload_scroll").scrollTop=gid("xform3_upload_file_"+index).offsetTop;
+				if (index && gid("xform3_upload_scroll") && gid("xform3_upload_file_"+index)) gid("xform3_upload_scroll").scrollTop=gid("xform3_upload_file_"+index).offsetTop;
 			},
 			"oncomplete":function(uploader, r){
 				newwait_close();
