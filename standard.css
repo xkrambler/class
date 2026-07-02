@@ -16,12 +16,12 @@ img { border: 0; vertical-align: middle; }
 hr { border: 0; height: 0; margin: 12px 0; padding: 0; }
 label { cursor: pointer; }
 p { margin: 12px 0; }
-h1 { font-size: 24px; margin: 12px 0; font-weight: normal; }
-h2 { font-size: 18px; margin: 12px 0; font-weight: normal; }
-h3 { font-size: 16px; margin: 12px 0; font-weight: normal; }
-h4 { font-size: 14px; margin: 12px 0; font-weight: normal; }
-h5 { font-size: 12px; margin: 12px 0; font-weight: normal; }
-h6 { font-size: 12px; margin: 12px 0; font-weight: normal; }
+h1 { font-size: 1.8em; margin: 12px 0; font-weight: normal; }
+h2 { font-size: 1.5em; margin: 12px 0; font-weight: normal; }
+h3 { font-size: 1.4em; margin: 12px 0; font-weight: normal; }
+h4 { font-size: 1.2em; margin: 12px 0; font-weight: normal; }
+h5 { font-size: 1.1em; margin: 12px 0; font-weight: normal; }
+h6 { font-size: 1em; margin: 12px 0; font-weight: normal; }
 .cmd { cursor: pointer; }
 .tdiv { border-collapse: collapse; }
 .tdiv td { padding: 0; }
