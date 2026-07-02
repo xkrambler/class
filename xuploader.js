@@ -291,6 +291,8 @@ function xUploader(o) {
 				// no more chunks or not chunked, upload completed
 				self.o.oncomplete(self, o);
 				if (!o.data.ok && self.o.onerror) self.o.onerror(self, o);
+				// reset files without send event .onfiles
+				self.reset(true);
 			}
 		}, false);
 		self.xhr.addEventListener("error", function(r){
@@ -325,16 +327,11 @@ function xUploader(o) {
 		for (var i=0; i < self.o.files.length; i++)
 			self.data.files[i]={"start":0, "sending":0, "sent":false};
 
-		// if i have files to send
-		//if (self.data.files.length > 0) {
-
 		// run onstart callback, when file browsing closed
 		if (self.o.onstart) self.o.onstart(self, {"files":self.o.files});
 
 		// start to send
 		self.send();
-
-		//}
 
 		// all ok
 		return true;
@@ -477,19 +474,19 @@ function xUploader(o) {
 	};
 
 	// get/set first file
-	self.file=function(file){
+	self.file=function(file, _noevents){
 		if (isset(file)) {
 			if (!self.o.files) self.o.files=[];
 			self.o.files[0]=file;
-			if (self.o.onfiles) self.o.onfiles(self, {"files":self.o.files});
+			if (self.o.onfiles && !_noevents) self.o.onfiles(self, {"files":self.o.files});
 		}
 		return (self.o.files && self.o.files[0]?self.o.files[0]:false);
 	};
 
 	// reset files
-	self.reset=function(){
+	self.reset=function(_noevents){
 		if (self.o.input) self.o.input.value="";
-		self.files([]);
+		self.files([], _noevents);
 	};
 
 	// get/set post data
