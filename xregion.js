@@ -579,6 +579,11 @@ var xRegion={
 			return c;
 		};
 
+		// get current canvas
+		a.getCanvas=function(){
+			return o.canvas;
+		};
+
 		// reset
 		a.reset=function(){
 
