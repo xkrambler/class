@@ -465,10 +465,10 @@ function xUploader(o) {
 	};
 
 	// get/set files
-	self.files=function(files){
+	self.files=function(files, _noevents){
 		if (isset(files)) {
 			self.o.files=files;
-			if (self.o.onfiles) self.o.onfiles(self, {"files":self.o.files});
+			if (self.o.onfiles && !_noevents) self.o.onfiles(self, {"files":self.o.files});
 		}
 		return self.o.files;
 	};
