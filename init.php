@@ -7,6 +7,15 @@ if (!defined("__DIR__")) define("__DIR__", dirname(__FILE__)); // PHP 5.2- compa
 // base class
 class x {
 
+	// register generic autoloader, base path as an option
+	static function autoload($base=null) {
+		spl_autoload_register(function($c) use ($base) {
+			if (!isset($base) || $base === null) $base=getcwd();
+			$f=$base.(substr($base, -1, 1) != "/"?"/":"").strtolower(str_replace('\\', '/', $c)).".php";
+			if (file_exists($f)) require_once($f);
+		});
+	}
+
 	// get/set page information
 	static public function page($k=null, $v=null) {
 		if (!isset($GLOBALS["page"])) $GLOBALS["page"]=array();
@@ -341,12 +350,25 @@ if ($_x=x::inc()) foreach ($_x as $_c) {
 	if (file_exists($_f.'.php')) x::isinc($_c, require_once($_f.'.php'));
 }
 
-// automatic instances
+// automatic instances (legacy)
 if (class_exists("Kernel")) {
 	$kernel=(isset($db) && $db?new Kernel($db):new Kernel());
 	if (class_exists("View")) $view=new View($kernel, (isset($base)?$base:null), (isset($skin)?$skin:null)); // deprecated
 }
 if (class_exists("Conf") && isset($db) && $db) $conf=new Conf(array("db"=>$db));
+
+// x autoloader
+if (function_exists("spl_autoload_register")) {
+	spl_autoload_register(function($c) {
+		global $css, $js;
+		if (substr((string)$c, 0, 2) == "x\\") {
+			$f="/x".strtolower(substr(str_replace('\\', '/', $c), 2));
+			if (file_exists(__DIR__.$f.".php")) require_once(__DIR__.$f.".php");
+			if (file_exists(__DIR__.$f.".css")) $css[$f.".css"]=false;
+			if (file_exists(__DIR__.$f.".js")) $js[$f.".js"]=false;
+		}
+	});
+}
 
 // dump variables for debug
 if (!function_exists("debug")) {
