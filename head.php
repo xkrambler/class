@@ -93,7 +93,7 @@ echo "<head>\n";
 if ($_v=x::page("content-type")) echo "\t".'<meta http-equiv="Content-Type" content="'.x::entities($_v).'" />'."\n";
 foreach ($_b=array("description", "generator", "keywords", "viewport", "theme-color") as $_n) if ($_v=x::page($_n)) $page["meta"][$_n]=$_v;
 if (is_array($page["meta"])) foreach ($page["meta"] as $_n=>$_v) if (is_string($_v)) echo "\t".'<meta name="'.x::entities($_n).'" content="'.x::entities($_v).'" />'."\n";
-if (isset($page["title"]) || isset($title)) echo "\t".'<title>'.x::entities((isset($title)?(string)$title.(isset($page["title"])?(($_v=$page["titlesep"])?$_v:" - "):"").$page["title"]:"")).'</title>'."\n";
+if (isset($page["title"]) || isset($title)) echo "\t".'<title>'.x::entities((isset($title) && strlen((string)$title)?(string)$title.(isset($page["title"])?(($_v=$page["titlesep"])?$_v:" - "):""):"").(isset($page["title"])?$page["title"]:"")).'</title>'."\n";
 if ($_v=x::page("base")) echo "\t".'<base href="'.$_v.'" />'."\n";
 if ($_b=x::page("favicon")) {
 	echo "\t".'<link rel="icon" type="image/x-icon" href="'.x::entities($_b).'" />'."\n";
