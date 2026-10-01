@@ -268,7 +268,7 @@ class xForm3 {
 	// check if a field has value
 	function fieldHasValue($field) {
 		if (!is_array($field)) $field=$this->fields[$field];
-		if (!array_key_exists("value", $field) && !$field["required"]) return false;
+		if (!is_array($field) || !array_key_exists("value", $field) && !$field["required"]) return false;
 		if ($field) switch ($field["type"]) {
 		case "":
 		case "files":
