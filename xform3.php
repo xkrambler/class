@@ -599,6 +599,12 @@ class xForm3 {
 						if ($files=$this->files($field)) foreach ($files as &$file) { if (!$file["deleted"]) $files_count++; } unset($file);
 						$check=($files_count?true:false);
 						break;
+					case "radio":
+						if (isset($f["options"])) {
+							$check=isset($f["options"][$v]);
+							break;
+						}
+						// no break
 					default:
 						$check=(strlen(trim((string)$v))?true:false);
 					}
