@@ -138,7 +138,8 @@ function xEditor(o) {
 			} else {
 				self.toolbox_container=document.createElement("div");
 				self.toolbox_container.style.position="relative";
-				self.editor.parentNode.insertBefore(self.toolbox_container, self.editor);
+				if (self.o.toolbar) document.body.appendChild(self.toolbox_container);
+				else self.editor.parentNode.insertBefore(self.toolbox_container, self.editor);
 				self.toolbox_container.appendChild(self.toolbox);
 			}
 		}
