@@ -944,6 +944,21 @@ function xForm3(o) {
 				a.data[field].container.appendChild(div);
 			}
 
+			// destroy previous sortable, if any (container is new, previous instance is invalid)
+			if (a.data[field].sortable) {
+				try {
+					switch (a.sortableLibrary()) {
+					case "sortablejs":
+						a.data[field].sortable.destroy();
+						break;
+					case "jqueryui":
+						a.data[field].sortable.sortable("destroy");
+						break;
+					}
+				} catch (e) {}
+				delete a.data[field].sortable;
+			}
+
 			// generate file listing
 			for (var index in a.data[field].files) {
 				var item=a.data[field].files[index];
