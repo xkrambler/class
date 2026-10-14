@@ -507,6 +507,6 @@ class xError {
 }
 
 // instance, if setup defined
-if ($error_setup) foreach ($error_setup as $_n=>$_s) {
+if (isset($error_setup) && is_array($error_setup)) foreach ($error_setup as $_n=>$_s) {
 	$$_n=new xError($_s);
 } unset($_n); unset($_s);
