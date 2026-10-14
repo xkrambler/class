@@ -9,13 +9,14 @@ require_once(__DIR__."/init.php");
 
 	Syntax:
 		$error=new xError([
-			"access"=>"data/access.log", // set access log
-			"errors"=>true, // set error log (true=same as access)
-			"generic"=>false, // show a generic error message
+			"access"=>"data/access.log", // set access log (default: false)
+			"errors"=>true, // set error log (true=same as access) (default: false)
+			"generic"=>false, // show a generic error message (default: false)
+			"log"=>true, // record into PHP error log (default: true)
 			"render"=>function($error, $err){ print_r($err); }, // custom renderer
-			"display"=>true, // display errors
-			"args"=>true, // visible arguments if true, not only types (false), or disabled (null)
-			"mail"=>[ // set mailing on errors
+			"display"=>true, // display errors (default: true)
+			"args"=>true, // visible arguments if true, not only types (false), or disabled (null) (default: null)
+			"mail"=>[ // set mailing on errors (default: unset)
 				"from"=>"from@email.com",
 				"to"=>"to@email.com",
 			],
@@ -102,6 +103,12 @@ class xError {
 
 		// php automatic compatibility support
 		$this->phpc=(isset($this->phpc) && $this->phpc?$this->phpc:(x::page("phpc")?x::page("phpc"):7));
+
+		// if no display set, true
+		if (!isset($this->display)) $this->display=true;
+
+		// if no log set, true
+		if (!isset($this->log)) $this->log=true;
 
 		// initialize variables
 		if (!isset($this->log_post_limit)) $this->log_post_limit=64*1024;
@@ -395,8 +402,12 @@ class xError {
 			"message"=>($this->generic === true?$this->_T("generic"):$this->generic),
 		];
 
-		// si no tengo versión de texto, preparar ahora
+		// if no text version, prepare
 		if (!$err["text"]) $err["text"]=strip_tags(nl2br($err["message"]));
+
+		// register in error log
+		$error_log="[".date("YmdHis")."] ".$err["title"].": ".$err["text"];
+		if ($this->log) error_log($error_log);
 
 		// AJAX
 		if ($GLOBALS["ajax"] && function_exists("ajax")) {
@@ -405,7 +416,7 @@ class xError {
 			ajax($r);
 		// CLI
 		} else if (!isset($_SERVER["HTTP_HOST"])) {
-			error_log("[".date("YmdHis")."] ".$err["title"].": ".$err["text"]);
+			if (!$this->log) error_log($error_log); // already registered
 		// HTML
 		} else {
 			?><!doctype html>
