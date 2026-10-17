@@ -128,6 +128,7 @@ class xError {
 			set_error_handler(function($type, $message, $file, $line, $context=[]){
 				if (in_array($type, $this->warnings)) {
 					if ($this->phpc < 8.4 && strpos($message, "Undefined variable") !== false) return; // ignore undefined variable for PHP 8.4+
+					if ($this->phpc < 8.4 && strpos($message, "Undefined array offset") !== false) return; // ignore undefined array offset for PHP 8.4+
 					if ($this->phpc < 8 && strpos($message, "Undefined array key") !== false) return; // ignore undefined array keys for PHP 8+
 					$this->error=[
 						"type"=>$type,
