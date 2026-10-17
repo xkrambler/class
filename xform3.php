@@ -682,6 +682,7 @@ class xForm3 {
 	// get JSON data for a field
 	function jsfield($field) {
 		$f=$this->fields[$field];
+		if (!is_array($f)) return [];
 		if ($this->value($field)) $f["value"]=true;
 		else unset($f["value"]);
 		unset($f["extra"]);
