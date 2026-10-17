@@ -213,8 +213,8 @@ class xImage {
 	function paste($i2, $x=0, $y=0, $forzar=false) {
 		if (!($im2=($i2 instanceof self?$i2->getHandler():$i2))) return false;
 		return ($forzar
-			?imagecopyresized($this->im, $im2, $x, $y, 0, 0, imagesx($this->im), imagesy($this->im), imagesx($im2), imagesy($im2))
-			:imagecopy($this->im, $im2, $x, $y, 0, 0, imagesx($im2), imagesy($im2))
+			?imagecopyresized($this->im, $im2, (int)$x, (int)$y, 0, 0, imagesx($this->im), imagesy($this->im), imagesx($im2), imagesy($im2))
+			:imagecopy($this->im, $im2, (int)$x, (int)$y, 0, 0, imagesx($im2), imagesy($im2))
 		);
 	}
 
@@ -222,7 +222,7 @@ class xImage {
 	function copy($i2, $x=0, $y=0) {
 		if (!($im2=($i2 instanceof self?$i2->getHandler():$i2))) return false;
 		$this->im=imagecreatetruecolor(imagesx($im2), imagesy($im2));
-		return imagecopy($this->im, $im2, $x, $y, 0, 0, imagesx($im2), imagesy($im2));
+		return imagecopy($this->im, $im2, (int)$x, (int)$y, 0, 0, imagesx($im2), imagesy($im2));
 	}
 
 	// add color to image
@@ -259,21 +259,21 @@ class xImage {
 		$p=$w/$h;
 		$x=0;
 		$y=0;
-		$nw=$maxwidth;
-		$nh=$maxwidth/$p;
+		$nw=(int)$maxwidth;
+		$nh=(int)$maxwidth/$p;
 		if ($nh > $maxheight) {
-			$nh=$maxheight;
+			$nh=(int)$maxheight;
 			$nw=round($maxheight*$p);
-			if (abs($nw-$maxwidth) <= 4) $nw=$maxwidth;
-			$x=($border?($maxwidth-$nw)/2:0);
+			if (abs($nw-$maxwidth) <= 4) $nw=(int)$maxwidth;
+			$x=(int)($border?($maxwidth-$nw)/2:0);
 		} else {
-			if (abs($nh-$maxheight) <= 4) $nh=$maxheight;
-			$y=($border?($maxheight-$nh)/2:0);
+			if (abs($nh-$maxheight) <= 4) $nh=(int)$maxheight;
+			$y=(int)($border?($maxheight-$nh)/2:0);
 		}
 		$nh=round($nh);
 		// create destination image
 		$imt=($border
-			?imagecreatetruecolor($maxwidth, $maxheight)
+			?imagecreatetruecolor((int)$maxwidth, (int)$maxheight)
 			:imagecreatetruecolor($nw, $nh)
 		);
 		imagesavealpha($imt, true);
@@ -296,8 +296,8 @@ class xImage {
 		}
 		if ($color) imagefilledrectangle($imt, 0, 0, $nw, $nh, $color);
 		// create new image with new scale
-		if ($resample) imagecopyresampled($imt, $this->im, $x, $y, 0, 0, $nw, $nh, $w, $h);
-		else imagecopyresized($imt, $this->im, $x, $y, 0, 0, $nw, $nh, $w, $h);
+		if ($resample) imagecopyresampled($imt, $this->im, (int)$x, (int)$y, 0, 0, $nw, $nh, $w, $h);
+		else imagecopyresized($imt, $this->im, (int)$x, (int)$y, 0, 0, $nw, $nh, $w, $h);
 		// destroy old and set new
 		imagedestroy($this->im);
 		$this->im=$imt;
