@@ -240,10 +240,10 @@ class xImage {
 	// resize image
 	function resize($width, $height, $resample=true) {
 		// create container
-		$imt=imagecreatetruecolor($width, $height);
+		$imt=imagecreatetruecolor((int)$width, (int)$height);
 		// create new image resized
-		if ($resample) imagecopyresampled($imt, $this->im, 0, 0, 0, 0, $width, $height, imagesx($this->im), imagesy($this->im));
-		else imagecopyresized($imt, $this->im, 0, 0, 0, 0, $width, $height, imagesx($this->im), imagesy($this->im));
+		if ($resample) imagecopyresampled($imt, $this->im, 0, 0, 0, 0, (int)$width, (int)$height, imagesx($this->im), imagesy($this->im));
+		else imagecopyresized($imt, $this->im, 0, 0, 0, 0, (int)$width, (int)$height, imagesx($this->im), imagesy($this->im));
 		// destroy old and return new
 		imagedestroy($this->im);
 		$this->im=$imt;
