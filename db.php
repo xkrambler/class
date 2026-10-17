@@ -334,17 +334,18 @@ abstract class dbbase {
 	// get date in ISO format
 	static function date($timestamp=null) {
 		if ($timestamp === null) $timestamp=time();
-		return date("Y-m-d", $timestamp);
+		return date("Y-m-d", (double)$timestamp);
 	}
 
 	// get date and time in ISO format
 	static function datetime($timestamp=null) {
 		if ($timestamp === null) $timestamp=time();
-		return date("Y-m-d H:i:s", $timestamp);
+		return date("Y-m-d H:i:s", (double)$timestamp);
 	}
 
 	// return complete or partial ISO date/date-time as an Spanish notation dd/mm/yyyy [hh:mm:ss]
 	static function spdate($sqldate) {
+		$sqldate=(string)$sqldate;
 		if (strlen($sqldate) == 19) return substr($sqldate, 8, 2)."/".substr($sqldate, 5, 2)."/".substr($sqldate, 0, 4)." ".substr($sqldate, 11);
 		if (strlen($sqldate) == 16) return substr($sqldate, 8, 2)."/".substr($sqldate, 5, 2)."/".substr($sqldate, 0, 4)." ".substr($sqldate, 11).":00";
 		if (strlen($sqldate) == 13) return substr($sqldate, 8, 2)."/".substr($sqldate, 5, 2)."/".substr($sqldate, 0, 4)." ".substr($sqldate, 11).":00:00";
@@ -354,6 +355,7 @@ abstract class dbbase {
 
 	// parses Spanish date-time notation to ISO date[time]
 	static function sqldate($spdate) {
+		$sqldate=(string)$sqldate;
 		if (strlen($spdate) < 10) return($spdate);
 		$t=substr($spdate, 11);
 		if (strlen($t) == 2) $t.=":00:00";
