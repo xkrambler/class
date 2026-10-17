@@ -7,7 +7,7 @@ abstract class TPV {
 		"test"=>false,
 		"table"=>"tpv",
 	);
-	protected $setup=false;
+	protected $setup=[];
 	protected $lasterr=false;
 	protected $operation=false;
 
