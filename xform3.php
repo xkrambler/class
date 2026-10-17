@@ -381,7 +381,7 @@ class xForm3 {
 							}
 							if (!isset($f["size"]) && isset($f["data"])) $f["size"]=strlen($f["data"]);
 							require_once(__DIR__."/mimetypes.php");
-							if (!$f["type"]) $f["type"]=($f["data"]?$this->mimeByMagic(substr(string)($f["data"], 0, 16)):Mimetypes::file($f["name"]));
+							if (!$f["type"]) $f["type"]=($f["data"]?$this->mimeByMagic(substr((string)$f["data"], 0, 16)):Mimetypes::file($f["name"]));
 							$this->fields[$field]["files"][$index]=$f;
 							$svalue["files"][$index]=$f;
 							$index++;
