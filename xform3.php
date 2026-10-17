@@ -375,13 +375,13 @@ class xForm3 {
 							if (!$svalue_last["files"]) $svalue_store=true;
 							if ($f["file"]) {
 								if (!$f["name"]) $f["name"]=basename($f["file"]);
-								if (!$f["ext"] && (($j=strrpos($f["name"], ".")) !== false)) $f["ext"]=substr($f["name"], $j+1);
+								if (!$f["ext"] && (($j=strrpos($f["name"], ".")) !== false)) $f["ext"]=substr((string)$f["name"], $j+1);
 								if (!$f["type"]) $f["type"]=""; // asegurarse que el campo está creado
 								if (file_exists($f["file"])) $f["size"]=filesize($f["file"]);
 							}
 							if (!isset($f["size"]) && isset($f["data"])) $f["size"]=strlen($f["data"]);
 							require_once(__DIR__."/mimetypes.php");
-							if (!$f["type"]) $f["type"]=($f["data"]?$this->mimeByMagic(substr($f["data"], 0, 16)):Mimetypes::file($f["name"]));
+							if (!$f["type"]) $f["type"]=($f["data"]?$this->mimeByMagic(substr(string)($f["data"], 0, 16)):Mimetypes::file($f["name"]));
 							$this->fields[$field]["files"][$index]=$f;
 							$svalue["files"][$index]=$f;
 							$index++;
@@ -840,7 +840,7 @@ class xForm3 {
 				." name='".$name.":d'"
 				." class='".$class."'"
 				." type='date'"
-				." value='".$this->entities(substr($f["value"], 0, 10))."'"
+				." value='".$this->entities(substr((string)$f["value"], 0, 10))."'"
 				." maxlength='10'"
 				.($f["date:min"]?" min='".$f["date:min"]."'":"")
 				.($f["date:max"]?" max='".$f["date:max"]."'":"")
@@ -860,7 +860,7 @@ class xForm3 {
 				." name='".$name.":t'"
 				." class='".$class."'"
 				." type='time'"
-				." value='".$this->entities(substr($f["value"], 11, 5))."'"
+				." value='".$this->entities(substr((string)$f["value"], 11, 5))."'"
 				.($f["time:min"]?" min='".$f["time:min"]."'":"")
 				.($f["time:max"]?" max='".$f["time:max"]."'":"")
 				.($f["time:step"]?" step='".$f["time:step"]."'":"")
@@ -883,7 +883,7 @@ class xForm3 {
 				." name='".$name."'"
 				." class='".$class."'"
 				." type='".$f["type"]."'"
-				." value='".$this->entities(substr($f["value"], 0, $length))."'"
+				." value='".$this->entities(substr((string)$f["value"], 0, $length))."'"
 				." maxlength='".$length."'"
 				.($f["min"]?" min='".$f["min"]."'":"")
 				.($f["max"]?" max='".$f["max"]."'":"")
@@ -906,7 +906,7 @@ class xForm3 {
 				." name='".$name."'"
 				." class='".$class."'"
 				." type='".$f["type"]."'"
-				." value='".$this->entities(substr($f["value"], 0, $length))."'"
+				." value='".$this->entities(substr((string)$f["value"], 0, $length))."'"
 				." maxlength='".$length."'"
 				.($f["min"]?" min='".$f["min"]."'":"")
 				.($f["max"]?" max='".$f["max"]."'":"")
@@ -1230,7 +1230,7 @@ class xForm3 {
 					$index=($_REQUEST["index"]?intval($_REQUEST["index"]):0);
 					$file=$svalue["files"][$index];
 					// try to get mimetype
-					if (!$file["type"]) $file["type"]=$this->mimeByMagic(substr($file["data"], 0, 16));
+					if (!$file["type"]) $file["type"]=$this->mimeByMagic(substr((string)$file["data"], 0, 16));
 					// scale, if requested
 					if (($w=intval($_REQUEST["w"])) && ($h=intval($_REQUEST["h"])) && $file["type"]) {
 						$xi=$this->imageScale(array_merge(($f["scale"]?$f["scale"]:array()), array(
@@ -1331,7 +1331,7 @@ class xForm3 {
 							case "image":
 							case "images":
 								$xi=false;
-								if (($file["data"] && !$this->mimeByMagic(substr($file["data"], 0, 16))) || !($xi=$this->filexImage(array("file"=>$upload["tmp"]))) || !$xi->formatActive()) {
+								if (($file["data"] && !$this->mimeByMagic(substr((string)$file["data"], 0, 16))) || !($xi=$this->filexImage(array("file"=>$upload["tmp"]))) || !$xi->formatActive()) {
 									return $o["_warns"]($o, "La imagen ".$file["name"]." no tiene formato correcto.");
 								}
 								break;
