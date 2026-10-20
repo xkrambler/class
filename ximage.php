@@ -10,7 +10,7 @@
 		Pablo Rodríguez Rey (alias mr.xkr) mr -at- xkr -dot- es (http://mr.xkr.es/)
 
 	Modified by mr.xkr in Feb/2008 respect to class "Imagen" initially developed by Cucaracha.
-	6th version revised by mr.xkr Sep/2021.
+	7th version revised by mr.xkr Oct/2026.
 
 	Usage:
 		$xi=new xImage("file.jpg");
@@ -38,7 +38,7 @@ class xImage {
 	 * @param Mixed Second parameter as stated above
 	 */
 	function __construct($first=null, $second=null) {
-		if ($first) {
+		if (function_exists("imagecreatetruecolor") && $first) {
 			if ($second) {
 				$this->im=imagecreatetruecolor($first, $second);
 			} else {
@@ -54,7 +54,7 @@ class xImage {
 	// destructor
 	function __destruct() {
 		if ($this->im) {
-			@imagedestroy($this->im);
+			if (function_exists("imagedestroy")) @imagedestroy($this->im);
 			$this->im=null;
 		}
 	}
@@ -111,7 +111,7 @@ class xImage {
 
 	// get file format
 	static function getFileFormat($filename) {
-		if (!file_exists($filename)) return false;
+		if (!is_string($filename) || !file_exists($filename)) return false;
 		if ($f=(@fopen($filename, "r"))) {
 			$bytes=fread($f, 4);
 			fclose($f);
@@ -128,7 +128,7 @@ class xImage {
 
 	// return active format
 	function formatActive($format=null){
-		return ($format?$format:($this->format?$this->format:""));
+		return (string)($format?$format:($this->format?$this->format:""));
 	}
 
 	// create image from a string
@@ -211,6 +211,7 @@ class xImage {
 
 	// paste an image
 	function paste($i2, $x=0, $y=0, $forzar=false) {
+		if (!$this->im) return false;
 		if (!($im2=($i2 instanceof self?$i2->getHandler():$i2))) return false;
 		return ($forzar
 			?imagecopyresized($this->im, $im2, (int)$x, (int)$y, 0, 0, imagesx($this->im), imagesy($this->im), imagesx($im2), imagesy($im2))
@@ -220,6 +221,7 @@ class xImage {
 
 	// copy an image
 	function copy($i2, $x=0, $y=0) {
+		if (!$this->im) return false;
 		if (!($im2=($i2 instanceof self?$i2->getHandler():$i2))) return false;
 		$this->im=imagecreatetruecolor(imagesx($im2), imagesy($im2));
 		return imagecopy($this->im, $im2, (int)$x, (int)$y, 0, 0, imagesx($im2), imagesy($im2));
@@ -227,18 +229,25 @@ class xImage {
 
 	// add color to image
 	function color($c=false) {
+		if (!$this->im) return false;
 		$c=$this->isColor($c);
 		return ($c?imagecolorallocate($this->im, $c[0], $c[1], $c[2]):false);
 	}
 
 	// fill image with a color
 	function fill($color=array(0, 0, 0)) {
+		if (!$this->im) return false;
 		$c=$this->color($color);
 		return ($c?imagefilledrectangle($this->im, 0, 0, imagesx($this->im), imagesy($this->im), ($c?$c:0)):false);
 	}
 
 	// resize image
 	function resize($width, $height, $resample=true) {
+		if (!$this->im) return false;
+		// ensure parameters
+		$width=(int)$width;
+		$height=(int)$height;
+		$resample=(bool)$resample;
 		// create container
 		$imt=imagecreatetruecolor((int)$width, (int)$height);
 		// create new image resized
@@ -253,6 +262,13 @@ class xImage {
 
 	// scale image
 	function scale($maxwidth, $maxheight, $border=false, $resample=true, $background=false) {
+		if (!$this->im) return false;
+		// ensure parameters
+		$maxwidth=(int)$maxwidth;
+		$maxheight=(int)$maxheight;
+		$border=(bool)$border;
+		$resample=(bool)$resample;
+		$background=(bool)$background;
 		// calculate new proportions
 		$w=imagesx($this->im);
 		$h=imagesy($this->im);
@@ -307,11 +323,13 @@ class xImage {
 
 	// flip image
 	function flip($mode) {
+		if (!$this->im) return false;
 		return imageflip($this->im, $mode);
 	}
 
 	// rotate image
 	function rotate($a, $c=false) {
+		if (!$this->im) return false;
 		$c=$this->color($c);
 		$this->im=imagerotate($this->im, $a, ($c?$c:0));
 		return $this->im;
