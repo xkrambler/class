@@ -2,7 +2,7 @@
 
 /*
 
-	PHP Class to access ORACLE databases v0.3b, by Pablo Rodríguez Rey
+	PHP Class to access ORACLE databases v0.3b, by Pablo RodrÃ­guez Rey
 	http://mr.xkr.es ~ mr-at-xkr-dot-es
 	Under GPLv2 license (https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
 
@@ -28,7 +28,7 @@ class dbORACLE extends dbbase {
 	// real connect to server
 	function rconnect() {
 		$oci_connect=(!isset($this->setup["persistent"]) || $this->setup["persistent"]?"oci_pconnect":"oci_connect");
-		if (!function_exists($oci_connect)) die("ERROR: La librería dbOracle no iniciada: Función ".$oci_connect." inexistente.");
+		if (!function_exists($oci_connect)) die("ERROR: La librerÃ­a dbOracle no iniciada: FunciÃ³n ".$oci_connect." inexistente.");
 		if (!$this->setup["connection_string"]) {
 			// check if port is specified in host
 			$i=strpos($this->setup["host"], ":");
