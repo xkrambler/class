@@ -537,7 +537,7 @@ class PayPal {
 				CURLOPT_POSTFIELDS=>"grant_type=client_credentials",
 			]);
 			if (!($out=curl_exec($ch))) return $this->error("PayPal bearerRequest failed: ".curl_error($ch).'('.curl_errno($ch).')');
-			curl_close($ch);
+			if (PHP_VERSION_ID < 80500) curl_close($ch);
 
 			// decode bearer
 			if (!($json=json_decode($out, true))) return $this->error("PayPal bearerRequest JSON parse error");

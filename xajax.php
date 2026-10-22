@@ -72,7 +72,7 @@ function ws($url, $fields=null, $options=[]) {
 		$rinfo=curl_getinfo($ch);
 		$rinfo["content"]=$r;
 	}
-	curl_close($ch);
+	if (PHP_VERSION_ID < 80500) curl_close($ch);
 	return (isset($rinfo)?$rinfo:$r);
 }
 

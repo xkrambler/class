@@ -123,7 +123,7 @@ class xStripe {
 		}*/
 
 		// close CURL connection
-		curl_close($ch);
+		if (PHP_VERSION_ID < 80500) curl_close($ch);
 
 		// return response as array
 		return json_decode($this->response, true);

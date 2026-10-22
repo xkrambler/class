@@ -320,7 +320,7 @@ class TPVSERMEPA extends TPV {
 		));
 		$this->cancel_result=curl_exec($ch);
 		//echo "<h2>Resultado</h2>".x::entities($this->cancel_result); debug(curl_getinfo($ch));
-		curl_close($ch);
+		if (PHP_VERSION_ID < 80500) curl_close($ch);
 
 		// decodificar JSON inicial
 		if (!($cr=json_decode($this->cancel_result, true))) return $this->error("cancelOperation: Error desconocido, salida RAW: ".$this->cancel_result);

@@ -171,7 +171,7 @@ class xTelegram {
 		curl_setopt_array($ch, $opt);
 		$r=curl_exec($ch);
 		$this->curl=curl_getinfo($ch);
-		curl_close($ch);
+		if (PHP_VERSION_ID < 80500) curl_close($ch);
 		return $r;
 	}
 
