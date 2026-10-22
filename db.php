@@ -334,13 +334,13 @@ abstract class dbbase {
 	// get date in ISO format
 	static function date($timestamp=null) {
 		if ($timestamp === null) $timestamp=time();
-		return date("Y-m-d", (double)$timestamp);
+		return date("Y-m-d", (float)$timestamp);
 	}
 
 	// get date and time in ISO format
 	static function datetime($timestamp=null) {
 		if ($timestamp === null) $timestamp=time();
-		return date("Y-m-d H:i:s", (double)$timestamp);
+		return date("Y-m-d H:i:s", (float)$timestamp);
 	}
 
 	// return complete or partial ISO date/date-time as an Spanish notation dd/mm/yyyy [hh:mm:ss]
