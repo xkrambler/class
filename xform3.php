@@ -638,7 +638,7 @@ class xForm3 {
 				}
 				// check length interval
 				if ($f["minlength"] && $f["maxlength"] && (
-					($f["minlength"] > strlen($v)) || ($f["maxlength"] < strlen($v))
+					($f["minlength"] > strlen((string)$v)) || ($f["maxlength"] < strlen((string)$v))
 				)) {
 					$this->errorsFieldAdd($field, $prefix."Debe tener ".($f["minlength"] == $f["maxlength"]
 						?($f["minlength"] == 1?"1 caracter.":$f["minlength"]." caracteres.")
@@ -646,18 +646,18 @@ class xForm3 {
 					), "nlength");
 				} else {
 					// check minimum length
-					if ($f["minlength"] && $f["minlength"] > strlen($v)) $this->errorsFieldAdd($field, $prefix."Debe tener un mínimo de ".$f["minlength"]." caracteres.", "minlength");
+					if ($f["minlength"] && $f["minlength"] > strlen((string)$v)) $this->errorsFieldAdd($field, $prefix."Debe tener un mínimo de ".$f["minlength"]." caracteres.", "minlength");
 					// check maximum length
-					if ($f["maxlength"] && $f["maxlength"] < strlen($v)) $this->errorsFieldAdd($field, $prefix."Debe tener un máximo de ".$f["maxlength"]." caracteres.", "minlength");
+					if ($f["maxlength"] && $f["maxlength"] < strlen((string)$v)) $this->errorsFieldAdd($field, $prefix."Debe tener un máximo de ".$f["maxlength"]." caracteres.", "minlength");
 				}
 				// check number in interval
 				if (isset($f["min"]) && isset($f["max"]) && ($f["min"] > doubleval($v) || $f["max"] < doubleval($v))) {
 					$this->errorsFieldAdd($field, $prefix."Debe debe estar en el intervalo ".$f["min"]." y ".$f["max"].".", "minmax");
 				} else {
 					// check minimum number
-					if (isset($f["min"]) && $f["min"] > doubleval($v)) $this->errorsFieldAdd($field, $prefix."Debe ser como mínimo ".$f["min"].".", "min");
+					if (isset($f["min"]) && $f["min"] > doubleval((string)$v)) $this->errorsFieldAdd($field, $prefix."Debe ser como mínimo ".$f["min"].".", "min");
 					// check maximum number
-					if (isset($f["max"]) && $f["max"] < doubleval($v)) $this->errorsFieldAdd($field, $prefix."Debe ser como máximo ".$f["max"].".", "max");
+					if (isset($f["max"]) && $f["max"] < doubleval((string)$v)) $this->errorsFieldAdd($field, $prefix."Debe ser como máximo ".$f["max"].".", "max");
 				}
 			}
 		}
