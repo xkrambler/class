@@ -149,7 +149,7 @@ class WebSocketClient {
 	}
 
 	// set blocking
-	function blocking(bool $blocking=null) {
+	function blocking($blocking=null) {
 		if ($blocking !== null) $this->blocking=$blocking;
 		return $this->blocking;
 	}

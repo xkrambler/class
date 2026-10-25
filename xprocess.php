@@ -42,7 +42,7 @@ class Process {
 
 	// get/set options
 	function get() { return $this->o; }
-	function set(array $o=null) { if (is_array($o)) foreach ($o as $k=>$v) $this->o[$k]=$v; return $this->o; }
+	function set($o) { if (is_array($o)) foreach ($o as $k=>$v) $this->o[$k]=$v; return $this->o; }
 
 	// parse command/arguments
 	function parse($o) {

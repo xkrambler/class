@@ -10,5 +10,5 @@ class xData {
 	function __isset(string $k) { return isset($this->o[$k]); }
 	function defaults() { return $this->defaults; }
 	function get() { return $this->o; }
-	function set(array $o) { if (is_array($o)) foreach ($o as $k=>$v) $this->o[$k]=$v; return $this->o; }
+	function set($o) { if (is_array($o)) foreach ($o as $k=>$v) $this->o[$k]=$v; return $this->o; }
 }

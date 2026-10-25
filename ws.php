@@ -272,7 +272,7 @@ class WS {
 	}
 
 	// dump database error
-	function dberr(dbbase $db=null) {
+	function dberr($db=null) {
 		if ($db === null && isset($this->db)) $db=$this->db;
 		$this->err($db instanceof dbbase?$db:"Database error");
 	}
