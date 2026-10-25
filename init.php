@@ -329,7 +329,7 @@ if ($_e=x::page("error_reporting")) error_reporting($_e);
 if (is_string(x::page("sessionname"))) {
 	session_set_cookie_params(0, '/; samesite=Lax', '');
 	if ($_x=x::page("sessionname")) session_name($_x);
-	if (isset($_REQUEST["sessionid"]) && preg_match('/^[-,a-zA-Z0-9]{1,128}$/', (string)$_REQUEST["sessionid"])) session_id($_REQUEST["sessionid"]);
+	if (($_x=x::page("sessionid")) && isset($_x) && preg_match('/^[-,a-zA-Z0-9]{1,128}$/', (string)$_x)) session_id($_x);
 	session_start();
 }
 
