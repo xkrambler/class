@@ -412,7 +412,7 @@ class xError {
 		if ($this->log) error_log($error_log);
 
 		// AJAX
-		if ($GLOBALS["ajax"] && function_exists("ajax")) {
+		if (isset($GLOBALS["ajax"]) && function_exists("ajax")) {
 			$r=["err"=>$err["title"].": ".$err["text"]];
 			if (isset($err["code"])) $r["code"]=$err["code"];
 			ajax($r);
