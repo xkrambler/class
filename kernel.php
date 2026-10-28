@@ -473,7 +473,7 @@ class Kernel {
 
 	// default HTML entities conversion to UTF-8 with double and single quotes
 	static function entities($s) {
-		return htmlentities($s, ENT_QUOTES, "UTF-8");
+		return htmlentities((string)$s, ENT_QUOTES, "UTF-8");
 	}
 
 	// sanitize input values, trimming outer spaces and HTML tags
@@ -485,7 +485,7 @@ class Kernel {
 					$a[$i]=self::sanitize($v);
 			return $a;
 		} else {
-			return ($value === null || $value === true || $value === false?$value:trim(strip_tags($value)));
+			return ($value === null || $value === true || $value === false?(string)$value:trim(strip_tags((string)$value)));
 		}
 	}
 
