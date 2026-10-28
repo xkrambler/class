@@ -103,12 +103,14 @@ class xSearchSQLfromText {
 
 	function sql() {
 		$sql="";
-		$busqueda=explode(" ", $this->search);
-		foreach ($busqueda as $i=>$w) {
-			$sql.=($sql?" AND ":"")."(";
-			foreach ($this->fields as $i=>$f)
-				$sql.=($i?" OR ":"").$this->fieldsql($f)." LIKE '".$this->valuesql((substr_count($w, "%")?$w:"%".str_replace("_", "\\_", $w)."%"), $f)."'";
-			$sql.=")";
+		if (isset($this->search) && is_string($this->search)) {
+			$busqueda=explode(" ", $this->search);
+			foreach ($busqueda as $i=>$w) {
+				$sql.=($sql?" AND ":"")."(";
+				foreach ($this->fields as $i=>$f)
+					$sql.=($i?" OR ":"").$this->fieldsql($f)." LIKE '".$this->valuesql((substr_count($w, "%")?$w:"%".str_replace("_", "\\_", $w)."%"), $f)."'";
+				$sql.=")";
+			}
 		}
 		return $sql;
 	}
