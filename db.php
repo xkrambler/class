@@ -52,6 +52,9 @@
 
 */
 
+// UTF-8 compatibility helpers
+require_once(dirname(__FILE__)."/utf8.php");
+
 // constants
 define("DB_ERR_NONE",     0);
 define("DB_ERR_CONNECT",  1);
