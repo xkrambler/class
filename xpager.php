@@ -31,6 +31,8 @@ class xPager {
 	public $end;
 	public $single;
 	public $limit;
+	public $pagenum;
+	public $pagestart;
 
 	// constructor
 	function __construct($o=array()) {
