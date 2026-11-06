@@ -118,7 +118,7 @@ class dbAccess extends dbbase {
 		if (!$a) return $a;
 		$b=Array();
 		foreach ($a as $i=>$v)
-			$b[$i]=utf8_encode($v);
+			$b[$i]=utf8_encode_compat($v);
 		return $b;
 	}
 

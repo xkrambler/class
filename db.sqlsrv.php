@@ -188,7 +188,7 @@ class dbSQLSRV extends dbbase {
 	// devuelve el último mensaje de error producido en el servidor
 	function error() {
 		$errors=sqlsrv_errors();
-		return ($this->real_error?$this->real_error:utf8_encode($errors[0]["message"]));
+		return ($this->real_error?$this->real_error:utf8_encode_compat($errors[0]["message"]));
 	}
 	
 }

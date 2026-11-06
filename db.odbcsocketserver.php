@@ -81,13 +81,13 @@ class dbOdbcSocketServer extends dbbase {
 		// Si falla la conexión al servidor, rellenamos las variables de error
 		if (!$this->idquery[$querynum]){
 			$this->real_errnum = $errno;
-			$this->real_error = utf8_encode($errstr);
+			$this->real_error = utf8_encode_compat($errstr);
 			return false;
 		}else{
 			// En ODBC las contraseñas con el carácter ';' dan problemas. Avisamos al usuario para que no se rompa la cabeza intentando saber qué ocurre.
 			if(strpos($this->setup["pass"],";")!==false){
 				$this->real_errnum = -1;
-				$this->real_error = utf8_encode("Database user's password must not contain a semicolon.");
+				$this->real_error = utf8_encode_compat("Database user's password must not contain a semicolon.");
 				return false;
 			}
 			// Construir el XML de la petición al servidor
@@ -131,7 +131,7 @@ class dbOdbcSocketServer extends dbbase {
 			// Si la respuesta del servidor no ha sido "success", extraemos el texto del error
 			// <?xml version="1.0"? ><result state="failure"><error>Texto del error</error></result>
 			$this->real_errnum = -1;
-			$this->real_error = utf8_encode(strval($ob->error));
+			$this->real_error = utf8_encode_compat(strval($ob->error));
 			return false;
 		}
 		
@@ -164,7 +164,7 @@ class dbOdbcSocketServer extends dbbase {
 		if (!$a) return $a;
 		$b=Array();
 		foreach ($a as $i=>$v)
-			$b[$i]=utf8_encode($v);
+			$b[$i]=utf8_encode_compat($v);
 		return $b;
 	}
 
