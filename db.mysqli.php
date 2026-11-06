@@ -74,6 +74,8 @@ class dbMySQLi extends dbbase {
 			$this->real_error="ERROR: MySQL improved library not installed, mysqli() class does not exist.";
 			return false;
 		}
+		// restore PHP <8.1 legacy error handling (return false instead of throwing)
+		if (function_exists("mysqli_report")) @mysqli_report(MYSQLI_REPORT_OFF);
 		if ($this->resource && is_object($this->resource)) {
 			$this->idcon=$this->resource;
 			$this->db=$this->database();
@@ -170,7 +172,13 @@ class dbMySQLi extends dbbase {
 	// do a ping check
 	function ping() {
 		if (!$this->idcon || $this->idcon->connect_errno) return false;
-		return @$this->idcon->ping();
+		// mysqli::ping() está deprecado desde PHP 8.4
+		if (PHP_VERSION_ID < 80400) return @$this->idcon->ping();
+		try {
+			return (@$this->idcon->query("SELECT 1") !== false);
+		} catch (\Throwable $e) {
+			return false;
+		}
 	}
 
 	// get information about last query
