@@ -358,7 +358,7 @@ abstract class dbbase {
 
 	// parses Spanish date-time notation to ISO date[time]
 	static function sqldate($spdate) {
-		$sqldate=(string)$sqldate;
+		$spdate=(string)$spdate;
 		if (strlen($spdate) < 10) return($spdate);
 		$t=substr($spdate, 11);
 		if (strlen($t) == 2) $t.=":00:00";
@@ -368,6 +368,7 @@ abstract class dbbase {
 
 	// returns age between one date (timestamp/ISO) and other or current date (timestamp)
 	static function sqlage($sqldate, $dateref=null) {
+		$sqldate=(string)$sqldate;
 		if ($dateref === null) $dateref=time();
 		list($Y, $m, $d)=(is_numeric($sqldate)?array(date("Y", $sqldate), date("m", $sqldate), date("d", $sqldate)):explode("-", substr($sqldate, 0, 10)));
 		return ((date('m', $dateref)-$m) >0 || (date('m', $dateref)-$m) == 0 && (date('d', $dateref)-$d) >= 0) ? (date('Y', $dateref)-$Y) : ((date('Y', $dateref)-$Y) - 1);
@@ -375,6 +376,7 @@ abstract class dbbase {
 
 	// convert ISO date[+time] to UNIX timestamp
 	static function timestamp($sqldate) {
+		$sqldate=(string)$sqldate;
 		if (strlen($sqldate) == 10) {
 			$f=explode("-", $sqldate);
 			return mktime(0, 0, 0, $f[1], $f[2], $f[0]);
