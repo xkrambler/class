@@ -456,7 +456,7 @@ class xError {
 							<?php } ?>
 						</div>
 					<?php } ?>
-					<?php if ($err["sql"]) { ?>
+					<?php if (!empty($err["sql"])) { ?>
 						<pre class='_xerror_sql'><?=$err["sql"]?></pre>
 					<?php } ?>
 				</div>
