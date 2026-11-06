@@ -709,6 +709,7 @@ class Kernel {
 	// DEPRECATED: obtener todos los parámetros como array
 	function arrayFromQueryString($qs=null) {
 		if ($qs === null) $qs=$_SERVER["QUERY_STRING"];
+		$qs=(string)$qs;
 		$a=[];
 		if (substr($qs, 0, 1) == "?") $qs=substr($qs, 1);
 		parse_str($qs, $a);
