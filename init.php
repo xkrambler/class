@@ -2,6 +2,10 @@
 
 // basic setup
 error_reporting(E_ALL & ~E_NOTICE); // all but not notices
+
+// UTF-8 compatibility helpers (utf8_encode/utf8_decode are deprecated since PHP 8.2)
+require_once(dirname(__FILE__)."/utf8.php");
+
 if (!defined("__DIR__")) define("__DIR__", dirname(__FILE__)); // PHP 5.2- compatibility
 
 // base class
@@ -109,7 +113,7 @@ class x {
 	// get path
 	static public function path() {
 		$p=self::request();
-		if ($i=strpos($p, "?")) $p=substr($p, 0, $i);
+		if (isset($p) && ($i=strpos($p, "?"))) $p=substr($p, 0, $i);
 		return $p;
 	}
 
