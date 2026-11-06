@@ -68,6 +68,7 @@ foreach ($_e=array("css", "js") as $_i) {
 }
 
 // extra common data
+if (!is_array($data)) $data=array();
 if (!isset($data["me"]) && $page["me"]) $data["me"]=$page["me"];
 if (!isset($data["base"]) && $page["base"]) $data["base"]=$page["base"];
 if (!isset($data["uri"]) && ($_v=$_SERVER["REQUEST_URI"])) $data["uri"]=$_v;
