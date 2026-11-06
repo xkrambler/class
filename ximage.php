@@ -54,7 +54,7 @@ class xImage {
 	// destructor
 	function __destruct() {
 		if ($this->im) {
-			if (function_exists("imagedestroy")) @imagedestroy($this->im);
+			if (PHP_VERSION_ID < 80500 && function_exists("imagedestroy")) @imagedestroy($this->im);
 			$this->im=null;
 		}
 	}
@@ -254,7 +254,7 @@ class xImage {
 		if ($resample) imagecopyresampled($imt, $this->im, 0, 0, 0, 0, (int)$width, (int)$height, imagesx($this->im), imagesy($this->im));
 		else imagecopyresized($imt, $this->im, 0, 0, 0, 0, (int)$width, (int)$height, imagesx($this->im), imagesy($this->im));
 		// destroy old and return new
-		imagedestroy($this->im);
+		if (PHP_VERSION_ID < 80500) imagedestroy($this->im);
 		$this->im=$imt;
 		// all ok
 		return true;
@@ -315,7 +315,7 @@ class xImage {
 		if ($resample) imagecopyresampled($imt, $this->im, (int)$x, (int)$y, 0, 0, $nw, $nh, $w, $h);
 		else imagecopyresized($imt, $this->im, (int)$x, (int)$y, 0, 0, $nw, $nh, $w, $h);
 		// destroy old and set new
-		imagedestroy($this->im);
+		if (PHP_VERSION_ID < 80500) imagedestroy($this->im);
 		$this->im=$imt;
 		// done
 		return $this->im;

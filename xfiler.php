@@ -22,7 +22,7 @@
 		switch ($ajax) {
 		case "filer:capture":
 			$filer=$_REQUEST["filer"];
-			$path=utf8_decode($_REQUEST["path"]);
+			$path=utf8_decode_compat($_REQUEST["path"]);
 			if (strpos($path,"..")!==false) die("Acceso denegado a ruta.");
 			if (substr($path,0,1)=="/") die("Acceso denegado a ruta.");
 			$filename=$_REQUEST["file"];
@@ -43,10 +43,10 @@
 		
 		case "filer:newfolder":
 			$filer=$adata["filer"];
-			$path=utf8_decode($adata["path"]);
+			$path=utf8_decode_compat($adata["path"]);
 			if (strpos($path,"..")!==false) ajax(Array("err"=>"Acceso denegado a ruta."));
 			if (substr($path,0,1)=="/") ajax(Array("err"=>"Acceso denegado a ruta."));
-			$folder=utf8_decode($adata["folder"]);
+			$folder=utf8_decode_compat($adata["folder"]);
 			if (strpos($folder,"..")!==false || strpos($folder,"/")!==false) ajax(Array("err"=>"Nombre de carpeta incorrecto"));
 			$o=$dirs[$filer];
 			if ($o["upload"]) {
@@ -66,12 +66,12 @@
 
 		case "filer:delete":
 			$filer=$adata["filer"];
-			$path=utf8_decode($adata["path"]);
+			$path=utf8_decode_compat($adata["path"]);
 			if (strpos($path,"..")!==false) ajax(Array("err"=>"Acceso denegado a ruta."));
 			if (substr($path,0,1)=="/") ajax(Array("err"=>"Acceso denegado a ruta."));
 			if (!$adata["items"]) ajax(Array("err"=>"No ha indicado ningún elemento a borrar."));
 			foreach ($adata["items"] as $item) {
-				$filename=trim(utf8_decode($item));
+				$filename=trim(utf8_decode_compat($item));
 				if (!$filename) ajax(Array("err"=>"Se debe especificar una carpeta/archivo."));
 				if (strpos($filename,"..")!==false || strpos($filename,"/")!==false) ajax(Array("err"=>"Nombre de fichero incorrecto"));
 				$o=$dirs[$filer];
@@ -105,12 +105,12 @@
 						}
 						if (!(@rmdir($rpath.$filename))) {
 							$lasterr=error_get_last();
-							ajax(Array("err"=>"Error borrando la carpeta ".utf8_encode($rpath.$filename).": ".$lasterr["message"]));
+							ajax(Array("err"=>"Error borrando la carpeta ".utf8_encode_compat($rpath.$filename).": ".$lasterr["message"]));
 						}
 					} else {
 						if (!(@unlink($rpath.$filename))) {
 							$lasterr=error_get_last();
-							ajax(Array("err"=>"Error borrando el archivo ".utf8_encode($filename).": ".$lasterr["message"]));
+							ajax(Array("err"=>"Error borrando el archivo ".utf8_encode_compat($filename).": ".$lasterr["message"]));
 						}
 					}
 				} else {
@@ -121,12 +121,12 @@
 
 		case "filer:upload":
 			$filer=$_REQUEST["filer"];
-			$path=utf8_decode($_REQUEST["path"]);
+			$path=utf8_decode_compat($_REQUEST["path"]);
 			if (strpos($path,"..")!==false) die("Access forbidden.");
 			if (substr($path,0,1)=="/") die("Location forbidden.");
 			$o=$dirs[$filer];
 			if ($o["upload"]) {
-				$name=utf8_decode(str_replace("'","_",str_replace("\"","_",basename($_FILES["file"]["name"]))));
+				$name=utf8_decode_compat(str_replace("'","_",str_replace("\"","_",basename($_FILES["file"]["name"]))));
 				$size=filesize($_FILES["file"]["tmp_name"]);
 				$rpath=null;
 				if ($o["upload"]===true) $o["upload"]=Array("");
@@ -139,8 +139,8 @@
 				if ($rpath===null) {
 					?><html><head><script>
 						parent.filer.uploaded({
-							"file":"<?=utf8_encode($name)?>",
-							"path":"<?=utf8_encode($path)?>",
+							"file":"<?=utf8_encode_compat($name)?>",
+							"path":"<?=utf8_encode_compat($path)?>",
 							"ok":false
 						});
 					</script></head>
@@ -151,8 +151,8 @@
 					move_uploaded_file($_FILES["file"]["tmp_name"],$rpath.$name);
 					?><html><head><script>
 						parent.filer.uploaded({
-							"path":"<?=utf8_encode($path)?>",
-							"file":"<?=utf8_encode($name)?>",
+							"path":"<?=utf8_encode_compat($path)?>",
+							"file":"<?=utf8_encode_compat($name)?>",
 							"size":"<?=$size?>",
 							"sizet":"<?=$view->bytesToString($size)?>",
 							"ok":true
@@ -168,7 +168,7 @@
 		
 		case "filer:uploader":
 			$filer=$_REQUEST["filer"];
-			$path=utf8_decode($_REQUEST["path"]);
+			$path=utf8_decode_compat($_REQUEST["path"]);
 			if (strpos($path,"..")!==false) die("Access forbidden.");
 			if (substr($path,0,1)=="/") die("Location forbidden.");
 			$o=$dirs[$filer];
@@ -200,7 +200,7 @@
 			<body>
 				<form id='fileform' method='post' enctype="multipart/form-data">
 					<input type='hidden' name='ajax' value='filer:upload' />
-					<input type='hidden' id='path' name='path' value='<?=utf8_encode($path)?>' />
+					<input type='hidden' id='path' name='path' value='<?=utf8_encode_compat($path)?>' />
 					<input type='hidden' name='filer' value='<?=$filer?>' />
 					<input id='file' name='file' type='file' />
 				</form>
@@ -215,8 +215,8 @@
 			
 			// filtrar parámetros y obtener opciones
 			$o=$dirs[$adata["filer"]];
-			$raiz=utf8_decode($o["root"]);
-			$path=trim(utf8_decode($adata["path"]));
+			$raiz=utf8_decode_compat($o["root"]);
+			$path=trim(utf8_decode_compat($adata["path"]));
 			$ext=($adata["ext"]?$adata["ext"]:"");
 			if (strpos($path,"..")!==false) ajax(Array("err"=>"Access forbidden."));
 			if (substr($path,0,1)=="/") ajax(Array("err"=>"Location forbidden."));
@@ -257,7 +257,7 @@
 							."&w=128"
 							."&h=96"
 							."&filer=".urlencode($adata["filer"])
-							."&path=".urlencode(utf8_encode($path))
+							."&path=".urlencode(utf8_encode_compat($path))
 							."&file=".urlencode($e);
 						break;
 					default:
@@ -269,7 +269,7 @@
 					$all[($isdir?"dirs":"files")][$i++]=Array(
 						"imagen"=>$imagen,
 						"ico"=>$ico,
-						"file"=>utf8_encode($e),
+						"file"=>utf8_encode_compat($e),
 						"path"=>$raiz,
 						"dir"=>$isdir,
 						"size"=>$size,
@@ -294,8 +294,8 @@
 			
 			// devolver AJAX
 			ajax(Array(
-				"root"=>utf8_encode($raiz),
-				"path"=>utf8_encode($path),
+				"root"=>utf8_encode_compat($raiz),
+				"path"=>utf8_encode_compat($path),
 				"dir"=>$directorio,
 				"count"=>count($directorio),
 				"exts"=>$o["ext"],

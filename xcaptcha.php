@@ -174,7 +174,7 @@ class xCaptcha {
 	protected function imageAllocate() {
 
 		// deallocate last image
-		if (!empty($this->im)) imagedestroy($this->im);
+		if (PHP_VERSION_ID < 80500 && !empty($this->im)) imagedestroy($this->im);
 
 		// create image
 		$this->im=imagecreatetruecolor($this->width*$this->scale, $this->height*$this->scale);
@@ -328,7 +328,7 @@ class xCaptcha {
 	protected function reduceImage() {
 		$imResampled=imagecreatetruecolor($this->width, $this->height);
 		imagecopyresampled($imResampled, $this->im, 0, 0, 0, 0, $this->width, $this->height, (int)$this->width*$this->scale, (int)$this->height*$this->scale);
-		imagedestroy($this->im);
+		if (PHP_VERSION_ID < 80500) imagedestroy($this->im);
 		$this->im=$imResampled;
 	}
 
