@@ -145,7 +145,7 @@
 						});
 					</script></head>
 					<body>Error de acceso</body>
-					</html><?
+					</html><?php
 					exit;
 				} else {
 					move_uploaded_file($_FILES["file"]["tmp_name"],$rpath.$name);
@@ -159,7 +159,7 @@
 						});
 					</script></head>
 					<body>Subido correctamente</body>
-					</html><?
+					</html><?php
 				}
 			} else {
 				die("En esta carpeta no se puede escribir.");
@@ -205,7 +205,7 @@
 					<input id='file' name='file' type='file' />
 				</form>
 			</body>
-			</html><?
+			</html><?php
 			exit;
 		
 		case "filer:newfolder":

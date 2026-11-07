@@ -6,8 +6,6 @@ error_reporting(E_ALL & ~E_NOTICE); // all but not notices
 // UTF-8 compatibility helpers (utf8_encode/utf8_decode are deprecated since PHP 8.2)
 require_once(dirname(__FILE__)."/utf8.php");
 
-if (!defined("__DIR__")) define("__DIR__", dirname(__FILE__)); // PHP 5.2- compatibility
-
 // base class
 class x {
 
@@ -302,9 +300,6 @@ if (!function_exists("perror")) {
 
 // PHP compatibility
 if (intval(x::page("phpc")) < 8 && defined("PHP_VERSION_ID") && PHP_VERSION_ID >= 80000) error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
-
-// check basic setup
-if ((bool)ini_get('register_globals')) perror("Security: register_globals must be disabled to continue.");
 
 // forced variables
 $me=x::self();

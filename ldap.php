@@ -53,7 +53,7 @@ class LDAP {
 		}
 
 		// conectar al servidor LDAP
-		$this->ds=(@ldap_connect($this->setup["host"],($this->setup["port"]?$this->setup["port"]:389)));
+		$this->ds=(@ldap_connect("ldap://".$this->setup["host"].":".($this->setup["port"]?$this->setup["port"]:389)));
 		if (!$this->ds) {
 			$this->err=LDAP_ERR_HOST;
 			$this->isconnected=false;

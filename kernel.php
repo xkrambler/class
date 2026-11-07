@@ -27,7 +27,7 @@ class Kernel {
 
 	// remove magic quotes, if needed
 	static function removeMagicQuotes($v) {
-		return (ini_get("magic_quotes_gpc")?stripslashes($v):$v);
+		return $v; // magic quotes were removed in PHP 5.4
 	}
 
 	// get/set database
@@ -669,7 +669,7 @@ class Kernel {
 	// DEPRECATED: returns only the keys that exists by name
 	static function arrayGet($data, $keys) {
 		$newdata=array();
-		if ($this->isHash($keys)) {
+		if (self::isHash($keys)) {
 			foreach ($keys as $k=>$v)
 				$newdata[$k]=$data[$k];
 		} else {

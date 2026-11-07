@@ -97,7 +97,7 @@ class View {
 	 */
 	function hiddenFields($fields) {
 		foreach ($fields as $name=>$value)
-			echo '<input type="hidden" name="'.$name.'" value="'.htmlspecialchars($value).'" />'."\n";
+			echo '<input type="hidden" name="'.$name.'" value="'.htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401, "UTF-8").'" />'."\n";
 	}
 	
 	/**

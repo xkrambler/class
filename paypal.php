@@ -22,7 +22,7 @@
 		function set($o=Array()) { if ($o) foreach ($o as $n=>$v) $this->o[$n]=$v; }
 		function db($v=null) { if ($v!==null) $this->db=$v; return $this->db; }
 
-		function entities($v) { return htmlentities($v,null,"UTF-8"); }
+		function entities($v) { return htmlentities($v, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401, "UTF-8"); }
 
 		// get/set tabla de trabajo
 		function table($table=null) {
@@ -93,7 +93,7 @@
 		function err() {
 			?><h1>PayPal Error</h1>
 			<p><b><?=($this->pperror?$this->pperror:"Error no definido.")?></b></p>
-			<p>Proceso detenido por seguridad.</p><?
+			<p>Proceso detenido por seguridad.</p><?php
 			exit;
 		}
 

@@ -255,7 +255,7 @@ class WS {
 							array_to_xml($v, $label);
 						} else {
 							if (is_array($array) && is_int($k)) $k="item";
-							$xml->addChild($k, htmlspecialchars($v));
+							$xml->addChild($k, htmlspecialchars($v, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401, "UTF-8"));
 						}
 					}
 				}
