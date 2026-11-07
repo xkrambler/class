@@ -400,8 +400,8 @@ class Kernel {
 				$c=0;
 				foreach ($row as $n=>$v) {
 					$rd=(!strlen($d) || $numeric && is_numeric($v)?"":$d);
-					if (!strlen($d)) $v=str_replace($s, $escape.$s, $v);
-					echo ($c++?$s:"").$rd.(strlen($d)?str_replace($d, $escape.$d, $v):$v).$rd;
+					if (!strlen($d)) $v=str_replace($s, $escape.$s, (string)$v);
+					echo ($c++?$s:"").$rd.(strlen($d)?str_replace($d, $escape.$d, (string)$v):$v).$rd;
 				}
 				echo $eol;
 			}
