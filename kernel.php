@@ -180,7 +180,7 @@ class Kernel {
 		}
 		$body.="--{$mime_boundary_alt}--\r\n\r\n";
 		if ($o["attachments"]) foreach ($o["attachments"] as $a) {
-			$name=basename($a["name"]);
+			$name=basename((string)($a["name"] ?? ""));
 			if ($a["file"]) {
 				if (!($a["data"]=file_get_contents($a["file"]))) return false;
 				if (!$name) $name=basename($a["file"]);
