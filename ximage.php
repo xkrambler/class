@@ -86,6 +86,7 @@ class xImage {
 
 	// get format by magic bytes
 	static function getFormatByMagic($bytes) {
+		if (!is_string($bytes) || $bytes === "") return false;
 		if (substr($bytes, 0, 3) == "\xFF\xD8\xFF") return "jpg";
 		else if (substr($bytes, 0, 3) == "GIF") return "gif";
 		else if (substr($bytes, 1, 3) == "PNG") return "png";
@@ -133,10 +134,12 @@ class xImage {
 
 	// create image from a string
 	function fromString($s) {
-		if ($imt=(@imagecreatefromstring($s))) $this->im=$imt;
-		$this->format=$this->getFormatByMagic($s);
+		$format=$this->getFormatByMagic($s);
+		if (!($imt=(@imagecreatefromstring($s)))) return false;
+		$this->im=$imt;
+		$this->format=$format;
 		@imagesavealpha($this->im, true);
-		return ($imt?true:false);
+		return true;
 	}
 
 	// return image as a string
@@ -187,6 +190,7 @@ class xImage {
 
 	// output image
 	function output($format=null, $quality=90, $withmime=true) {
+		if (!$this->im) return false;
 		$format=$this->formatActive($format);
 		if ($withmime) $this->OutMime($format);
 		switch ($format) {
@@ -199,7 +203,7 @@ class xImage {
 
 	// save in disk
 	function save($format=null, $filename=null, $quality=90) {
-		if ($filename === null) return false;
+		if (!$this->im || $filename === null) return false;
 		$format=$this->formatActive($format);
 		switch ($format) {
 		case "jpg": return imagejpeg($this->im, $filename, $quality);
