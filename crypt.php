@@ -1,8 +1,12 @@
 <?php
 
 /*
-	Cryptography helper class 0.2c
+	Cryptography helper class 0.3
 	Abstraction to MCrypt/OpenSSL libraries.
+
+	New tokens are encrypted with the configured algorithm (AES-256-CBC is
+	recommended) and prefixed with $marker, so legacy tokens (Blowfish,
+	AES-128...) can still be detected and decrypted.
 */
 class Crypt {
 
@@ -14,7 +18,13 @@ class Crypt {
 	public $key="";
 	public $openssl;
 	public $unpadding=true;
+	public $legacy=["blowfish", "aes-128"];
+	public $marker="~v2~";
+	protected $iv_seed="";
+	protected $cipher_methods=null;
 	protected $error=false;
+	protected static $blowfish_loaded=false;
+	protected static $blowfish_autoload=false;
 
 	// init
 	function __construct($o=array()) {
@@ -28,15 +38,19 @@ class Crypt {
 		if (isset($o["mode"]))      $this->mode=$o["mode"];
 		if (isset($o["key"]))       $this->key=$o["key"];
 		if (isset($o["unpadding"])) $this->unpadding=$o["unpadding"];
-		if (isset($o["iv"]))        $this->iv=$o["iv"];
+		if (isset($o["iv"]))        $this->iv_seed=$o["iv"];
+		if (isset($o["legacy"]))    $this->legacy=(is_array($o["legacy"])?$o["legacy"]:[$o["legacy"]]);
+		if (isset($o["marker"]))    $this->marker=$o["marker"];
 		$this->algorithm=(isset($o["algorithm"])?$o["algorithm"]:($this->algorithm?$this->algorithm:($this->openssl?"aes-128":"blowfish")));
 		if ($this->openssl && !function_exists("openssl_open")) return $this->error("OpenSSL module not available.");
 		else if (!$this->openssl && !function_exists("mcrypt_cbc")) return $this->error("MCrypt module not available.");
 		// get IV size
 		$this->iv_size=($this->openssl
-			?openssl_cipher_iv_length($this->realAlgorithm()."-".$this->mode)
+			?openssl_cipher_iv_length($this->ciphersuite())
 			:mcrypt_get_iv_size($this->algorithm, $this->mode)
 		);
+		if ($this->iv_size === false || $this->iv_size < 0)
+			return $this->error("Cannot initiate cipher: ".$this->ciphersuite());
 		// generate IV
 		$this->iv=(isset($o["iv"])
 			?str_pad("", $this->iv_size, substr($o["iv"], 0, $this->iv_size))
@@ -47,18 +61,29 @@ class Crypt {
 	}
 
 	// get real algorithm depending on ciphering library
-	function realAlgorithm() {
+	function realAlgorithm($algorithm=null) {
+		if ($algorithm === null) $algorithm=$this->algorithm;
 		if ($this->openssl) {
-			switch ($this->algorithm) {
+			switch ($algorithm) {
 			case "blowfish": return "bf";
 			}
 		}
-		return $this->algorithm;
+		return $algorithm;
+	}
+
+	// get OpenSSL cipher suite (algorithm-mode), accepting "aes-256-cbc" too
+	function ciphersuite($algorithm=null) {
+		$algorithm=$this->realAlgorithm($algorithm);
+		if (preg_match('/-(?:cbc|ecb|cfb|ofb|ctr|gcm|ccm|xts|wrap)$/i', $algorithm))
+			return strtolower($algorithm);
+		return strtolower($algorithm."-".$this->mode);
 	}
 
 	// return supported algorithms
 	function algorithms() {
-		return ($this->openssl?openssl_get_cipher_methods():mcrypt_list_algorithms());
+		if (!$this->openssl) return mcrypt_list_algorithms();
+		if ($this->cipher_methods === null) $this->cipher_methods=openssl_get_cipher_methods();
+		return $this->cipher_methods;
 	}
 
 	// get/set key
@@ -79,7 +104,7 @@ class Crypt {
 		if (!strlen($this->mode)) return $this->error("Cannot cipher: no mode.");
 		if (!strlen($this->key)) return $this->error("Cannot cipher: no key.");
 		$r=($this->openssl
-			?openssl_encrypt($data, $this->realAlgorithm()."-".$this->mode, $this->key, $this->openssl, $this->iv)
+			?openssl_encrypt($data, $this->ciphersuite(), $this->key, $this->openssl, $this->iv)
 			:mcrypt_encrypt($this->realAlgorithm(), $this->key, $data, $this->mode, $this->iv)
 		);
 		return ($r === false?$this->error("Cannot cipher: ".($this->openssl?openssl_error_string():(($v=error_get_last()) && isset($v["message"])?$v["message"]:"Unknown"))):$r);
@@ -91,20 +116,110 @@ class Crypt {
 		if (!strlen($this->mode)) return $this->error("Cannot cipher: no mode.");
 		if (!strlen($this->key)) return $this->error("Cannot cipher: no key.");
 		$r=($this->openssl
-			?openssl_decrypt($data, $this->realAlgorithm()."-".$this->mode, $this->key, $this->openssl, $this->iv)
+			?openssl_decrypt($data, $this->ciphersuite(), $this->key, $this->openssl, $this->iv)
 			:$this->unpadding(mcrypt_decrypt($this->realAlgorithm(), $this->key, $data, $this->mode, $this->iv))
 		);
 		return ($r === false?$this->error("Cannot decipher: ".($this->openssl?openssl_error_string():(($v=error_get_last()) && isset($v["message"])?$v["message"]:"Unknown"))):$r);
 	}
 
-	// encrypt
+	// encrypt (new token format)
 	function encrypt($data) {
-		return $this->filterEncode($this->filter, $this->cipher($data));
+		$r=$this->cipher($data);
+		if ($r === false) return false;
+		return $this->marker.$this->filterEncode($this->filter, $r);
 	}
 
-	// decrypt
-	function decrypt($data) {
-		return $this->decipher($this->filterDecode($this->filter, $data));
+	// decrypt (new and legacy token formats)
+	function decrypt($data, $validator=null) {
+		if (!is_string($data) || !strlen($data)) return false;
+		$m=(string)$this->marker;
+		if ($m !== "" && strncmp($data, $m, strlen($m)) === 0) {
+			$r=$this->decipher($this->filterDecode($this->filter, substr($data, strlen($m))));
+			return ($r === false || ($validator && !$validator($r)) ? false : $r);
+		}
+		$raw=$this->filterDecode($this->filter, $data);
+		if (!is_string($raw) || !strlen($raw)) return false;
+		foreach ((array)$this->legacy as $algorithm) {
+			if (!strlen($algorithm)) continue;
+			$r=$this->legacyDecipher($algorithm, $raw);
+			if ($r === false) continue;
+			if ($validator === null || $validator($r)) return $r;
+		}
+		return false;
+	}
+
+	// decrypt JSON (tries legacy algorithms until valid JSON is found)
+	function decryptJSON($data) {
+		return $this->decrypt($data, function($s) {
+			return is_array(json_decode($s, true));
+		});
+	}
+
+	// decipher data using a legacy algorithm
+	function legacyDecipher($algorithm, $data) {
+		if (in_array($algorithm, ["blowfish", "bf", "bf-cbc"], true)) {
+			$iv=$this->legacyIv("blowfish");
+			if ($this->openssl && in_array("bf-".$this->mode, $this->algorithms(), true)) {
+				$r=@openssl_decrypt($data, "bf-".$this->mode, $this->key, $this->openssl, $iv);
+				if ($r !== false) return $r;
+			}
+			if (!$this->loadBlowfish()) return false;
+			try {
+				$bf=new \phpseclib3\Crypt\Blowfish($this->mode);
+				$bf->setKey($this->key);
+				$bf->setIV($iv);
+				$r=$bf->decrypt($data);
+				return ($r === false?false:$r);
+			} catch (\Throwable $e) {
+				return false;
+			}
+		}
+		if (!$this->openssl) return false;
+		$cipher=$this->ciphersuite($algorithm);
+		if (!in_array($cipher, $this->algorithms(), true)) return false;
+		$r=@openssl_decrypt($data, $cipher, $this->key, $this->openssl, $this->legacyIv($algorithm));
+		return ($r === false?false:$r);
+	}
+
+	// get IV for a legacy algorithm
+	function legacyIv($algorithm) {
+		$size=($this->openssl
+			?openssl_cipher_iv_length($this->ciphersuite($algorithm))
+			:($algorithm === "blowfish" ? 8 : 16)
+		);
+		if ($size === false || $size < 0) $size=($algorithm === "blowfish" ? 8 : 16);
+		return str_pad("", $size, substr((string)$this->iv_seed, 0, $size));
+	}
+
+	// load phpseclib's pure-PHP Blowfish (for OpenSSL 3 without bf-cbc)
+	function loadBlowfish() {
+		if (self::$blowfish_loaded || class_exists("phpseclib3\\Crypt\\Blowfish")) return self::$blowfish_loaded=true;
+		$bases=[
+			__DIR__."/../vendor/phpseclib/phpseclib/phpseclib/",
+			__DIR__."/../fac/vendor/phpseclib/phpseclib/phpseclib/",
+		];
+		if (!self::$blowfish_autoload) {
+			self::$blowfish_autoload=true;
+			spl_autoload_register(function($class) use ($bases) {
+				$prefix="phpseclib3\\";
+				if (strncmp($class, $prefix, strlen($prefix)) !== 0) return;
+				$file=str_replace("\\", "/", substr($class, strlen($prefix))).".php";
+				foreach ($bases as $base) {
+					if (is_file($base.$file)) {
+						require_once($base.$file);
+						return;
+					}
+				}
+			});
+		}
+		if (class_exists("phpseclib3\\Crypt\\Blowfish")) return self::$blowfish_loaded=true;
+		foreach ([__DIR__."/../vendor/autoload.php", __DIR__."/../fac/vendor/autoload.php"] as $autoload) {
+			if (is_file($autoload)) {
+				require_once($autoload);
+				if (class_exists("phpseclib3\\Crypt\\Blowfish")) return self::$blowfish_loaded=true;
+			}
+		}
+		return self::$blowfish_loaded=false;
 	}
 
 	// remove padding
