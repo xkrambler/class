@@ -226,7 +226,7 @@ abstract class dbbase {
 					." rows(<b>".$t["rows"]."</b>)"
 					." lastid(<b>".$t["lastid"]."</b>):"
 					."</div>";
-			echo "<pre class='sqltimesdump_box sqltimesdump_sql'>".htmlentities($t["sql"])."</pre>";
+			echo "<pre class='sqltimesdump_box sqltimesdump_sql'>".htmlentities($t["sql"], ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401, "UTF-8")."</pre>";
 			if ($t["explain"]) {
 				echo "<div class='sqltimesdump_explain'>";
 				echo "<table class='sqltimesdump_explaintable'><tr>";
@@ -643,7 +643,7 @@ abstract class dbbase {
 				."<div style='font-size: 13px; position: relative; top: -23px; border: 1px solid #F00; padding: 0px 9px 0px 9px;'>\n"
 				."<p><b>Descripción:</b><br><span style='color: green;'>".$error."</span></p>\n"
 				.($info?"<p><b>Información:</b><br><span style='color: green;'>".(is_array($info)?serialize($info):$info)."</span></p>":"")."\n"
-				.($this->lastquery($querynum)?"<p><b>Consulta(".$querynum."):</b><br><pre style='font-size:0.9em;color: blue;'>".htmlentities($this->lastquery($querynum))."</pre></p>":"")."\n"
+				.($this->lastquery($querynum)?"<p><b>Consulta(".$querynum."):</b><br><pre style='font-size:0.9em;color: blue;'>".htmlentities($this->lastquery($querynum), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401, "UTF-8")."</pre></p>":"")."\n"
 				."</div>\n"
 				."</div>\n"
 		;

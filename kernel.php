@@ -27,7 +27,7 @@ class Kernel {
 
 	// remove magic quotes, if needed
 	static function removeMagicQuotes($v) {
-		return (ini_get("magic_quotes_gpc")?stripslashes($v):$v);
+		return $v; // magic quotes were removed in PHP 5.4
 	}
 
 	// get/set database
@@ -180,7 +180,7 @@ class Kernel {
 		}
 		$body.="--{$mime_boundary_alt}--\r\n\r\n";
 		if ($o["attachments"]) foreach ($o["attachments"] as $a) {
-			$name=basename($a["name"]);
+			$name=basename((string)($a["name"] ?? ""));
 			if ($a["file"]) {
 				if (!($a["data"]=file_get_contents($a["file"]))) return false;
 				if (!$name) $name=basename($a["file"]);
@@ -669,7 +669,7 @@ class Kernel {
 	// DEPRECATED: returns only the keys that exists by name
 	static function arrayGet($data, $keys) {
 		$newdata=array();
-		if ($this->isHash($keys)) {
+		if (self::isHash($keys)) {
 			foreach ($keys as $k=>$v)
 				$newdata[$k]=$data[$k];
 		} else {

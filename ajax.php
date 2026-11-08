@@ -37,7 +37,7 @@
 // convertir datos de un parámetro enviado con la librería AJAX
 function aget($data=null) {
 	if ($data === "") return "";
-	$json=(doubleval(phpversion()) < 5.4 && get_magic_quotes_gpc()?stripslashes($data):$data);
+	$json=$data; // magic quotes were removed in PHP 5.4
 	return json_decode($json, true); // siempre es UTF-8
 }
 

@@ -152,7 +152,7 @@ abstract class TPV {
 
 	// get HTML entities
 	function entities($v) {
-		return (method_exists("x", "entities")?x::entities($v):htmlentities($v, null, 'UTF-8'));
+		return (method_exists("x", "entities")?x::entities($v):htmlentities($v, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401, 'UTF-8'));
 	}
 
 	// get HTML Form
@@ -193,7 +193,7 @@ abstract class TPV {
 					}
 				</script>
 			</body>
-		</html><?
+		</html><?php
 		exit;
 	}
 

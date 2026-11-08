@@ -169,7 +169,7 @@ class xForm3 {
 
 	// filter HTML entities
 	function entities($value) {
-		return (method_exists("x", "entities")?x::entities($value):htmlentities($value, null, "UTF-8"));
+		return (method_exists("x", "entities")?x::entities($value):htmlentities($value, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401, "UTF-8"));
 	}
 
 	// convert typical CSS styles to one line style attribute
