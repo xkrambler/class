@@ -80,7 +80,7 @@ if ($_b=x::page("content-type")) {
 		$_i=trim($_i);
 		if (strtolower(substr($_i, 0, 8)) === "charset=") $page["charset"]=strtoupper(substr($_i, 8));
 	}
-	header("Content-Type: ".$page["content-type"]);
+	if (!headers_sent()) header("Content-Type: ".$page["content-type"]);
 }
 $page["charset"]=x::charset();
 
