@@ -408,8 +408,8 @@ class xForm3 {
 				}
 				// fill always with data
 				if (is_array($files)) foreach ($files as $i=>&$f) {
-					if (is_array($f) && file_exists($f["file"]) && !isset($f["data"]))
-						$f["data"]=file_get_contents($f["file"]);
+					if (is_array($f) && $f["file"]??false && file_exists((string)$f["file"]) && !isset($f["data"]))
+						$f["data"]=file_get_contents((string)$f["file"]);
 				} unset($f);
 				// otherwise, return field files
 				return $files;
