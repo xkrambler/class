@@ -11,6 +11,7 @@ require_once(__DIR__."/init.php");
 		$error=new xError([
 			"access"=>"data/access.log", // set access log (default: false)
 			"errors"=>true, // set error log (true=same as access) (default: false)
+			"register"=>E_ALL & ~E_NOTICE, // error types registered in error log, regardless of error_reporting (default: current error reporting)
 			"generic"=>false, // show a generic error message (default: false)
 			"log"=>true, // record into PHP error log (default: true)
 			"render"=>function($error, $err){ print_r($err); }, // custom renderer
@@ -69,6 +70,9 @@ class xError {
 	// constructor
 	function __construct(array $setup=[]) {
 
+		// keep pending errors produced before the handler was installed (e.g. compile-time errors)
+		$pending=error_get_last();
+
 		// setup
 		$this->setup($setup);
 
@@ -76,7 +80,10 @@ class xError {
 		if (isset($_SERVER["HTTP_HOST"])) $this->log($this->accessEntry());
 
 		// set current error reporting
-		$this->errorReporting(isset($this->reporting)?$this->reporting:error_reporting());
+		$this->reporting(isset($this->reporting)?$this->reporting:error_reporting());
+
+		// register pending errors produced before the error handler was installed (e.g. compile-time errors)
+		$this->registerLast($pending);
 
 		// set current perror instance
 		if (!self::$current) self::$current=$this;
@@ -121,15 +128,25 @@ class xError {
 		// by default, capture is activated
 		if (!isset($this->capture) || $this->capture) {
 
+			// normalize register flag (bool is allowed as a shortcut)
+			if (isset($this->register)) {
+				if ($this->register === true) $this->register=E_ALL;
+				else if ($this->register === false) $this->register=0;
+				else $this->register=intval($this->register);
+			}
+
 			// hide errors
 			$this->visible(false);
 
-			// capture non-critical warnings
+			// capture non-critical errors
 			set_error_handler(function($type, $message, $file, $line, $context=[]){
 				if (in_array($type, $this->warnings)) {
 					if ($this->phpc < 8.4 && strpos((string)($message ?? ""), "Undefined variable") !== false) return; // ignore undefined variable for PHP 8.4+
 					if ($this->phpc < 8.4 && strpos((string)($message ?? ""), "Trying to access array offset") !== false) return; // ignore undefined array offset for PHP 8.4+
 					if ($this->phpc < 8 && strpos((string)($message ?? ""), "Undefined array key") !== false) return; // ignore undefined array keys for PHP 8+
+				}
+				if (in_array($type, $this->warnings) || ($this->errors_path && isset($this->register))) {
+					if ($this->errors_path && isset($this->register) && $this->silenced($type)) return;
 					$this->error=[
 						"type"=>$type,
 						"message"=>$message,
@@ -137,15 +154,19 @@ class xError {
 						"line"=>$line,
 						"trace"=>$this->trace(),
 					];
-					$error_reporting=error_reporting()&~E_RECOVERABLE_ERROR;
-					if ($error_reporting & $type) $this->err($this->error, false);
+					if ($this->registering($type)) {
+						// register only, or register and display depending on error reporting
+						$display=(($this->errors_path && isset($this->register))?($this->reporting & $type):true);
+						if ($display) $this->err($this->error, false);
+						else $this->error($this->error);
+					}
 				}
-			});
+			}, ($this->errors_path && isset($this->register)?$this->register:E_ALL));
 
 			// capture critical errors
 			register_shutdown_function(function(){
 				$e=error_get_last();
-				if ($e && isset($e["type"]) && ($this->reporting & $e["type"])) {
+				if ($e && isset($e["type"]) && $this->registering($e["type"], true)) {
 					if (in_array($e["type"], $this->criticals)) {
 						// split message and trace
 						$a=explode("\n", (string)($e["message"] ?? ""));
@@ -156,7 +177,9 @@ class xError {
 							if (!in_array($l, ["Stack trace:", "  thrown"]))
 								$e["trace"][]=["message"=>$l];
 						$this->error=$e;
-						$this->err($e);
+						$display=(($this->errors_path && isset($this->register))?($this->reporting & $e["type"]):true);
+						if ($display) $this->err($e);
+						else $this->error($e);
 					}
 				}
 			});
@@ -205,8 +228,34 @@ class xError {
 		if ($f=$this->access) file_put_contents($f, (string)$m, FILE_APPEND);
 	}
 
+	// check if an error type must be registered in the error log
+	function registering($type, $critical=false) {
+		// explicit register flags are used only when the error log is enabled
+		if ($this->errors_path && isset($this->register)) return ($this->register & $type);
+		// critical errors use the configured error reporting
+		if ($critical) return ($this->reporting & $type);
+		// non-critical errors use the current error reporting
+		return ((error_reporting()&~E_RECOVERABLE_ERROR) & $type);
+	}
+
+	// check if an error was silenced with the @ operator
+	function silenced($type) {
+		$reporting=error_reporting();
+		$silence=(E_ERROR|E_CORE_ERROR|E_COMPILE_ERROR|E_USER_ERROR|E_RECOVERABLE_ERROR|E_PARSE) & $this->reporting;
+		foreach ($this->criticals as $c) $silence&=~$c;
+		return ($silence && $reporting === $silence && !($reporting & $type));
+	}
+
+	// register pending errors produced before the error handler was installed
+	function registerLast($e=null) {
+		if (!$this->errors_path || !isset($this->register)) return;
+		if (!$e || !isset($e["type"]) || !$this->registering($e["type"])) return;
+		$e["trace"]=[];
+		$this->error($e);
+	}
+
 	// get/set error reporting
-	function errorReporting($reporting=null) {
+	function reporting($reporting=null) {
 		if ($reporting === null) return $this->reporting;
 		$this->reporting=$e=$reporting;
 		foreach ($this->criticals as $c) $e&=~$c;
@@ -214,7 +263,7 @@ class xError {
 	}
 
 	// returns an array of error reporting types as an array
-	function errorReportingList($reporting=null) {
+	function reportingList($reporting=null) {
 		if ($reporting === null) $reporting=$this->reporting;
 		$a=[];
 		foreach ($this->error_types as $e=>$s)

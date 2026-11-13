@@ -3,9 +3,6 @@
 // basic setup
 error_reporting(E_ALL & ~E_NOTICE); // all but not notices
 
-// UTF-8 compatibility helpers (utf8_encode/utf8_decode are deprecated since PHP 8.2)
-require_once(dirname(__FILE__)."/utf8.php");
-
 // base class
 class x {
 
