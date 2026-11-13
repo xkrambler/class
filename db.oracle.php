@@ -50,7 +50,7 @@ class dbORACLE extends dbbase {
 		}
 		$oci_connect="oci_connect";
 		$this->idcon=(@$oci_connect($this->setup["user"], $this->setup["pass"], $this->setup["connection_string"], $this->setup["encoding"])); // por defecto era WE8MSWIN1252
-		$this->connected=($this->idcon>0?true:false);
+		$this->connected=($this->idcon?true:false);
 		if ($this->connected) {
 			@oci_execute(oci_parse($this->idcon,"ALTER SESSION SET NLS_DATE_FORMAT='yyyy-mm-dd hh24:mi:ss'"), OCI_DEFAULT);
 			@oci_execute(oci_parse($this->idcon,"ALTER SESSION SET NLS_NUMERIC_CHARACTERS='.,'"), OCI_DEFAULT);
@@ -63,7 +63,7 @@ class dbORACLE extends dbbase {
 
 	// close server connection
 	function close() {
-		if (!$this->idcon>0) return false;
+		if (!$this->idcon) return false;
 		oci_close($this->idcon);
 		$this->idcon=false;
 		return true;
@@ -82,7 +82,7 @@ class dbORACLE extends dbbase {
 
 	// select default scheme
 	function select($database) {
-		if (!$this->idcon>0) return false;
+		if (!$this->idcon) return false;
 		$this->setup["db"]=$database;
 		return $this->reconnect();
 	}
@@ -98,8 +98,8 @@ class dbORACLE extends dbbase {
 
 	// run query (select)
 	function query($sqlquery, $querynum=null) {
-		if ($this->setup["delayed"] && !$this->idcon>0 && !$this->rconnect()) return false;
-		if (!$this->idcon>0) return false;
+		if ($this->setup["delayed"] && !$this->idcon && !$this->rconnect()) return false;
+		if (!$this->idcon) return false;
 		if (!$querynum) {
 			$this->lastquerynum++;
 			$querynum="%".$this->lastquerynum;
@@ -136,7 +136,7 @@ class dbORACLE extends dbbase {
 
 	// clear memory from query
 	function freequery($querynum=null) {
-		if (!$this->idcon>0) return false;
+		if (!$this->idcon) return false;
 		if (!$querynum) $querynum="%".$this->lastquerynum;
 		oci_free_statement($this->stmt[$querynum]);
 		return true;
@@ -144,21 +144,21 @@ class dbORACLE extends dbbase {
 
 	// return number of affected rows from last query
 	function numrows($querynum=null) {
-		if (!$this->idcon>0) return false;
+		if (!$this->idcon) return false;
 		if (!$querynum) $querynum="%".$this->lastquerynum;
 		return $this->afrows[$querynum];
 	}
 
 	// return next row
 	function row($querynum=null) {
-		if (!$this->idcon>0) return false;
+		if (!$this->idcon) return false;
 		if (!$querynum) $querynum="%".$this->lastquerynum;
 		return oci_fetch_assoc($this->stmt[$querynum]);
 	}
 
 	// returns from first row first field or requested field
 	function field($field="", $querynum=null) {
-		if (!$this->idcon>0) return false;
+		if (!$this->idcon) return false;
 		if (!$querynum) $querynum="%".$this->lastquerynum;
 		$this->lastrow=oci_fetch_assoc($this->stmt[$querynum]);
 		if (strlen((string)($field ?? ""))) return $this->lastrow[$field];
@@ -179,7 +179,7 @@ class dbORACLE extends dbbase {
 
 	// return server database version
 	function dbversion() {
-		if (!$this->idcon>0) return false;
+		if (!$this->idcon) return false;
 		return oci_server_version($this->idcon);
 	}
 

@@ -211,7 +211,7 @@ class dbMySQLi extends dbbase {
 
 	// query with reconnection/timeout
 	protected function pquery($sql) {
-		if ($this->delayed && !($this->idcon > 0) && !$this->rconnect()) return false;
+		if ($this->delayed && !$this->idcon && !$this->rconnect()) return false;
 		if (!$this->idcon) return false;
 		// start query
 		$retries=0;
@@ -319,7 +319,7 @@ class dbMySQLi extends dbbase {
 
 	// perform multiple query
 	function multi($sql, $querynum=null) {
-		if ($this->delayed && !($this->idcon > 0) && !$this->rconnect()) return false;
+		if ($this->delayed && !$this->idcon && !$this->rconnect()) return false;
 		$querynum=$this->querynum($querynum, true);
 		$st=microtime(true);
 		$retries=0;
@@ -420,7 +420,8 @@ class dbMySQLi extends dbbase {
 
 	// escape string to be used in query
 	function escape($s) {
-		if ($this->delayed && !($this->idcon > 0) && !$this->rconnect() || $this->idcon->connect_errno) return false;
+		if ($this->delayed && !$this->idcon && !$this->rconnect()) return false;
+		if (!$this->idcon || $this->idcon->connect_errno) return false;
 		return (string)$this->idcon->real_escape_string((string)$s);
 	}
 

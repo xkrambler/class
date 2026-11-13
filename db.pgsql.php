@@ -48,14 +48,14 @@ class dbPgSQL extends dbbase {
 		$this->idcon=(@$pg_connect($this->setup["connection_string"]));
 		$this->pg_connect_last_error=$db_pgsql_captured_errstr;
 		restore_error_handler();
-		$this->connected=($this->idcon>0?true:false);
+		$this->connected=($this->idcon?true:false);
 		$this->dbselected=$this->connected;
 		return $this->connected;
 	}
 
 	// cierra la conexión con el servidor
 	function close() {
-		if (!$this->idcon>0) return false;
+		if (!$this->idcon) return false;
 		pg_close($this->idcon);
 		return true;
 	}
@@ -63,13 +63,13 @@ class dbPgSQL extends dbbase {
 	// información de conexión
 	function ready() {
 		if ($this->delayed) return true;
-		if (!$this->idcon > 0) return false;
+		if (!$this->idcon) return false;
 		return (pg_connection_status($this->idcon) == PGSQL_CONNECTION_OK);
 	}
 
 	// selecciona la base de datos con la que trabajará la clase
 	function select($database) {
-		if (!$this->idcon > 0) return false;
+		if (!$this->idcon) return false;
 		$this->setup["db"]=$database;
 		return $this->rconnect();
 	}
@@ -85,8 +85,8 @@ class dbPgSQL extends dbbase {
 
 	// ejecuta una consulta (select)
 	function query($sqlquery, $querynum=null) {
-		if ($this->delayed && !($this->idcon > 0) && !$this->rconnect()) return false;
-		if (!$this->idcon>0) return false;
+		if ($this->delayed && !$this->idcon && !$this->rconnect()) return false;
+		if (!$this->idcon) return false;
 		if (!$querynum) {
 			$this->lastquerynum++;
 			$querynum="%".$this->lastquerynum;
@@ -109,7 +109,7 @@ class dbPgSQL extends dbbase {
 
 	// limpia la consulta
 	function freequery($querynum=null) {
-		if (!$this->idcon>0) return false;
+		if (!$this->idcon) return false;
 		if (!$querynum) $querynum="%".$this->lastquerynum;
 		@pg_free_result($this->idquery[$querynum]);
 		return true;
@@ -117,21 +117,21 @@ class dbPgSQL extends dbbase {
 
 	// devuelve el número de filas afectadas
 	function numrows($querynum=null) {
-		if (!$this->idcon>0) return false;
+		if (!$this->idcon) return false;
 		if (!$querynum) $querynum="%".$this->lastquerynum;
 		return $this->afrows[$querynum];
 	}
 
 	// devuelve array fila
 	function row($querynum=null) {
-		if (!$this->idcon>0) return false;
+		if (!$this->idcon) return false;
 		if (!$querynum) $querynum="%".$this->lastquerynum;
 		return pg_fetch_assoc($this->idquery[$querynum]);
 	}
 
 	// devuelve de la primera fila el valor del campo deseado o el primero si se omite
 	function field($field="", $querynum=null) {
-		if (!$this->idcon>0) return false;
+		if (!$this->idcon) return false;
 		if (!$querynum) $querynum="%".$this->lastquerynum;
 		$this->lastrow=pg_fetch_assoc($this->idquery[$querynum]);
 		if (strlen((string)($field ?? ""))) return $this->lastrow[$field];
@@ -151,7 +151,7 @@ class dbPgSQL extends dbbase {
 
 	// devuelve la cadena de versión del servidor
 	function dbversion() {
-		if (!($this->idcon > 0)) return "";
+		if (!$this->idcon) return "";
 		if (!($q=db_query("SELECT VERSION()", $this->idcon))) return false;
 		$irow=db_fetch_array($q);
 		return $irow[0];

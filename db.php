@@ -290,7 +290,7 @@ abstract class dbbase {
 
 	// return query as an array
 	function aquery($querynum=null) {
-		if (!$this->idcon > 0) return false;
+		if (!$this->idcon) return false;
 		if (!$querynum) $querynum="%".$this->lastquerynum;
 		$a=array();
 		for ($i=0; $row=$this->row($querynum); $i++)
@@ -301,7 +301,7 @@ abstract class dbbase {
 
 	// return query as an associative array based on a key field
 	function asocquery($fieldkey="id", $querynum=null) {
-		if (!$this->idcon > 0) return false;
+		if (!$this->idcon) return false;
 		if (!$querynum) $querynum="%".$this->lastquerynum;
 		$a=array();
 		for ($i=0; $row=$this->row($querynum); $i++)
@@ -312,7 +312,7 @@ abstract class dbbase {
 
 	// return query as an associative array of multiple rows based on a key field
 	function asocaquery($fieldkey="id", $querynum=null) {
-		if (!$this->idcon > 0) return false;
+		if (!$this->idcon) return false;
 		if (!$querynum) $querynum="%".$this->lastquerynum;
 		$a=array();
 		for ($i=0; $row=$this->row($querynum); $i++) {
@@ -325,7 +325,7 @@ abstract class dbbase {
 
 	// return a query as an key->value array
 	function hashquery($k, $v, $querynum=null) {
-		if (!$this->idcon > 0) return false;
+		if (!$this->idcon) return false;
 		if (!$querynum) $querynum="%".$this->lastquerynum;
 		$a=array();
 		for ($i=0; $row=$this->row($querynum); $i++)
