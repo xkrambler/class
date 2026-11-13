@@ -17,12 +17,12 @@ class Kernel {
 
 	// return GET by key or null
 	static function get($k) {
-		return self::removeMagicQuotes(isset($_GET[(string)$k])?$_GET[(string)$k]:null);
+		return self::removeMagicQuotes(isset($_GET[(string)$k])?($_GET[(string)$k] ?? ""):null);
 	}
 
 	// return POST by key or null
 	static function post($k) {
-		return self::removeMagicQuotes(isset($_POST[(string)$k])?$_POST[(string)$k]:null);
+		return self::removeMagicQuotes(isset($_POST[(string)$k])?($_POST[(string)$k] ?? ""):null);
 	}
 
 	// remove magic quotes, if needed
@@ -40,7 +40,7 @@ class Kernel {
 	static function autoload($base=null) {
 		spl_autoload_register(function($c) use ($base) {
 			if (!isset($base) || $base === null) $base=getcwd();
-			$f=$base.(substr($base, -1, 1) != "/"?"/":"").strtolower(str_replace('\\', '/', $c)).".php";
+			$f=$base.(substr((string)($base ?? ""), -1, 1) != "/"?"/":"").strtolower(str_replace('\\', '/', $c)).".php";
 			if (file_exists($f)) require_once($f);
 		});
 	}
@@ -98,15 +98,15 @@ class Kernel {
 
 	// encode mail string
 	static function mailEncode($s) {
-		return '=?'.\x::charset().'?B?'.base64_encode($s).'?=';
+		return '=?'.\x::charset().'?B?'.base64_encode((string)($s ?? "")).'?=';
 	}
 
 	// encode e-mail destination
 	static function mailDestination($s) {
-		$s=trim($s);
-		if ($i=strrpos($s, " ")) {
-			if (substr($s, 0, 1) != "=") {
-				return self::mailEncode(substr($s, 0, $i)).substr($s, $i);
+		$s=trim((string)($s ?? ""));
+		if ($i=strrpos((string)($s ?? ""), " ")) {
+			if (substr((string)($s ?? ""), 0, 1) != "=") {
+				return self::mailEncode(substr((string)($s ?? ""), 0, $i)).substr((string)($s ?? ""), $i);
 			}
 		}
 		return $s;
@@ -116,7 +116,7 @@ class Kernel {
 	static function headerMailDestinations($header, $emails) {
 		$s="";
 		if ($emails)
-			foreach ($a=(is_array($emails)?$emails:explode(",", $emails)) as $e)
+			foreach ($a=(is_array($emails)?$emails:explode(",", (string)($emails ?? ""))) as $e)
 				$s.=$header.": ".self::mailDestination($e)."\r\n";
 		return $s;
 	}
@@ -168,14 +168,14 @@ class Kernel {
 			$body.="--{$mime_boundary_alt}\r\n"
 				."Content-Type: text/plain; charset=UTF-8\r\n"
 				."Content-Transfer-Encoding: base64\r\n"
-				."\r\n".rtrim(chunk_split(base64_encode($v)))."\r\n\r\n"
+				."\r\n".rtrim(chunk_split(base64_encode((string)($v ?? ""))))."\r\n\r\n"
 			;
 		}
 		if ($v=$o["html"]) {
 			$body.="--{$mime_boundary_alt}\r\n"
 				."Content-Type: text/html; charset=UTF-8\r\n"
 				."Content-Transfer-Encoding: base64\r\n"
-				."\r\n".rtrim(chunk_split(base64_encode($v)))."\r\n\r\n"
+				."\r\n".rtrim(chunk_split(base64_encode((string)($v ?? ""))))."\r\n\r\n"
 			;
 		}
 		$body.="--{$mime_boundary_alt}--\r\n\r\n";
@@ -183,11 +183,11 @@ class Kernel {
 			$name=basename((string)($a["name"] ?? ""));
 			if ($a["file"]) {
 				if (!($a["data"]=file_get_contents($a["file"]))) return false;
-				if (!$name) $name=basename($a["file"]);
+				if (!$name) $name=basename((string)($a["file"] ?? ""));
 			}
 			if (!$a["type"]) $a["type"]=self::getMimetype($name);
 			if ($name) $name=str_replace('"', '_', str_replace(['\r', '*', '?', '/', '\\', '\n'], '', $name));
-			$temp=rtrim(chunk_split(base64_encode($a["data"])));
+			$temp=rtrim(chunk_split(base64_encode((string)($a["data"] ?? ""))));
 			$body
 				.="--{$mime_boundary_mix}\r\n"
 				."Content-Type: ".($a["type"]?$a["type"]:"application/octet-stream").($name?";\r\n name=\"".$name."\"":"")."\r\n"
@@ -206,26 +206,26 @@ class Kernel {
 			if (is_array($o["to"])) {
 				foreach ($o["to"] as $e) $to.=($to?",":"").self::mailDestination($e);
 			} else {
-				$to=(strpos($o["to"], ",")?$o["to"]:self::mailDestination($o["to"]));
+				$to=(strpos((string)($o["to"] ?? ""), ",")?$o["to"]:self::mailDestination($o["to"]));
 			}
 		} else {
 			if ($o["bcc"]) $to="undisclosed-recipients:;";
 		}
 		// prepare subject: if not 7-bit, encode
 		$subject=$o["subject"];
-		if (!preg_match("/^[\\040-\\176]+$/", $subject)) $subject=self::mailEncode($o["subject"]);
+		if (!preg_match("/^[\\040-\\176]+$/", (string)($subject ?? ""))) $subject=self::mailEncode($o["subject"]);
 		// send it!
-		return @mail($to, $subject, $body, $headers);
+		return @mail((string)($to ?? ""), (string)($subject ?? ""), (string)($body ?? ""), $headers);
 	}
 
 	// dir filename sorting
 	static function nameSort($a, $b) {
-		return strnatcasecmp($a["name"], $b["name"]);
+		return strnatcasecmp((string)($a["name"] ?? ""), (string)($b["name"] ?? ""));
 	}
 
 	// read a directory sorting it naturally, first folders, and return entries as array
 	static function dir($p="./") {
-		if (substr($p, -1, 1) != DIRECTORY_SEPARATOR) $p.=DIRECTORY_SEPARATOR;
+		if (substr((string)($p ?? ""), -1, 1) != DIRECTORY_SEPARATOR) $p.=DIRECTORY_SEPARATOR;
 		$fd=array();
 		$fa=array();
 		$d=dir($p);
@@ -256,7 +256,7 @@ class Kernel {
 
 	// recursive file find
 	function dir_recursive($root, $paths=false) {
-		if (substr($root, -1, 1) != "/") $root.="/";
+		if (substr((string)($root ?? ""), -1, 1) != "/") $root.="/";
 		$a=array();
 		$d=dir($root);
 		while ($e=$d->read()) {
@@ -278,7 +278,7 @@ class Kernel {
 	// recursive file deletion (USE WITH CARE)
 	function rm_recursive($base) {
 		if (!$base) return false;
-		if (substr($base,-1,1)!="/") return false;
+		if (substr((string)($base ?? ""),-1,1)!="/") return false;
 		if (!file_exists($base)) return false;
 		foreach ($this->dir_recursive($base) as $f)
 			@unlink($f);
@@ -291,10 +291,10 @@ class Kernel {
 
 	// return filename trimed and saned without quotes, or empty string if possible hack detected
 	static function fileSanity($f) {
-		if (strpos($f, "\\") !== false) return "";
-		if (strpos($f, "/") !== false) return "";
-		if (strpos($f, "..") !== false) return "";
-		$f=trim($f);
+		if (strpos((string)($f ?? ""), "\\") !== false) return "";
+		if (strpos((string)($f ?? ""), "/") !== false) return "";
+		if (strpos((string)($f ?? ""), "..") !== false) return "";
+		$f=trim((string)($f ?? ""));
 		$f=str_replace('"', "", $f);
 		$f=str_replace("'", "", $f);
 		return $f;
@@ -304,7 +304,7 @@ class Kernel {
 	static function dumpFile($o) {
 		// capturar metodo/tipo
 		if ($o["readfile"]) $o["file"]=$o["readfile"]; // compatibilidad
-		if ($o["file"]) { $method="file"; $f=basename($o["file"]); }
+		if ($o["file"]) { $method="file"; $f=basename((string)($o["file"] ?? "")); }
 		if ($o["ob"]) { $method="ob";   $f=$o["ob"]; }
 		if ($o["headers"]) { $method="headers"; $f=$o["headers"]; }
 		if ($o["data"]) { $method="data"; $f=$o["filename"]; }
@@ -335,7 +335,7 @@ class Kernel {
 		case "data":
 		default:
 			if (!isset($o["data"])) return false;
-			header("Content-Length: ".strlen($o["data"]));
+			header("Content-Length: ".strlen((string)($o["data"] ?? "")));
 			echo $o["data"];
 		}
 		// terminar/continuar
@@ -389,8 +389,8 @@ class Kernel {
 				if ($filter) $row=$filter($row);
 				$c=0;
 				foreach ($row as $v=>$n) {
-					if (!strlen($d)) $v=str_replace($s, $escape.$s, $v);
-					echo ($c++?$s:"").(strlen($d)?$d.str_replace($d, $escape.$d, $v).$d:$v);
+					if (!strlen((string)($d ?? ""))) $v=str_replace($s, $escape.$s, $v);
+					echo ($c++?$s:"").(strlen((string)($d ?? ""))?$d.str_replace($d, $escape.$d, $v).$d:$v);
 				}
 				echo $eol;
 				break;
@@ -399,9 +399,9 @@ class Kernel {
 				if ($filter) $row=$filter($row);
 				$c=0;
 				foreach ($row as $n=>$v) {
-					$rd=(!strlen($d) || $numeric && is_numeric($v)?"":$d);
-					if (!strlen($d)) $v=str_replace($s, $escape.$s, (string)$v);
-					echo ($c++?$s:"").$rd.(strlen($d)?str_replace($d, $escape.$d, (string)$v):$v).$rd;
+					$rd=(!strlen((string)($d ?? "")) || $numeric && is_numeric($v)?"":$d);
+					if (!strlen((string)($d ?? ""))) $v=str_replace($s, $escape.$s, (string)$v);
+					echo ($c++?$s:"").$rd.(strlen((string)($d ?? ""))?str_replace($d, $escape.$d, (string)$v):$v).$rd;
 				}
 				echo $eol;
 			}
@@ -414,14 +414,14 @@ class Kernel {
 	static function template($template, $fields, $o=array()) {
 		if (!isset($o["tags"])) $o["tags"]="%%";
 		$j=0;
-		while ($j < strlen($template)) {
-			$i=strpos($template, substr($o["tags"], 0, 1), $j);   if ($i === false) break;
-			$j=strpos($template, substr($o["tags"], 1, 1), $i+1); if ($j === false) break;
-			$v=substr($template, $i+1, $j-$i-1);
+		while ($j < strlen((string)($template ?? ""))) {
+			$i=strpos((string)($template ?? ""), substr((string)($o["tags"] ?? ""), 0, 1), $j);   if ($i === false) break;
+			$j=strpos((string)($template ?? ""), substr((string)($o["tags"] ?? ""), 1, 1), $i+1); if ($j === false) break;
+			$v=substr((string)($template ?? ""), $i+1, $j-$i-1);
 			if ($v === "") {
-				$template=substr($template, 0, $i).substr($template, $j);
+				$template=substr((string)($template ?? ""), 0, $i).substr((string)($template ?? ""), $j);
 			} else {
-				$vs=explode(".", $v);
+				$vs=explode(".", (string)($v ?? ""));
 				$l=&$fields;
 				foreach ($vs as $ni=>$nv) {
 					if (!isset($l) || !is_array($l)) break;
@@ -429,8 +429,8 @@ class Kernel {
 				}
 				if (isset($l)) {
 					$r=(is_callable($l)?$l($v, $nv, $ni):$l);
-					$template=substr($template, 0, $i).$r.substr($template, $j+1);
-					$j=$i+strlen($r)-1;
+					$template=substr((string)($template ?? ""), 0, $i).$r.substr((string)($template ?? ""), $j+1);
+					$j=$i+strlen((string)($r ?? ""))-1;
 				}
 			}
 			$j++;
@@ -441,12 +441,12 @@ class Kernel {
 	// e-mail verification
 	static function verifyEmail($email) {
 		if (!$email) return array(false,"Dirección de correo no especificada");
-		$atIndex = strrpos($email, "@");
+		$atIndex = strrpos((string)($email ?? ""), "@");
 		if ($atIndex===false) return array(false,"No es una dirección de correo.");
-		$domain = substr($email, $atIndex+1);
-		$local = substr($email, 0, $atIndex);
-		$localLen = strlen($local);
-		$domainLen = strlen($domain);
+		$domain = substr((string)($email ?? ""), $atIndex+1);
+		$local = substr((string)($email ?? ""), 0, $atIndex);
+		$localLen = strlen((string)($local ?? ""));
+		$domainLen = strlen((string)($domain ?? ""));
 		// local part length exceeded
 		if ($localLen < 1 || $localLen > 64) return array(false,"Nombre de usuario excede la norma.");
 		// domain part length exceeded
@@ -454,11 +454,11 @@ class Kernel {
 		// local part starts or ends with '.'
 		else if ($local[0] == '.' || $local[$localLen-1] == '.') return array(false,$genmsg." No se admite . para empezar/terminar el nombre de usuario.");
 		// local part has two consecutive dots
-		else if (preg_match('/\\.\\./', $local)) return array(false,"Doble puntuación no admitida para el nombre de usuario.");
+		else if (preg_match('/\\.\\./', (string)($local ?? ""))) return array(false,"Doble puntuación no admitida para el nombre de usuario.");
 		// character not valid in domain part
-		else if (!preg_match('/^[A-Za-z0-9\\-\\.]+$/', $domain)) return array(false,"Nombre de dominio tiene carácteres fuera de norma.");
+		else if (!preg_match('/^[A-Za-z0-9\\-\\.]+$/', (string)($domain ?? ""))) return array(false,"Nombre de dominio tiene carácteres fuera de norma.");
 		// domain part has two consecutive dots
-		else if (preg_match('/\\.\\./', $domain)) return array(false,"Doble puntuación no admitida para el dominio.");
+		else if (preg_match('/\\.\\./', (string)($domain ?? ""))) return array(false,"Doble puntuación no admitida para el dominio.");
 		else if (!preg_match('/^(\\\\.|[A-Za-z0-9!#%&`_=\\/$\'*+?^{}|~.-])+$/', str_replace("\\\\","",$local))) {
 			// character not valid in local part unless local part is quoted
 			if (!preg_match('/^"(\\\\"|[^"])+"$/', str_replace("\\\\","",$local))) return array(false,"Caracter no válido.");
@@ -527,7 +527,7 @@ class Kernel {
 			// write data to input pipe
 			if (isset($o["in"]) && ($in=$o["in"])) {
 				if (is_callable($in)) $in($o, $pipes, $proc);
-				else fwrite($pipes[0], $in);
+				else fwrite($pipes[0], (string)($in ?? ""));
 				fclose($pipes[0]);
 			}
 
@@ -535,14 +535,14 @@ class Kernel {
 			while (!feof($pipes[1]) || !feof($pipes[2])) {
 				if (!feof($pipes[1])) $data=fread($pipes[1], (isset($o["buffer"])?$o["buffer"]:4096));
 				if (!feof($pipes[2])) $error=fread($pipes[2], (isset($o["buffer"])?$o["buffer"]:4096));
-				if (strlen($error) && isset($o["redir"]) && ($redir=$o["redir"])) {
+				if (strlen((string)($error ?? "")) && isset($o["redir"]) && ($redir=$o["redir"])) {
 					if (is_callable($redir)) $error=$redir($error, $pipes, $proc);
 					if (is_string($error)) $data.=$error;
 				}
 				if (is_callable($o["out"])) $o["out"]($data, $pipes, $proc);
 				else if ($o["callback"]) {
 					$in=$o["callback"]($data, $pipes, $proc);
-					if (is_string($in) && strlen($in)) fwrite($pipes[0], $in);
+					if (is_string($in) && strlen((string)($in ?? ""))) fwrite($pipes[0], (string)($in ?? ""));
 				}
 				if (is_callable($o["err"])) $o["err"]($error, $pipes, $proc);
 				$out.=$data;
@@ -570,7 +570,7 @@ class Kernel {
 	static function getEncoding($text) {
 		$c=0;
 		$ascii=true;
-		for ($i=0; $i < strlen($text); $i++) {
+		for ($i=0; $i < strlen((string)($text ?? "")); $i++) {
 			$byte=ord($text[$i]);
 			if ($c > 0) {
 				if (($byte>>6) != 0x2) return "ISO-8859-1";
@@ -590,8 +590,8 @@ class Kernel {
 	static function httpOutput($o) {
 		if ($o["file"]) {
 			if (!$o["type"]) $o["type"]=self::getMimetype($o["file"]);
-			if (!$o["len"]) $o["len"]=($o["data"]?strlen($o["data"]):filesize($o["file"]));
-			if (!isset($o["name"])) $o["name"]=basename($o["file"]);
+			if (!$o["len"]) $o["len"]=($o["data"]?strlen((string)($o["data"] ?? "")):filesize($o["file"]));
+			if (!isset($o["name"])) $o["name"]=basename((string)($o["file"] ?? ""));
 		}
 		if ($o["attachment"]) $o["disposition"]="attachment";
 		if ($o["name"] || $o["disposition"]) {
@@ -601,9 +601,9 @@ class Kernel {
 			);
 		}
 		if (isset($_SERVER['HTTP_RANGE']) && $o["len"]) {
-			$ranges=explode(',', substr($_SERVER['HTTP_RANGE'], 6));
+			$ranges=explode(',', substr((string)($_SERVER['HTTP_RANGE'] ?? ""), 6));
 			foreach ($ranges as $range) {
-				list($start, $end)=explode('-', $range);
+				list($start, $end)=explode('-', (string)($range ?? ""));
 				if (!$start) $start=0;
 				if (!$end) $end=$o["len"];
 				if ($start > $end) {
@@ -619,7 +619,7 @@ class Kernel {
 					if ($o["streamer"]) {
 						echo $o["streamer"](array_merge($o, array("start"=>$start, "end"=>$end, "length"=>($end-$start))));
 					} else if ($o["data"]) {
-						echo substr($o["data"], $start, $end-$start);
+						echo substr((string)($o["data"] ?? ""), $start, $end-$start);
 					} else if ($o["file"]) {
 						if ($f=fopen($o["file"], "r")) {
 							fseek($f, $start);
@@ -693,7 +693,7 @@ class Kernel {
 		$a=array();
 		if (is_array($data))
 			foreach ($data as $v)
-				$a[$v[$key]]=true;
+				$a[($v[$key] ?? "")]=true;
 		return array_keys($a);
 	}
 
@@ -702,16 +702,16 @@ class Kernel {
 		$a=array();
 		if (is_array($data))
 			foreach ($data as $v)
-				$a[$v[$key]]=($v === null?$v:$v[$value]);
+				$a[($v[$key] ?? "")]=($v === null?$v:$v[$value]);
 		return $a;
 	}
 
 	// DEPRECATED: obtener todos los parámetros como array
 	function arrayFromQueryString($qs=null) {
-		if ($qs === null) $qs=$_SERVER["QUERY_STRING"];
+		if ($qs === null) $qs=($_SERVER["QUERY_STRING"] ?? "");
 		$qs=(string)$qs;
 		$a=[];
-		if (substr($qs, 0, 1) == "?") $qs=substr($qs, 1);
+		if (substr((string)($qs ?? ""), 0, 1) == "?") $qs=substr((string)($qs ?? ""), 1);
 		parse_str($qs, $a);
 		return $a;
 	}
@@ -719,7 +719,7 @@ class Kernel {
 	// DEPRECATED: forma una Query String de un array asociativo
 	function queryStringFromarray($a) {
 		$s=http_build_query($a);
-		return (strlen($s)?"?":"").$s;
+		return (strlen((string)($s ?? ""))?"?":"").$s;
 	}
 
 	// DEPRECATED: suprime un parámetro de una QueryString
@@ -731,8 +731,8 @@ class Kernel {
 
 	// DEPRECATED: obtener mi yo real
 	function realme() {
-		$me=$_SERVER["REQUEST_URI"];
-		if ($i=strpos($me, "?")) $me=substr($me, 0, $i);
+		$me=($_SERVER["REQUEST_URI"] ?? "");
+		if ($i=strpos((string)($me ?? ""), "?")) $me=substr((string)($me ?? ""), 0, $i);
 		return $me;
 	}
 
@@ -740,20 +740,20 @@ class Kernel {
 	function alink($parametros=array(), $o=array()) {
 		$lnk=(isset($o["link"])?$o["link"]:$this->realme());
 		$entities=(isset($o["entities"])?$o["entities"]:true);
-		if ($qs=$_SERVER["QUERY_STRING"])
+		if ($qs=($_SERVER["QUERY_STRING"] ?? ""))
 			foreach ($parametros as $p=>$v)
 				$qs=$this->removeFromQueryString($qs,$p);
 		foreach ($parametros as $p=>$v)
 			if ($v!==null)
-				$qs.=($qs?"&":"?").urlencode($p).(strlen($v)?"=".urlencode($v):"");
-		$qs=($qs && substr($qs,0,1)!="?"?"?":"").$qs;
+				$qs.=($qs?"&":"?").urlencode((string)($p ?? "")).(strlen((string)($v ?? ""))?"=".urlencode((string)($v ?? "")):"");
+		$qs=($qs && substr((string)($qs ?? ""),0,1)!="?"?"?":"").$qs;
 		return $lnk.($entities?str_replace("&","&amp;",$qs):$qs);
 	}
 
 	// DEPRECATED: validate a string for valid bytes
 	static function validate($s, $validCharset) {
-		for ($i=0; $i<strlen($s); $i++)
-			if (strpos($validCharset, $s[$i]) === false)
+		for ($i=0; $i<strlen((string)($s ?? "")); $i++)
+			if (strpos((string)($validCharset ?? ""), (string)($s[$i] ?? "")) === false)
 				return false;
 		return true;
 	}
@@ -763,7 +763,7 @@ class Kernel {
 		if ($this->o["log"]) {
 			$s="[".($this->o["log"]["app"]?$this->o["log"]["app"]." ":"").date("YmdHis")."] ".$msg."\n";
 			if ($this->o["log"]["file"]) {
-				$d=dirname($this->o["log"]["file"]);
+				$d=dirname((string)($this->o["log"]["file"] ?? ""));
 				if (!file_exists($d)) @mkdir($d, 0775, true);
 				@file_put_contents($this->o["log"]["file"], $s, FILE_APPEND | LOCK_EX);
 			}

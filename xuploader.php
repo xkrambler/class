@@ -25,9 +25,9 @@ class xUploader {
 
 	// get PHP value in bytes
 	static function getValueInBytes($v) {
-		$v=trim($v);
-		$last=strtolower(substr($v, -1, 1));
-		if (!is_numeric($last)) $v=(int)substr($v, 0, -1);
+		$v=trim((string)($v ?? ""));
+		$last=strtolower(substr((string)($v ?? ""), -1, 1));
+		if (!is_numeric($last)) $v=(int)substr((string)($v ?? ""), 0, -1);
 		switch ($last) {
 		case 'g': $v*=1024;
 		case 'm': $v*=1024;
@@ -71,21 +71,21 @@ class xUploader {
 				}
 				// iterate files
 				foreach ($files["type"] as $index=>$type_info) {
-					$name=basename($files["name"][$index]);
-					if (!$name || strpos($name, "..")!==false || strpos($name, "/")!==false || strpos($name, "\\")!==false) continue;
+					$name=basename((string)($files["name"][$index] ?? ""));
+					if (!$name || strpos((string)($name ?? ""), "..")!==false || strpos((string)($name ?? ""), "/")!==false || strpos((string)($name ?? ""), "\\")!==false) continue;
 					$tmp=$files["tmp_name"][$index];
 					$append=false;
 					$ended=false;
-					$p=strrpos($type_info, "//");
+					$p=strrpos((string)($type_info ?? ""), "//");
 					$chunked=($p!==false);
 					$u=array(
 						"chunked"=>$chunked,
 						"name"=>$name,
-						"type"=>($chunked?substr($type_info, 0, $p):$type_info),
-						"ext"=>pathinfo($name, PATHINFO_EXTENSION),
+						"type"=>($chunked?substr((string)($type_info ?? ""), 0, $p):$type_info),
+						"ext"=>pathinfo((string)($name ?? ""), PATHINFO_EXTENSION),
 					);
 					if ($chunked) {
-						list($action, $num, $count, $total)=explode(".", substr($type_info, $p+2));
+						list($action, $num, $count, $total)=explode(".", substr((string)($type_info ?? ""), $p+2));
 						switch ($action) {
 						case "resume": $append=true; break; // append
 						case "end": $append=true; $ended=true; break; // append, end
@@ -148,9 +148,9 @@ class xUploader {
 	// store file (default: file 0660 rw-rw---- directory 0770 rwxrwx---)
 	function store($upload, $dst=null, $permissions=0664, $dpermissions=0775) {
 		if (!$dst) $dst=(is_callable($this->o["store"])?$this->o["store"]($this, $upload, $this->o):$this->o["store"].$upload["name"]);
-		if (strpos($dst, "/")!==false && !file_exists(dirname($dst))) {
-			mkdir(dirname($dst), $dpermissions, true);
-			chmod(dirname($dst), $dpermissions);
+		if (strpos((string)($dst ?? ""), "/")!==false && !file_exists(dirname((string)($dst ?? "")))) {
+			mkdir(dirname((string)($dst ?? "")), $dpermissions, true);
+			chmod(dirname((string)($dst ?? "")), $dpermissions);
 		}
 		if ($upload["chunked"]) rename($upload["tmp"], $dst);
 		else move_uploaded_file($upload["tmp"], $dst);
@@ -173,15 +173,15 @@ class xUploader {
 	// get upload information
 	function uploadGet($upload) {
 		$this->session();
-		return $_SESSION["xuploader"]["uploads"][$upload["name"]];
+		return $_SESSION["xuploader"]["uploads"][($upload["name"] ?? "")];
 	}
 
 	// set upload information
 	function uploadSet($upload) {
 		$this->session();
-		if (!$_SESSION["xuploader"]["uploads"][$upload["name"]]) return false;
-		$_SESSION["xuploader"]["uploads"][$upload["name"]]=array_merge(
-			$_SESSION["xuploader"]["uploads"][$upload["name"]],
+		if (!$_SESSION["xuploader"]["uploads"][($upload["name"] ?? "")]) return false;
+		$_SESSION["xuploader"]["uploads"][($upload["name"] ?? "")]=array_merge(
+			$_SESSION["xuploader"]["uploads"][($upload["name"] ?? "")],
 			$upload
 		);
 		return $this->uploadGet($upload);
@@ -190,7 +190,7 @@ class xUploader {
 	// start upload
 	function uploadStart($upload, $o) {
 		$this->session();
-		$_SESSION["xuploader"]["uploads"][$upload["name"]]=array(
+		$_SESSION["xuploader"]["uploads"][($upload["name"] ?? "")]=array(
 			"tmp"=>($o["store"]
 				?(is_callable($o["store"])?$o["store"]($this, $upload, $o):$o["store"].$upload["name"])
 				:tempnam(($o["temp"]?$o["temp"]:sys_get_temp_dir()), "xupload_")
@@ -203,8 +203,8 @@ class xUploader {
 	// finish upload
 	function uploadEnd($upload) {
 		$this->session();
-		if (!$_SESSION["xuploader"]["uploads"][$upload["name"]]) return false;
-		$_SESSION["xuploader"]["uploads"][$upload["name"]]["ended"]=true;
+		if (!$_SESSION["xuploader"]["uploads"][($upload["name"] ?? "")]) return false;
+		$_SESSION["xuploader"]["uploads"][($upload["name"] ?? "")]["ended"]=true;
 		return true;
 	}
 

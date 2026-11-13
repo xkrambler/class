@@ -84,7 +84,7 @@ class Conf {
 			return $a;
 		} if (is_array($ids)) {
 			foreach ($this->rows($ids) as $row)
-				$a[$row["id"]]=($row["tipo"] == "L"?$this->get($row["value"]):($row["tipo"]?$row["value"]:null));
+				$a[($row["id"] ?? "")]=($row["tipo"] == "L"?$this->get($row["value"]):($row["tipo"]?$row["value"]:null));
 			return $a;
 		} else {
 			if (!($row=$this->row($ids))) return null;
@@ -102,7 +102,7 @@ class Conf {
 		if (!$r=$this->db->query("SELECT * FROM ".$this->table.($where?" WHERE ".$where:""))) $this->db->err();
 		$a=array();
 		while ($row=$r->row())
-			$a[$row["id"]]=($row["tipo"] == "L"?$this->get($row["value"]):($row["tipo"]?$row["value"]:null));
+			$a[($row["id"] ?? "")]=($row["tipo"] == "L"?$this->get($row["value"]):($row["tipo"]?$row["value"]:null));
 		$r->freequery();
 		return $a;
 	}

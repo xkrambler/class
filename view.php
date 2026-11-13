@@ -43,17 +43,17 @@ class View {
 			$this->media=$newMedia;
 		} else {
 			// comprobación de medio de representación
-			$agent=(isset($_SERVER["HTTP_USER_AGENT"])?$_SERVER["HTTP_USER_AGENT"]:"");
+			$agent=(isset($_SERVER["HTTP_USER_AGENT"])?($_SERVER["HTTP_USER_AGENT"] ?? ""):"");
 			// por defecto el medio es PC
 			$this->media="pc";
 			// HTC P3300/1.35.621.1 Mozilla/4.0 Profile/MIDP-2.0 Configuration/CLDC-1.1 (compatible; MSIE 4.01; Windows CE; PPC; 240x320)
-			if (strpos($agent,"PPC;")) $this->media="pda";
+			if (strpos((string)($agent ?? ""),"PPC;")) $this->media="pda";
 			// BlackBerry8800/4.2.1 Profile/MIDP-2.0 Configuration/CLDC-1.1 VendorID/129
 			if (strpos(".".$agent,"BlackBerry")) $this->media="bb";
 			// Opera/9.50 (J2ME/MIDP; Opera Mini/4.0.9800/230; U; es)
-			if (strpos($agent,"Opera Mini")) $this->media="mobile";
+			if (strpos((string)($agent ?? ""),"Opera Mini")) $this->media="mobile";
 			// Android
-			if (strpos($agent,"Android")) $this->media="android";
+			if (strpos((string)($agent ?? ""),"Android")) $this->media="android";
 		}
 	}
 	
@@ -97,7 +97,7 @@ class View {
 	 */
 	function hiddenFields($fields) {
 		foreach ($fields as $name=>$value)
-			echo '<input type="hidden" name="'.$name.'" value="'.htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401, "UTF-8").'" />'."\n";
+			echo '<input type="hidden" name="'.$name.'" value="'.htmlspecialchars((string)($value ?? ""), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401, "UTF-8").'" />'."\n";
 	}
 	
 	/**
@@ -112,17 +112,17 @@ class View {
 	function afecha($fecha, $html=true) {
 		// comprobar si en vez de una fecha, nos pasan los segundos transcurridos y,
 		// si es así, convertir al formato de fecha
-		if (!strpos($fecha," ")) {
+		if (!strpos((string)($fecha ?? "")," ")) {
 			$fecha=date("Y-m-d H:i:s",(time()-$fecha));
 		}
 		// obtener la fecha y la hora por separado
-		$f=explode(" ",$fecha); $d=$f[0]; $h=substr($f[1],0,5);
+		$f=explode(" ",(string)($fecha ?? "")); $d=$f[0]; $h=substr((string)($f[1] ?? ""),0,5);
 		// si es de hoy...
 		$t="";
 		if ($d==date("Y-m-d")) {
 			$t=", hoy";
-			$ds=explode("-",$f[0]);
-			$hs=explode(":",$f[1]);
+			$ds=explode("-",(string)($f[0] ?? ""));
+			$hs=explode(":",(string)($f[1] ?? ""));
 			$a=time()-mktime($hs[0],$hs[1],$hs[2],$ds[1],$ds[2],$ds[0]);
 			if ($a<60) $t=", <b>ahora</b>";
 			if ($a>=60 && $a<3600) $t=" (hace <b>".floor($a/60)."</b> minuto".(floor($a/60)!=1?"s":"").")";
@@ -131,11 +131,11 @@ class View {
 		// si es de ayer...
 		if (!$t && $d==date("Y-m-d",time()-86400)) $t=" (<b>ayer</b>)";
 		// si no es ni de ayer ni de hoy...
-		if (!$t) $t=" el <b>".substr($d,8,2)."/".substr($d,5,2)."/".substr($d,0,4)."</b>";
+		if (!$t) $t=" el <b>".substr((string)($d ?? ""),8,2)."/".substr((string)($d ?? ""),5,2)."/".substr((string)($d ?? ""),0,4)."</b>";
 		// formar cadena final
 		$t="a las <b>".$h."</b>".$t;
 		// devolver HTML o texto plano
-		return($html?$t:strip_tags($t));
+		return($html?$t:strip_tags((string)($t ?? "")));
 	}
 
 	/**
@@ -145,7 +145,7 @@ class View {
 	 * @return Boolean TRUE si es Internet Explorer, FALSE en caso contrario.
 	 */
 	function isie() {
-		return (strpos($_SERVER["HTTP_USER_AGENT"],"MSIE")>0?true:false);
+		return (strpos((string)($_SERVER["HTTP_USER_AGENT"] ?? ""),"MSIE")>0?true:false);
 	}
 
 	/**
@@ -284,12 +284,12 @@ class View {
 				.($td?$td." día".($td == 1?"":"s").", ":"")
 				.($th?$th." hora".($th == 1?"":"s").", ":"")
 				.($tm?$tm." minuto".($tm == 1?"":"s")." y ":"")
-				.$ts.substr($tx, 1)." segundo".($ts == 1?"":"s")
+				.$ts.substr((string)($tx ?? ""), 1)." segundo".($ts == 1?"":"s")
 			:""
 				.($td?$td."d ":"")
 				.($o["nohour"]?"":($th?$th."h ".($tm && $tm<10?"0":""):""))
 				.($o["nomin"]?"":($tm?$tm."m ":""))
-				.($o["nosec"]?"":($ts && $ts<10?"0":"").($ts || $tx?$ts.substr($tx, 1)."s":""))
+				.($o["nosec"]?"":($ts && $ts<10?"0":"").($ts || $tx?$ts.substr((string)($tx ?? ""), 1)."s":""))
 		);
 	}
 
@@ -299,9 +299,9 @@ class View {
 		$tm=floor($t/60)%60;
 		$th=floor($t/3600);
 		//$td=floor($t/86400);
-		return str_pad($th, 2, "0", STR_PAD_LEFT)
-			.":".str_pad($tm, 2, "0", STR_PAD_LEFT)
-			.":".str_pad($ts, 2, "0", STR_PAD_LEFT)
+		return str_pad((string)($th ?? ""), 2, "0", STR_PAD_LEFT)
+			.":".str_pad((string)($tm ?? ""), 2, "0", STR_PAD_LEFT)
+			.":".str_pad((string)($ts ?? ""), 2, "0", STR_PAD_LEFT)
 		;
 	}
 
@@ -385,8 +385,8 @@ class View {
 				$files[$i]["size_text"]=$this->bytesToString($f["size"]);
 			if ($f["dir"]) $ico="images/ext16/folder.png";
 			else {
-				$x=strrpos($f["name"],".");
-				if ($x!==false) $ico="images/ext16/".substr($f["name"],$x+1).".png";
+				$x=strrpos((string)($f["name"] ?? ""),".");
+				if ($x!==false) $ico="images/ext16/".substr((string)($f["name"] ?? ""),$x+1).".png";
 				if ($x===false || !file_exists($ico)) $ico="images/ext16/file.png";
 			}
 			$files[$i]["ico"]=$ico;

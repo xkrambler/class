@@ -28,7 +28,7 @@ class CSV {
 		if (!isset($this->o["eol"])) $this->o["eol"]="\n";
 		if (!isset($this->o["headers"]) || $this->o["headers"]) {
 			if (!isset($this->o["mimetype"])) {
-				if (strtolower(substr($f, -4, 4)) == ".csv") $this->o["mimetype"]='text/csv';
+				if (strtolower(substr((string)($f ?? ""), -4, 4)) == ".csv") $this->o["mimetype"]='text/csv';
 				else {
 					require_once(__DIR__."/mimetypes.php");
 					$this->o["mimetype"]=Mimetypes::file($f);

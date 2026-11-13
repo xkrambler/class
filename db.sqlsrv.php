@@ -163,7 +163,7 @@ class dbSQLSRV extends dbbase {
 		$this->clear();
 		if (!$this->idcon>0) return(false);
 		$this->lastrow=$this->row($querynum);
-		if (strlen($field)) return($this->lastrow[$field]);
+		if (strlen((string)($field ?? ""))) return($this->lastrow[$field]);
 		else {
 			if ($this->lastrow)
 				foreach ($this->lastrow as $field=>$value)

@@ -22,7 +22,7 @@
 		function set($o=Array()) { if ($o) foreach ($o as $n=>$v) $this->o[$n]=$v; }
 		function db($v=null) { if ($v!==null) $this->db=$v; return $this->db; }
 
-		function entities($v) { return htmlentities($v, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401, "UTF-8"); }
+		function entities($v) { return htmlentities((string)($v ?? ""), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401, "UTF-8"); }
 
 		// get/set tabla de trabajo
 		function table($table=null) {
@@ -227,7 +227,7 @@
 					if (!$this->db->commit()) $this->db->err();
 				}
 				// guardar sesión y redireccionar a PayPal
-				$_SESSION["paypal"][$res["TOKEN"]]=$fields;
+				$_SESSION["paypal"][($res["TOKEN"] ?? "")]=$fields;
 				header('Location: '.$res["_redirect"]);
 				exit;
 			default:
@@ -239,8 +239,8 @@
 		// realiza el cobro efectivo dado un token y un identificador de pago
 		function process() {
 			// obtener token e identificador de pago
-			$token=$_GET["token"];
-			$payerid=$_GET["PayerID"];
+			$token=($_GET["token"] ?? "");
+			$payerid=($_GET["PayerID"] ?? "");
 			if ($token && $payerid) {
 				// comprobar que el token está en sesión
 				if (!$fields=$_SESSION["paypal"][$token]) {
@@ -333,7 +333,7 @@
 		// cancelación
 		function cancel() {
 			// obtener token
-			$token=$_GET["token"];
+			$token=($_GET["token"] ?? "");
 			if ($token) {
 				// si no ha sido cancelado...
 				if (!$_SESSION["paypal"][$token]["canceled"]) {

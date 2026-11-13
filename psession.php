@@ -25,7 +25,7 @@ class PSession extends \xData {
 
 	// session path (if defined)
 	function path() {
-		$path=($this->path?$this->path.(substr($this->path, -1, 1) != "/"?"/":""):false);
+		$path=($this->path?$this->path.(substr((string)($this->path ?? ""), -1, 1) != "/"?"/":""):false);
 		if ($path && !is_dir($path)) mkdir($path, 0775, true);
 		return $path;
 	}
@@ -89,8 +89,8 @@ class PSession extends \xData {
 			"sid"      =>session_id(),
 			"updated"  =>date("Y-m-d H:i:s"),
 			"expires"  =>date("Y-m-d H:i:s", $session["expires"]),
-			"ip"       =>$_SERVER["REMOTE_ADDR"],
-			"useragent"=>$_SERVER["HTTP_USER_AGENT"],
+			"ip"       =>($_SERVER["REMOTE_ADDR"] ?? ""),
+			"useragent"=>($_SERVER["HTTP_USER_AGENT"] ?? ""),
 			"userdata" =>$userdata,
 		];
 
@@ -132,7 +132,7 @@ class PSession extends \xData {
 
 	// persistent session load
 	function load() {
-		if ($sid=$_COOKIE[session_name()]) {
+		if ($sid=($_COOKIE[session_name()] ?? "")) {
 			if ($this->db) {
 				if (!$this->db->query("SELECT * FROM ".$this->db->sqltable($this->table)." WHERE sid='".$this->db->escape($sid)."' AND expires>NOW()")) $this->db->err();
 				$sdata=$this->db->row();
@@ -151,7 +151,7 @@ class PSession extends \xData {
 
 	// revalidate cookie
 	function revalidate() {
-		return (!isset($_SESSION["psession"]) || (time()-$_SESSION["psession"] > $this->revalidate)?$this->check():false);
+		return (!isset($_SESSION["psession"]) || (time()-($_SESSION["psession"] ?? "") > $this->revalidate)?$this->check():false);
 	}
 
 	// persistent session check

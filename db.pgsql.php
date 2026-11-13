@@ -134,7 +134,7 @@ class dbPgSQL extends dbbase {
 		if (!$this->idcon>0) return false;
 		if (!$querynum) $querynum="%".$this->lastquerynum;
 		$this->lastrow=pg_fetch_assoc($this->idquery[$querynum]);
-		if (strlen($field)) return $this->lastrow[$field];
+		if (strlen((string)($field ?? ""))) return $this->lastrow[$field];
 		else {
 			if ($this->lastrow)
 				foreach ($this->lastrow as $field=>$value)
@@ -170,9 +170,9 @@ class dbPgSQL extends dbbase {
 		$i=0;
 		$sqlpartial="";
 		while (true) {
-			$j=strpos($sql,"\n",$i);
-			$line=(!$j?substr($sql,$i):substr($sql,$i,$j-$i));
-			if (substr(rtrim($line),-1,1)!=";") $sqlpartial.=$line;
+			$j=strpos((string)($sql ?? ""),"\n",$i);
+			$line=(!$j?substr((string)($sql ?? ""),$i):substr((string)($sql ?? ""),$i,$j-$i));
+			if (substr(rtrim((string)($line ?? "")),-1,1)!=";") $sqlpartial.=$line;
 			else {
 				$sqlpartial.=$line;
 				if (!$this->execute($sqlpartial,"int-1")) return false;
@@ -227,7 +227,7 @@ class dbPgSQL extends dbbase {
 			if ($sql) $sql.=");\n";
 			$sql=$drop.$create.$sql.$optimize."\n";
 			if ($filename) {
-				if ($f) fputs($f,$sql);
+				if ($f) fputs($f,(string)($sql ?? ""));
 				else echo $sql;
 			} else {
 				$all.=$sql;

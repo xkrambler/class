@@ -85,15 +85,15 @@ class dbOdbcSocketServer extends dbbase {
 			return false;
 		}else{
 			// En ODBC las contraseñas con el carácter ';' dan problemas. Avisamos al usuario para que no se rompa la cabeza intentando saber qué ocurre.
-			if(strpos($this->setup["pass"],";")!==false){
+			if(strpos((string)($this->setup["pass"] ?? ""),";")!==false){
 				$this->real_errnum = -1;
 				$this->real_error = utf8_encode_compat("Database user's password must not contain a semicolon.");
 				return false;
 			}
 			// Construir el XML de la petición al servidor
-			$sSend = "<?xml version=\"1.0\"?>\r\n<request>\r\n<connectionstring>DSN=".$this->setup["dsn"].";UID=".$this->setup["user"].";PWD=".$this->setup["pass"]."</connectionstring>\r\n<sql>".HTMLSpecialChars($sqlquery)."</sql>\r\n</request>\r\n";
+			$sSend = "<?xml version=\"1.0\"?>\r\n<request>\r\n<connectionstring>DSN=".$this->setup["dsn"].";UID=".$this->setup["user"].";PWD=".$this->setup["pass"]."</connectionstring>\r\n<sql>".HTMLSpecialChars((string)($sqlquery ?? ""))."</sql>\r\n</request>\r\n";
 			// Enviar el XML
-			fputs($this->idquery[$querynum], $sSend);
+			fputs($this->idquery[$querynum], (string)($sSend ?? ""));
 			// Leer la respuesta
 			while (!feof($this->idquery[$querynum])){
 				$sreturn = $sreturn . fgets($this->idquery[$querynum], 128);
@@ -180,7 +180,7 @@ class dbOdbcSocketServer extends dbbase {
 		$this->clear();
 		if (!$querynum) $querynum="%".$this->lastquerynum;
 		$this->lastrow=$this->rowtoutf8($this->row($querynum));
-		if (strlen($field)) return($this->lastrow[$field]);
+		if (strlen((string)($field ?? ""))) return($this->lastrow[$field]);
 		else {
 			if ($this->lastrow)
 				foreach ($this->lastrow as $field=>$value)

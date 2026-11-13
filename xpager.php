@@ -37,7 +37,7 @@ class xPager {
 	// constructor
 	function __construct($o=array()) {
 		$this->num=$o["length"];
-		$this->page=intval($_GET["page"]);
+		$this->page=intval(($_GET["page"] ?? ""));
 		$this->max=intval($o["max"]);
 		$this->pageshow=intval($o["show"]);
 		$this->classes=$o["class"];
@@ -67,7 +67,7 @@ class xPager {
 		$pl=x::base().x::alink(array("page"=>null));
 		if ($this->classes["input"] && $drawpage==$this->page)
 			return "<input class='".$this->classes["input"]."' type='text' value='".($drawpage+1)."'"
-				." onKeyPress='javascript:if(event.keyCode==13)if(parseInt(this.value)!=NaN && parseInt(this.value)>0)location.href=\"".$pl.(strpos($pl, "?")?"&amp;":"?")."page=\"+(parseInt(this.value)-1)'"
+				." onKeyPress='javascript:if(event.keyCode==13)if(parseInt(this.value)!=NaN && parseInt(this.value)>0)location.href=\"".$pl.(strpos((string)($pl ?? ""), "?")?"&amp;":"?")."page=\"+(parseInt(this.value)-1)'"
 				." onFocus='javascript:this.select()'"
 				." onBlur='javascript:this.value=".($drawpage+1).";'"
 				." title='Página actual'"

@@ -207,7 +207,7 @@ class LDAP {
 				if (is_array($a[$i])) {
 					$r[$i]=$this->normalize($a[$i]);
 				} else {
-					if (is_array($a[$a[$i]])) $r[$a[$i]]=$this->normalize($a[$a[$i]]);
+					if (is_array($a[($a[$i] ?? "")])) $r[($a[$i] ?? "")]=$this->normalize($a[($a[$i] ?? "")]);
 					else $r[$i]=$a[$i];
 				}
 			}
@@ -277,7 +277,7 @@ class LDAP {
 		case LDAP_ERR_NODC: return "DC no encontrado en la rama que se esperaba".$extra;
 		case LDAP_ERR_QUERYSTRING: return "No se encuentra objeto en ".$this->setup["querystring"]." usando ".$this->setup["userquery"];
 		case LDAP_ERR_NOMODULE: return "No se ha cargado el módulo de ldap".$extra;
-		case LDAP_ERR_NONE: default: return trim($extra);
+		case LDAP_ERR_NONE: default: return trim((string)($extra ?? ""));
 		}
 	}
 

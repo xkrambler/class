@@ -87,10 +87,10 @@ class xImage {
 	// get format by magic bytes
 	static function getFormatByMagic($bytes) {
 		if (!is_string($bytes) || $bytes === "") return false;
-		if (substr($bytes, 0, 3) == "\xFF\xD8\xFF") return "jpg";
-		else if (substr($bytes, 0, 3) == "GIF") return "gif";
-		else if (substr($bytes, 1, 3) == "PNG") return "png";
-		else if (substr($bytes, 4, 8) == "ftypheic") return "heic";
+		if (substr((string)($bytes ?? ""), 0, 3) == "\xFF\xD8\xFF") return "jpg";
+		else if (substr((string)($bytes ?? ""), 0, 3) == "GIF") return "gif";
+		else if (substr((string)($bytes ?? ""), 1, 3) == "PNG") return "png";
+		else if (substr((string)($bytes ?? ""), 4, 8) == "ftypheic") return "heic";
 		return false;
 	}
 
@@ -156,7 +156,7 @@ class xImage {
 	function uri($format=null, $quality=75) {
 		$format=$this->formatActive($format);
 		$s=$this->toString($format, $quality);
-		return "data:".$this->getMimeByMagic($s).";base64,".base64_encode($s);
+		return "data:".$this->getMimeByMagic($s).";base64,".base64_encode((string)($s ?? ""));
 	}
 
 	// load image from file

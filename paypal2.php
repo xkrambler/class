@@ -158,7 +158,7 @@ class PayPal {
 		];
 
 		// enable profile experience for this site
-		$experience_profile_name=$_SERVER["SERVER_NAME"];
+		$experience_profile_name=($_SERVER["SERVER_NAME"] ?? "");
 
 		// search experience profiles to enable custom logo
 		if ($res=$this->restRequest("v1/payment-experience/web-profiles")) {
@@ -220,7 +220,7 @@ class PayPal {
 			$url_redirect=false;
 			foreach ($res["links"] as $l) if ($l["method"] == "REDIRECT") {
 				$url_redirect=$l["href"];
-				$url_info=parse_url($url_redirect);
+				$url_info=parse_url((string)($url_redirect ?? ""));
 				$url_query=[];
 				parse_str($url_info["query"], $url_query);
 				$token=$url_query["token"];
@@ -257,9 +257,9 @@ class PayPal {
 	function process() {
 
 		// obtain required data
-		$token=$_GET["token"];
-		$payerid=$_GET["PayerID"];
-		$payment_id=$_GET["paymentId"];
+		$token=($_GET["token"] ?? "");
+		$payerid=($_GET["PayerID"] ?? "");
+		$payment_id=($_GET["paymentId"] ?? "");
 		if ($token && $payerid && $payment_id) {
 
 			// check they payment is in session
@@ -332,7 +332,7 @@ class PayPal {
 	// mark payment as cancelled
 	function cancel() {
 		// request Token
-		if ($token=$_GET["token"]) {
+		if ($token=($_GET["token"] ?? "")) {
 			// if not cancelled
 			if ($_SESSION["paypal"][$token] && !$_SESSION["paypal"][$token]["canceled"]) {
 				// mark as cancelled
@@ -390,7 +390,7 @@ class PayPal {
 			break;
 
 		case "CANCEL":
-			return json_decode($op["cancelacion"], true);
+			return json_decode((string)($op["cancelacion"] ?? ""), true);
 
 		default:
 			return $this->error("Operation not elegible to return (status=".$op["estado"].")");
@@ -496,7 +496,7 @@ class PayPal {
 		// obtain operation
 		if (!($op=$this->getOperation($id))) return $this->error("Operation not found.");
 		// get sale id
-		$res=json_decode($op["resultado"], true);
+		$res=json_decode((string)($op["resultado"] ?? ""), true);
 		if (!($sale_id=$res["transactions"][0]["related_resources"][0]["sale"]["id"])) return $this->error("sale_id not found.");
 		// request
 		return $this->restRequest("v1/payments/sale/".$sale_id."/refund", "{}");
@@ -540,7 +540,7 @@ class PayPal {
 			if (PHP_VERSION_ID < 80500) curl_close($ch);
 
 			// decode bearer
-			if (!($json=json_decode($out, true))) return $this->error("PayPal bearerRequest JSON parse error");
+			if (!($json=json_decode((string)($out ?? ""), true))) return $this->error("PayPal bearerRequest JSON parse error");
 
 			// check for errors
 			if ($json["error"]) return $this->error("PayPal ".$json["error"].": ".$json["error_description"]);
@@ -593,7 +593,7 @@ class PayPal {
 		if (!$out) return $this->error("PayPal restRequest failed: ".curl_error($ch).'('.curl_errno($ch).'): '.$out);
 
 		// decode JSON
-		if (!($json=json_decode($out, true))) return $this->error("PayPal restRequest JSON parse error");
+		if (!($json=json_decode((string)($out ?? ""), true))) return $this->error("PayPal restRequest JSON parse error");
 
 		// return result
 		return $json;

@@ -114,19 +114,19 @@ abstract class TPV {
 	// verify URL
 	function fullurl($url) {
 		// base vars
-		$server="http".($_SERVER["HTTPS"] && $_SERVER["HTTPS"]!="off"?"s":"")."://".$_SERVER["HTTP_HOST"];
+		$server="http".(($_SERVER["HTTPS"] ?? "") && ($_SERVER["HTTPS"] ?? "")!="off"?"s":"")."://".($_SERVER["HTTP_HOST"] ?? "");
 		if (isset($_SERVER["REQUEST_URI"])) {
-			$requesturi=$_SERVER["REQUEST_URI"];
-			if ($i=strpos($requesturi,"?")) $requesturi=substr($requesturi,0,$i);
+			$requesturi=($_SERVER["REQUEST_URI"] ?? "");
+			if ($i=strpos((string)($requesturi ?? ""),"?")) $requesturi=substr((string)($requesturi ?? ""),0,$i);
 		} else {
-			$requesturi=$_SERVER["SCRIPT_NAME"];
+			$requesturi=($_SERVER["SCRIPT_NAME"] ?? "");
 		}
-		$baseurl=$server.(($i=strrpos($requesturi,"/"))!==false?substr($requesturi,0,$i+1):"/");
+		$baseurl=$server.(($i=strrpos((string)($requesturi ?? ""),"/"))!==false?substr((string)($requesturi ?? ""),0,$i+1):"/");
 		// if URL is not complete, fill it
-		if (strpos($url,"://")===false) {
+		if (strpos((string)($url ?? ""),"://")===false) {
 			// if not root specified, absolute path, and we use $server,
 			// any other case, its relative and we use $baseurl
-			if (substr($url,0,1)=="/") $url=$server.$url;
+			if (substr((string)($url ?? ""),0,1)=="/") $url=$server.$url;
 			else $url=$baseurl.$url;
 		}
 		// return full URL
@@ -152,7 +152,7 @@ abstract class TPV {
 
 	// get HTML entities
 	function entities($v) {
-		return (method_exists("x", "entities")?x::entities($v):htmlentities($v, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401, 'UTF-8'));
+		return (method_exists("x", "entities")?x::entities($v):htmlentities((string)($v ?? ""), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401, 'UTF-8'));
 	}
 
 	// get HTML Form
@@ -337,7 +337,7 @@ abstract class TPV {
 if (@$tpv_setup) {
 	foreach ($tpv_setup as $tpv_name=>$tpv_config) {
 		if ($tpv_config["type"]) {
-			require_once(__DIR__."/tpv.".strtolower($tpv_config["type"]).".php");
+			require_once(__DIR__."/tpv.".strtolower((string)($tpv_config["type"] ?? "")).".php");
 			$tpv_class="TPV".$tpv_config["type"];
 			$$tpv_name=new $tpv_class($tpv_config);
 		}

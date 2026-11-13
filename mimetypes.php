@@ -10,22 +10,22 @@ class Mimetypes {
 	// get mimetype by extension
 	static public function get($ext) {
 		if (!is_string($ext)) return false;
-		return self::$list[strtolower($ext)];
+		return self::$list[strtolower((string)($ext ?? ""))];
 	}
 
 	// get name by filename
 	static public function name($filename) {
 		if (!is_string($filename)) return false;
-		$f=basename($filename);
-		$i=strrpos($f, ".");
-		return ($i !== false?substr($f, 0, $i):$f);
+		$f=basename((string)($filename ?? ""));
+		$i=strrpos((string)($f ?? ""), ".");
+		return ($i !== false?substr((string)($f ?? ""), 0, $i):$f);
 	}
 
 	// get extension by filename
 	static public function ext($filename) {
 		if (!is_string($filename)) return false;
-		$i=strrpos($filename, ".");
-		return ($i !== false?substr($filename, $i+1):"");
+		$i=strrpos((string)($filename ?? ""), ".");
+		return ($i !== false?substr((string)($filename ?? ""), $i+1):"");
 	}
 
 	// get mimetype from filename, apply default if not found

@@ -10,7 +10,7 @@ class WS {
 
 	function __construct($o=[]) {
 		$this->o=$o;
-		$this->out=$_REQUEST["out"];
+		$this->out=($_REQUEST["out"] ?? "");
 		$this->setup();
 	}
 	function __get($n) { return $this->o[$n]; }
@@ -27,8 +27,8 @@ class WS {
 
 		// autoselect request type data
 		$this->json=null;
-		if (is_string($_REQUEST["action"])) {
-			$this->action=$_REQUEST["action"];
+		if (is_string(($_REQUEST["action"] ?? ""))) {
+			$this->action=($_REQUEST["action"] ?? "");
 			$this->json=$this->data=$_REQUEST;
 			unset($this->json["action"]);
 			$this->json=json_encode($this->json);
@@ -36,11 +36,11 @@ class WS {
 			$this->data=$GLOBALS["adata"];
 			$this->json=json_encode($this->data);
 		} else if (isset($_REQUEST["data"])) {
-			$this->json=(string)$_REQUEST["data"];
-			$this->data=json_decode($_REQUEST["data"], true);
+			$this->json=(string)($_REQUEST["data"] ?? "");
+			$this->data=json_decode((string)($_REQUEST["data"] ?? ""), true);
 		} else {
 			$this->json=file_get_contents('php://input');
-			$this->data=json_decode($this->json, true);
+			$this->data=json_decode((string)($this->json ?? ""), true);
 		}
 		if (!isset($this->action) && is_array($this->data)) $this->action=$this->data["action"];
 
@@ -67,7 +67,7 @@ class WS {
 		// common non authenticated actions
 		switch ($this->action) {
 		case "microtime": $this->out(["microtime"=>microtime(true)]);
-		case "ping": $this->out(["pong"=>substr($this->data["ping"], 0, 256)]);
+		case "ping": $this->out(["pong"=>substr((string)($this->data["ping"] ?? ""), 0, 256)]);
 		case "status":
 			$iskeyok=(
 				(isset($this->key) && $key == $this->key)
@@ -88,7 +88,7 @@ class WS {
 
 	// request method
 	function method() {
-		return $_SERVER['REQUEST_METHOD']??null;
+		return ($_SERVER['REQUEST_METHOD'] ?? "")??null;
 	}
 
 	// private: output CSV value
@@ -109,8 +109,8 @@ class WS {
 			// probably PHP-FPM < 7.3
 			$headers=[];
 			foreach ($_SERVER as $k=>$v)
-				if (substr($k, 0, 5) == 'HTTP_')
-					$headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($k, 5)))))]=$v;
+				if (substr((string)($k ?? ""), 0, 5) == 'HTTP_')
+					$headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr((string)($k ?? ""), 5)))))]=$v;
 			return $headers;
 		}
 	}
@@ -141,7 +141,7 @@ class WS {
 		$key=$this->key();
 
 		// key/keys authentication
-		if (is_string($key) && strlen($key)) {
+		if (is_string($key) && strlen((string)($key ?? ""))) {
 			if (isset($this->key) && $key === $this->key) return;
 			else if (is_array($this->keys)) {
 				if ($this->keys[$key] === true) return;
@@ -166,7 +166,7 @@ class WS {
 			if (isset($this->data[$p])) {
 				switch ($t["type"]) {
 				case "json":
-					$this->data[$p]=@json_decode($this->data[$p], true);
+					$this->data[$p]=@json_decode((string)($this->data[$p] ?? ""), true);
 					break;
 				case "number":
 					if (is_numeric($this->data[$p])) $this->data[$p]=doubleval($this->data[$p]);
@@ -179,7 +179,7 @@ class WS {
 					if (!is_array($this->data[$p])) $nok[$p]=true;
 					break;
 				case "date":
-					if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $this->data[$p], $v) || !checkdate($v[2], $v[3], $v[1])) $nok[$p]=true;
+					if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', (string)($this->data[$p] ?? ""), $v) || !checkdate($v[2], $v[3], $v[1])) $nok[$p]=true;
 					break;
 				case "required":
 					if (!($this->data[$p] || strlen((string)$this->data[$p]))) $nok[$p]=true;
@@ -201,14 +201,14 @@ class WS {
 	// output
 	function out($d=null, $out=null) {
 		if ($d === null) exit; // empty
-		if (is_string($_GET["jsonp"])) {
+		if (is_string(($_GET["jsonp"] ?? ""))) {
 			// clean/protect data
 			$data=$this->data;
 			unset($data["jsonp"]);
 			unset($data["key"]);
 			// send JSONP
 			header("Content-type: text/javascript");
-			echo $_GET["jsonp"]."(".json_encode($data).",".json_encode($d).");\n";
+			echo ($_GET["jsonp"] ?? "")."(".json_encode($data).",".json_encode($d).");\n";
 			exit;
 		} else {
 			switch (isset($out)?$out:$this->out) {
@@ -255,7 +255,7 @@ class WS {
 							array_to_xml($v, $label);
 						} else {
 							if (is_array($array) && is_int($k)) $k="item";
-							$xml->addChild($k, htmlspecialchars($v, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401, "UTF-8"));
+							$xml->addChild($k, htmlspecialchars((string)($v ?? ""), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401, "UTF-8"));
 						}
 					}
 				}

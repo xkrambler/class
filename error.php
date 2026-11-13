@@ -76,7 +76,7 @@ class xError {
 		if (isset($_SERVER["HTTP_HOST"])) $this->log($this->accessEntry());
 
 		// set current error reporting
-		$this->errorReporting(error_reporting());
+		$this->errorReporting(isset($this->reporting)?$this->reporting:error_reporting());
 
 		// set current perror instance
 		if (!self::$current) self::$current=$this;
@@ -127,29 +127,28 @@ class xError {
 			// capture non-critical warnings
 			set_error_handler(function($type, $message, $file, $line, $context=[]){
 				if (in_array($type, $this->warnings)) {
-					if ($this->phpc < 8.4 && strpos($message, "Undefined variable") !== false) return; // ignore undefined variable for PHP 8.4+
-					if ($this->phpc < 8.4 && strpos($message, "Trying to access array offset") !== false) return; // ignore undefined array offset for PHP 8.4+
-					if ($this->phpc < 8 && strpos($message, "Undefined array key") !== false) return; // ignore undefined array keys for PHP 8+
+					if ($this->phpc < 8.4 && strpos((string)($message ?? ""), "Undefined variable") !== false) return; // ignore undefined variable for PHP 8.4+
+					if ($this->phpc < 8.4 && strpos((string)($message ?? ""), "Trying to access array offset") !== false) return; // ignore undefined array offset for PHP 8.4+
+					if ($this->phpc < 8 && strpos((string)($message ?? ""), "Undefined array key") !== false) return; // ignore undefined array keys for PHP 8+
 					$this->error=[
 						"type"=>$type,
 						"message"=>$message,
 						"file"=>$file,
 						"line"=>$line,
 						"trace"=>$this->trace(),
-						//"context"=>$context,
 					];
 					$error_reporting=error_reporting()&~E_RECOVERABLE_ERROR;
-					if ($error_reporting) $this->err($this->error, false);
+					if ($error_reporting & $type) $this->err($this->error, false);
 				}
 			});
 
 			// capture critical errors
 			register_shutdown_function(function(){
 				$e=error_get_last();
-				if ($e && isset($e["type"]) && ($this->error_reporting & $e["type"])) {
+				if ($e && isset($e["type"]) && ($this->reporting & $e["type"])) {
 					if (in_array($e["type"], $this->criticals)) {
 						// split message and trace
-						$a=explode("\n", $e["message"]);
+						$a=explode("\n", (string)($e["message"] ?? ""));
 						$e["message"]=$a[0];
 						unset($a[0]);
 						$e["trace"]=[];
@@ -175,7 +174,7 @@ class xError {
 	// set access (and errors) log
 	function access($access, $errors=false) {
 		// resolve path now, to prevent future directory changes
-		if ($access) $this->access=realpath(dirname($access))."/".basename($access);
+		if ($access) $this->access=realpath(dirname((string)($access ?? "")))."/".basename((string)($access ?? ""));
 		if ($errors) $this->errors($errors);
 	}
 
@@ -186,14 +185,14 @@ class xError {
 			// use access log file
 			if ($f === true) $f=$this->access;
 			// resolve path now, to prevent future directory changes
-			$this->errors_path=realpath(dirname($f))."/".basename($f);
+			$this->errors_path=realpath(dirname((string)($f ?? "")))."/".basename((string)($f ?? ""));
 		}
 	}
 
 	// access entry
 	function accessEntry() {
 		return date("YmdHis")
-			." ".(isset($_SERVER["HTTP_HOST"])?(string)$_SERVER["HTTP_HOST"]:"-")
+			." ".(isset($_SERVER["HTTP_HOST"])?(string)($_SERVER["HTTP_HOST"] ?? ""):"-")
 			." ".(($v=\x::remoteaddr())?$v:"-")
 			." ".(($v=session_id())?$v:"-")
 			." ".\x::request()."\n"
@@ -207,19 +206,19 @@ class xError {
 	}
 
 	// get/set error reporting
-	function errorReporting($error_reporting=null) {
-		if ($error_reporting === null) return $this->error_reporting;
-		$this->error_reporting=$e=error_reporting();
+	function errorReporting($reporting=null) {
+		if ($reporting === null) return $this->reporting;
+		$this->reporting=$e=$reporting;
 		foreach ($this->criticals as $c) $e&=~$c;
 		return error_reporting($e);
 	}
 
 	// returns an array of error reporting types as an array
-	function errorReportingList($error_reporting=null) {
-		if ($error_reporting === null) $error_reporting=$this->error_reporting;
+	function errorReportingList($reporting=null) {
+		if ($reporting === null) $reporting=$this->reporting;
 		$a=[];
 		foreach ($this->error_types as $e=>$s)
-			if ($e > 0 && $error_reporting & $e)
+			if ($e > 0 && $reporting & $e)
 				$a[]=$s;
 		return $a;
 	}
@@ -315,9 +314,9 @@ class xError {
 			"message"=>$err,
 		]);
 		if (is_array($err)) {
-			if (!isset($err["title"])) $err["title"]=(($et=$this->error_types[$err["type"]])?$et:"Error[".$err["type"]."]");
-			if (!isset($err["text"])) $err["text"]=strip_tags($err["message"]).($err["file"]?""
-				.(strpos($err["message"], "\n")?"\n ":"")
+			if (!isset($err["title"])) $err["title"]=(($et=$this->error_types[($err["type"] ?? "")])?$et:"Error[".$err["type"]."]");
+			if (!isset($err["text"])) $err["text"]=strip_tags((string)($err["message"] ?? "")).($err["file"]?""
+				.(strpos((string)($err["message"] ?? ""), "\n")?"\n ":"")
 				." - ".$err["file"]." line ".$err["line"]:"");
 			if (!isset($err["trace"])) $err["trace"]=$this->trace();
 			if ($err["trace"])
@@ -360,16 +359,16 @@ class xError {
 
 	// e-mail subject
 	function emailSubject($err) {
-		return "[xError ".date("d/m/Y H:i:s")."] ".$err["title"].($_SERVER["HTTP_HOST"]?" ".$_SERVER["HTTP_HOST"]:"");
+		return "[xError ".date("d/m/Y H:i:s")."] ".$err["title"].(($_SERVER["HTTP_HOST"] ?? "")?" ".($_SERVER["HTTP_HOST"] ?? ""):"");
 	}
 
 	// e-mail text
 	function emailText($err) {
 		$e=$this->mail;
 		return ($e["text"]?$e["text"]:"")
-			.$err["title"].": ".strip_tags($err["message"])."\n"
+			.$err["title"].": ".strip_tags((string)($err["message"] ?? ""))."\n"
 			.($err["file"]?"File: ".$err["file"].($err["line"]?" at line ".$err["line"]:"")."\n":"")
-			.($_SERVER["HTTP_HOST"]?"URL: ".\x::base().\x::alink()."\n":"")
+			.(($_SERVER["HTTP_HOST"] ?? "")?"URL: ".\x::base().\x::alink()."\n":"")
 			.(($v=\x::remoteaddr())?"Remote_Addr: ".$v."\n":"")
 			."Time: ".date("d/m/Y H:i:s")."\n"
 			.(isset($this->burst_loop)?"Burst: ".$this->burst_loop."\n":"")
@@ -405,7 +404,7 @@ class xError {
 		];
 
 		// if no text version, prepare
-		if (!$err["text"]) $err["text"]=strip_tags(nl2br($err["message"]));
+		if (!$err["text"]) $err["text"]=strip_tags(nl2br((string)($err["message"] ?? "")));
 
 		// register in error log
 		$error_log="[".date("YmdHis")."] ".$err["title"].": ".$err["text"];

@@ -3,8 +3,8 @@
 // cifrar email en javascript y devolver como script devolviendo variable m
 function jsmails($m) {
 	$words=array();
-	for ($i=0; $i<strlen($m); $i++) {
-		$c=substr($m, $i, 1);
+	for ($i=0; $i<strlen((string)($m ?? "")); $i++) {
+		$c=substr((string)($m ?? ""), $i, 1);
 		$l=$words[$c];
 		$words[$c][($words[$c]?count($words[$c]):0)]=$i;
 	}
@@ -17,7 +17,7 @@ function jsmails($m) {
 	}
 	return "
 		var w={".$t."};
-		var m='".str_repeat(" ", strlen($m))."';
+		var m='".str_repeat(" ", strlen((string)($m ?? "")))."';
 		for (var i in w)
 			for (var j in w[i])
 				m=m.substring(0, w[i][j])+i+m.substring(w[i][j]+1);
@@ -27,8 +27,8 @@ function jsmails($m) {
 // cifrar email en javascript y devolver como document.write
 function jsmail($m,$a=false,$aa="") {
 	$words=Array();
-	for ($i=0;$i<strlen($m);$i++) {
-		$c=substr($m,$i,1);
+	for ($i=0;$i<strlen((string)($m ?? ""));$i++) {
+		$c=substr((string)($m ?? ""),$i,1);
 		$l=$words[$c];
 		$words[$c][($words[$c]?count($words[$c]):0)]=$i;
 	}

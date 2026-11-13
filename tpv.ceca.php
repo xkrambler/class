@@ -40,12 +40,12 @@ class TPVCECA extends TPV {
 	// traducir una cantidad al tipo CECA
 	function amountTranslate($amount) {
 		if (empty($amount)) return '000';
-		return str_pad(round($amount*100), 3, "0", STR_PAD_LEFT);
+		return str_pad((string)round($amount*100), 3, "0", STR_PAD_LEFT);
 	}
 
 	// obtener un valor rellenado con 0 a la izquierda
 	function getValuePadded($value, $length) {
-		return str_pad($value, $length, '0', STR_PAD_LEFT);
+		return str_pad((string)($value ?? ""), $length, '0', STR_PAD_LEFT);
 	}
 
 	// obtener valores del formulario
@@ -139,21 +139,21 @@ class TPVCECA extends TPV {
 			return array("err"=>$this->lasterr, "nooperation"=>true);
 		}
 		// si no hay firma, no se comprueba la operación
-		if (!$_POST['Firma']) return false;
+		if (!($_POST['Firma'] ?? "")) return false;
 		// calcular la firma
 		if (!$signature=$this->getNotifySignature($_POST))
 			array("err"=>$this->lasterr, "wrong"=>true);
 		// comprobar la firma
-		if ($signature !== $_POST['Firma']) {
-			$this->lasterr='Signature not valid ('.$signature.' != '.$_POST['Firma'].')';
+		if ($signature !== ($_POST['Firma'] ?? "")) {
+			$this->lasterr='Signature not valid ('.$signature.' != '.($_POST['Firma'] ?? "").')';
 			return array("err"=>$this->lasterr, "badsign"=>true);
 		}
 		// devolver información de transacción correcta
 		return array(
 			"ok"=>true,
-			"localizador"=>$_POST['Num_operacion'],
-			"referencia"=>$_POST['Referencia'],
-			"firma"=>$_POST['Firma'],
+			"localizador"=>($_POST['Num_operacion'] ?? ""),
+			"referencia"=>($_POST['Referencia'] ?? ""),
+			"firma"=>($_POST['Firma'] ?? ""),
 		);
 	}
 
@@ -166,7 +166,7 @@ class TPVCECA extends TPV {
 		if (!($operacion=$this->dbGet($tpv_id))) return $this->error("cancelOperation: operación ".$tpv_id." no encontrada.");
 
 		// obtener operación, solicitud realizada y preparar campos
-		if (!($notificacion=json_decode($operacion["notificacion"], true))) return $this->error("cancelOperation: no se puede decodificar notificacion.");
+		if (!($notificacion=json_decode((string)($operacion["notificacion"] ?? ""), true))) return $this->error("cancelOperation: no se puede decodificar notificacion.");
 		$fields=array();
 		foreach ($_fields=array(
 			"MerchantID",

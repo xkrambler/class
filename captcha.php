@@ -13,10 +13,10 @@
 		$captchaKey = md5(microtime()*time());
 		// Remove any hard to distinguish characters from our hash
 		preg_replace('([1aeilou0])', "", $captchaKey);
-	} while (strlen($captchaKey) < $captchaTextSize);
+	} while (strlen((string)($captchaKey ?? "")) < $captchaTextSize);
 
 	// we need only 7 characters for this captcha
-	$captchaKey = strtoupper(substr($captchaKey, 0, $captchaTextSize));
+	$captchaKey = strtoupper(substr((string)($captchaKey ?? ""), 0, $captchaTextSize));
 
 	// grab the base image from our pre-generated captcha image background
 	$captchaImage = imagecreatefrompng($captchaBase."images/captcha.png");
@@ -55,9 +55,9 @@
 	}
 
 	// Draw our randomly generated string to our captcha using the given true type font. In this case, I am using BitStream Vera Sans Bold, but you could modify it to any other font you wanted to use.
-	for ($i=0;$i<strlen($captchaKey);$i++) {
+	for ($i=0;$i<strlen((string)($captchaKey ?? ""));$i++) {
 		$textColor=imagecolorallocate($captchaImage, 67+rand(0,20), 138+rand(0,40), 92+rand(0,20));
-		imagettftext($captchaImage, 18+rand(0,15), 0, 20+$i*25+rand(0,5), 30+rand(0,15), $textColor, $fontFile, substr($captchaKey,$i,1)) or die();
+		imagettftext($captchaImage, 18+rand(0,15), 0, 20+$i*25+rand(0,5), 30+rand(0,15), $textColor, $fontFile, substr((string)($captchaKey ?? ""),$i,1)) or die();
 	}
 
 	// Output the image to the browser, header settings prevent caching

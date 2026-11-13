@@ -13,7 +13,7 @@ class x {
 	static function autoload($base=null) {
 		spl_autoload_register(function($c) use ($base) {
 			if (!isset($base) || $base === null) $base=getcwd();
-			$f=$base.(substr($base, -1, 1) != "/"?"/":"").strtolower(str_replace('\\', '/', $c)).".php";
+			$f=$base.(substr((string)($base ?? ""), -1, 1) != "/"?"/":"").strtolower(str_replace('\\', '/', $c)).".php";
 			if (file_exists($f)) require_once($f);
 		});
 	}
@@ -65,7 +65,7 @@ class x {
 			foreach ($_module as $_m) $_modulec+=self::module($_m);
 		} else {
 			foreach ($GLOBALS as $i=>$d)
-				if (substr($i, 0, 1) != "_" && $i != "GLOBALS")
+				if (substr((string)($i ?? ""), 0, 1) != "_" && $i != "GLOBALS")
 					global $$i;
 			if (file_exists($_module.".css")) { $_modulec++; $css[$_module.".css"]=false; }
 			if (file_exists($_module.".js")) { $_modulec++; $js[$_module.".js"]=false; }
@@ -80,7 +80,7 @@ class x {
 
 	// _server
 	static public function _server($k=null) {
-		return (isset($k)?(isset($_SERVER) && isset($_SERVER[$k])?$_SERVER[$k]:null):$_SERVER);
+		return (isset($k)?(isset($_SERVER) && isset($_SERVER[$k])?($_SERVER[$k] ?? ""):null):$_SERVER);
 	}
 
 	// is HTTPS?
@@ -95,6 +95,15 @@ class x {
 
 	// get running script
 	static public function self() {
+		// prevent PATH_INFO problems by default
+		if (x::page("path_info") === null || !x::page("path_info")) {
+			$script=(string)($_SERVER["SCRIPT_NAME"] ?? "");
+			$file=basename((string)($_SERVER["SCRIPT_FILENAME"] ?? ""));
+			if ($script !== "" && $file !== "" && ($i=strpos($script, "/".$file)) !== false) {
+				$script=substr($script, 0, $i+strlen($file)+1);
+			}
+			return ($script !== ""?$script:(isset($_SERVER["PHP_SELF"]) && is_string($_SERVER["PHP_SELF"])?$_SERVER["PHP_SELF"]:""));
+		}
 		return self::_server("PHP_SELF");
 	}
 
@@ -111,21 +120,21 @@ class x {
 	// get path
 	static public function path() {
 		$p=self::request();
-		if (isset($p) && ($i=strpos($p, "?"))) $p=substr($p, 0, $i);
+		if (isset($p) && ($i=strpos((string)($p ?? ""), "?"))) $p=substr((string)($p ?? ""), 0, $i);
 		return $p;
 	}
 
 	// get query
 	static public function query() {
 		$p=self::request();
-		$i=strpos($p, "?");
-		return ($i!==false && $p?substr($p, $i+1):"");
+		$i=strpos((string)($p ?? ""), "?");
+		return ($i!==false && $p?substr((string)($p ?? ""), $i+1):"");
 	}
 
 	// get "me"
 	static public function me() {
 		$url=self::path();
-		return (substr($url, -1, 1) == "/"?"":basename($url));
+		return (substr((string)($url ?? ""), -1, 1) == "/"?"":basename((string)($url ?? "")));
 	}
 
 	// get relative URL+query
@@ -144,16 +153,16 @@ class x {
 		if ($base !== null) $page["base"]=$base;
 		if (isset($page["base"])) return $page["base"];
 		$path=self::path();
-		return (($server=self::server())?$server.(($i=strrpos($path, "/")) !== false?substr($path, 0, $i+1):"/"):"");
+		return (($server=self::server())?$server.(($i=strrpos((string)($path ?? ""), "/")) !== false?substr((string)($path ?? ""), 0, $i+1):"/"):"");
 	}
 
 	// link: create parametrized link
 	static public function link($get=array(), $url=null) {
 		if ($url === null) $url=self::me();
 		else {
-			$p=parse_url($url);
-			$i=strpos($url, '?');
-			if ($i !== false) $url=substr($url, 0, $i);
+			$p=parse_url((string)($url ?? ""));
+			$i=strpos((string)($url ?? ""), '?');
+			if ($i !== false) $url=substr((string)($url ?? ""), 0, $i);
 			$geturl=array();
 			parse_str((isset($p['query'])?(string)$p['query']:''), $geturl);
 			if ($geturl) $get=array_replace($geturl, $get);
@@ -162,9 +171,9 @@ class x {
 		$p=($get?http_build_query($get, "", "&", PHP_QUERY_RFC3986):"");
 		// supress alone equals
 		$p=str_replace("=&", "&", $p);
-		if (substr($p, -1, 1) === "=") $p=substr($p, 0, -1);
+		if (substr((string)($p ?? ""), -1, 1) === "=") $p=substr((string)($p ?? ""), 0, -1);
 		// encode URL
-		return $url.(strlen($p)?"?".$p:"");
+		return $url.(strlen((string)($p ?? ""))?"?".$p:"");
 	}
 
 	// alter link: modify parametrized link from current request parameters
@@ -181,7 +190,7 @@ class x {
 
 	// force HTTPS navigation
 	static public function forcehttps() {
-		if (isset($_SERVER["HTTP_HOST"]) && !self::ishttps()) self::redir("https://".$_SERVER["HTTP_HOST"].self::request());
+		if (isset($_SERVER["HTTP_HOST"]) && !self::ishttps()) self::redir("https://".($_SERVER["HTTP_HOST"] ?? "").self::request());
 	}
 
 	// efective remote address
@@ -203,6 +212,14 @@ class x {
 
 	// generic set cookie
 	static public function setcookie(string $name, string $value, array $o=array()) {
+		$o += [
+			"expires"=>0,
+			"path"=>"",
+			"domain"=>"",
+			"secure"=>false,
+			"httponly"=>false,
+			"samesite"=>"",
+		];
 		$c=[
 			"\x00"=>"", "\x1F"=>"", "\x7F"=>"", "\n"=>"%0A", "\r"=>"%0D",
 			" "=>"%20", ","=>"%2C", "/"=>"%2F", ";"=>"%3B", "="=>"%3D", "\\"=>"%5C"
@@ -260,7 +277,7 @@ if (!function_exists("perror")) {
 			$error->err($err, $exit);
 		} else {
 			if ($GLOBALS["ajax"] && function_exists("ajax")) ajax(array("err"=>"ERROR: ".$err));
-			else if (!x::_server("HTTP_HOST")) echo "ERROR: ".strip_tags($err)."\n";
+			else if (!x::_server("HTTP_HOST")) echo "ERROR: ".strip_tags((string)($err ?? ""))."\n";
 			else {
 				?><!doctype html>
 				<html>
@@ -286,7 +303,7 @@ if (!function_exists("perror")) {
 						<hr class='_xerror_hr' />
 						<div class='_xerror_foot'>
 							<div class='_xerror_a'><a href='<?=x::url()?>'><?=x::url()?></a></div>
-							<div class='_xerror_ss'><?=$_SERVER["SERVER_SOFTWARE"]?></div>
+							<div class='_xerror_ss'><?=($_SERVER["SERVER_SOFTWARE"] ?? "")?></div>
 							<div class='_xerror_clr'></div>
 						</div>
 					</div>
@@ -303,7 +320,7 @@ if (intval(x::page("phpc")) < 8 && defined("PHP_VERSION_ID") && PHP_VERSION_ID >
 
 // forced variables
 $me=x::self();
-if (isset($_REQUEST["id"])) $id=$_REQUEST["id"];
+if (isset($_REQUEST["id"])) $id=($_REQUEST["id"] ?? "");
 if (!isset($data)) $data=array();
 
 // legacy variables (deprecated)
@@ -316,7 +333,7 @@ $_f=(is_string(x::page("conf"))?x::page("conf"):"conf/");
 if ($_f && file_exists($_f)) {
 	$_d=dir($_f);
 	while ($_e=$_d->read())
-		if (substr($_e, -4, 4) == ".php")
+		if (substr((string)($_e ?? ""), -4, 4) == ".php")
 			require_once($_d->path.$_e);
 	$_d->close();
 }
@@ -333,11 +350,11 @@ if (is_string(x::page("sessionname"))) {
 }
 
 // user in session
-$user=(isset($_SESSION["user"])?$_SESSION["user"]:null);
+$user=(isset($_SESSION["user"])?($_SESSION["user"] ?? ""):null);
 
 // legacy volatile variables
-if (isset($_SESSION["ok"]))  { $ok =$_SESSION["ok"];  unset($_SESSION["ok"]); }
-if (isset($_SESSION["err"])) { $err=$_SESSION["err"]; unset($_SESSION["err"]); }
+if (isset($_SESSION["ok"]))  { $ok =($_SESSION["ok"] ?? "");  unset($_SESSION["ok"]); }
+if (isset($_SESSION["err"])) { $err=($_SESSION["err"] ?? ""); unset($_SESSION["err"]); }
 
 // legacy PHP classes and additional libraries
 if (isset($classes) && $_x=$classes) foreach ($_x as $_c) x::inc($_c);
@@ -345,7 +362,7 @@ if (isset($include) && $_x=$include) foreach ($_x as $_c) x::inc($_c);
 
 // include all PHP classes
 if ($_x=x::inc()) foreach ($_x as $_c) {
-	$_f=(strpos($_c, "/") !== false?"":__DIR__."/").$_c;
+	$_f=(strpos((string)($_c ?? ""), "/") !== false?"":__DIR__."/").$_c;
 	if (file_exists($_f.'.php')) x::isinc($_c, require_once($_f.'.php'));
 }
 
@@ -432,7 +449,7 @@ if (isset($_GET["css"]) || isset($_GET["js"])) {
 
 	// crypt autoloading
 	$_pc=false;
-	if ($page["crypt"]) {
+	if (!empty($page["crypt"])) {
 		require_once(__DIR__."/crypt.php");
 		$_pc=new $page["crypt"]["type"]($page["crypt"]);
 		if (!$_pc->available()) $_pc->err();
@@ -441,12 +458,13 @@ if (isset($_GET["css"]) || isset($_GET["js"])) {
 	// get includes
 	$_i=array();
 	$_x=false;
+	$_m="";
 	if (isset($_GET["css"])) { $_x="css"; $_m="text/css"; }
 	else if (isset($_GET["js"]))  { $_x="js";  $_m="text/javascript"; }
 	if (!$_x) perror("/* BOOM: No ext! */"); // allowed extension
-	if ($_pc) $_GET[$_x]=$_pc->decrypt($_GET[$_x]); // cypher
-	if (strpos($_GET[$_x], "\0") !== false) die("/* BOOM: 0x00 Headshot! */"); // null character detected
-	if ($_GET[$_x] && !$_i=explode("|", $_GET[$_x])) die("/* No includes */"); // no includes
+	if ($_pc) $_GET[$_x]=$_pc->decrypt(($_GET[$_x] ?? "")); // cypher
+	if (strpos((string)($_GET[$_x] ?? ""), "\0") !== false) die("/* BOOM: 0x00 Headshot! */"); // null character detected
+	if (($_GET[$_x] ?? "") && !$_i=explode("|", (string)($_GET[$_x] ?? ""))) die("/* No includes */"); // no includes
 
 	// caching
 	if ($_c=x::page("cache_".$_x)) {
@@ -459,7 +477,7 @@ if (isset($_GET["css"]) || isset($_GET["js"])) {
 	if ($_c=x::page("maxage")) x::maxage($_c);
 
 	// send with compression, if available and not disabled
-	if (!x::page("no_gzip") && extension_loaded('zlib') && ($_c=x::_server("HTTP_ACCEPT_ENCODING")) && in_array("gzip", explode(",", $_c))) ob_start("ob_gzhandler");
+	if (!x::page("no_gzip") && extension_loaded('zlib') && ($_c=x::_server("HTTP_ACCEPT_ENCODING")) && in_array("gzip", explode(",", (string)($_c ?? "")))) ob_start("ob_gzhandler");
 
 	// set mimetype and charset
 	header("Content-type: ".$_m."; charset=".x::charset());
@@ -467,19 +485,19 @@ if (isset($_GET["css"]) || isset($_GET["js"])) {
 	// load included files
 	if ($_i) foreach ($_i as $_c) {
 		$_c=str_replace("\\", "/", $_c);
-		if (strpos($_c, "..") !== false) die("Not allowed.");
-		$_f=(substr($_c, 0, 1) == "/"?__DIR__:"");
+		if (strpos((string)($_c ?? ""), "..") !== false) die("Not allowed.");
+		$_f=(substr((string)($_c ?? ""), 0, 1) == "/"?__DIR__:"");
 		$_e=$_f.$_c.".".$_x;
 		if (file_exists($_e)) {
 			echo "/** ".$_c.".".$_x." **/\n";
 			if (x::page("d".$_x)) { // dangerous method
 				x::irequire($_e, array(
-					"base"=>dirname($_c).(dirname($_c)?"/":""),
-					"name"=>basename($_c).".".$_x,
+					"base"=>dirname((string)($_c ?? "")).(dirname((string)($_c ?? ""))?"/":""),
+					"name"=>basename((string)($_c ?? "")).".".$_x,
 				));
 			} else {
-				$_d=str_replace("%base%", dirname($_c).(dirname($_c)?"/":""), file_get_contents($_e));
-				echo (strpos($_d, "<?") === false?$_d:"// disabled")."\n\n";
+				$_d=str_replace("%base%", dirname((string)($_c ?? "")).(dirname((string)($_c ?? ""))?"/":""), file_get_contents($_e));
+				echo (strpos((string)($_d ?? ""), "<?") === false?$_d:"// disabled")."\n\n";
 			}
 		}
 	}

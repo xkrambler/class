@@ -53,7 +53,7 @@ class Crypt {
 			return $this->error("Cannot initiate cipher: ".$this->ciphersuite());
 		// generate IV
 		$this->iv=(isset($o["iv"])
-			?str_pad("", $this->iv_size, substr($o["iv"], 0, $this->iv_size))
+			?str_pad("", $this->iv_size, substr((string)($o["iv"] ?? ""), 0, $this->iv_size))
 			:str_pad("", $this->iv_size, "\0")
 		);
 		// all ok
@@ -74,8 +74,8 @@ class Crypt {
 	// get OpenSSL cipher suite (algorithm-mode), accepting "aes-256-cbc" too
 	function ciphersuite($algorithm=null) {
 		$algorithm=$this->realAlgorithm($algorithm);
-		if (preg_match('/-(?:cbc|ecb|cfb|ofb|ctr|gcm|ccm|xts|wrap)$/i', $algorithm))
-			return strtolower($algorithm);
+		if (preg_match('/-(?:cbc|ecb|cfb|ofb|ctr|gcm|ccm|xts|wrap)$/i', (string)($algorithm ?? "")))
+			return strtolower((string)($algorithm ?? ""));
 		return strtolower($algorithm."-".$this->mode);
 	}
 
@@ -101,8 +101,8 @@ class Crypt {
 	// cipher
 	function cipher($data) {
 		if (!strlen($this->realAlgorithm())) return $this->error("Cannot cipher: no algorithm.");
-		if (!strlen($this->mode)) return $this->error("Cannot cipher: no mode.");
-		if (!strlen($this->key)) return $this->error("Cannot cipher: no key.");
+		if (!strlen((string)($this->mode ?? ""))) return $this->error("Cannot cipher: no mode.");
+		if (!strlen((string)($this->key ?? ""))) return $this->error("Cannot cipher: no key.");
 		$r=($this->openssl
 			?openssl_encrypt($data, $this->ciphersuite(), $this->key, $this->openssl, $this->iv)
 			:mcrypt_encrypt($this->realAlgorithm(), $this->key, $data, $this->mode, $this->iv)
@@ -113,8 +113,8 @@ class Crypt {
 	// decipher
 	function decipher($data) {
 		if (!strlen($this->realAlgorithm())) return $this->error("Cannot cipher: no algorithm.");
-		if (!strlen($this->mode)) return $this->error("Cannot cipher: no mode.");
-		if (!strlen($this->key)) return $this->error("Cannot cipher: no key.");
+		if (!strlen((string)($this->mode ?? ""))) return $this->error("Cannot cipher: no mode.");
+		if (!strlen((string)($this->key ?? ""))) return $this->error("Cannot cipher: no key.");
 		$r=($this->openssl
 			?openssl_decrypt($data, $this->ciphersuite(), $this->key, $this->openssl, $this->iv)
 			:$this->unpadding(mcrypt_decrypt($this->realAlgorithm(), $this->key, $data, $this->mode, $this->iv))
@@ -131,16 +131,16 @@ class Crypt {
 
 	// decrypt (new and legacy token formats)
 	function decrypt($data, $validator=null) {
-		if (!is_string($data) || !strlen($data)) return false;
+		if (!is_string($data) || !strlen((string)($data ?? ""))) return false;
 		$m=(string)$this->marker;
-		if ($m !== "" && strncmp($data, $m, strlen($m)) === 0) {
-			$r=$this->decipher($this->filterDecode($this->filter, substr($data, strlen($m))));
+		if ($m !== "" && strncmp((string)($data ?? ""), (string)($m ?? ""), strlen((string)($m ?? ""))) === 0) {
+			$r=$this->decipher($this->filterDecode($this->filter, substr((string)($data ?? ""), strlen((string)($m ?? "")))));
 			return ($r === false || ($validator && !$validator($r)) ? false : $r);
 		}
 		$raw=$this->filterDecode($this->filter, $data);
-		if (!is_string($raw) || !strlen($raw)) return false;
+		if (!is_string($raw) || !strlen((string)($raw ?? ""))) return false;
 		foreach ((array)$this->legacy as $algorithm) {
-			if (!strlen($algorithm)) continue;
+			if (!strlen((string)($algorithm ?? ""))) continue;
 			$r=$this->legacyDecipher($algorithm, $raw);
 			if ($r === false) continue;
 			if ($validator === null || $validator($r)) return $r;
@@ -151,7 +151,7 @@ class Crypt {
 	// decrypt JSON (tries legacy algorithms until valid JSON is found)
 	function decryptJSON($data) {
 		return $this->decrypt($data, function($s) {
-			return is_array(json_decode($s, true));
+			return is_array(json_decode((string)($s ?? ""), true));
 		});
 	}
 
@@ -202,8 +202,8 @@ class Crypt {
 			self::$blowfish_autoload=true;
 			spl_autoload_register(function($class) use ($bases) {
 				$prefix="phpseclib3\\";
-				if (strncmp($class, $prefix, strlen($prefix)) !== 0) return;
-				$file=str_replace("\\", "/", substr($class, strlen($prefix))).".php";
+				if (strncmp((string)($class ?? ""), (string)($prefix ?? ""), strlen((string)($prefix ?? ""))) !== 0) return;
+				$file=str_replace("\\", "/", substr((string)($class ?? ""), strlen((string)($prefix ?? "")))).".php";
 				foreach ($bases as $base) {
 					if (is_file($base.$file)) {
 						require_once($base.$file);
@@ -231,7 +231,7 @@ class Crypt {
 	function filterEncode($filter, $data) {
 		if (!$filter || !is_string($data)) return $data;
 		switch ($filter) {
-		case "base64": return base64_encode($data);
+		case "base64": return base64_encode((string)($data ?? ""));
 		case "base64uf": return $this->base64ufEncode($data);
 		}
 	}
@@ -240,14 +240,14 @@ class Crypt {
 	function filterDecode($filter, $data) {
 		if (!$filter || !is_string($data)) return $data;
 		switch ($filter) {
-		case "base64": return base64_decode($data);
+		case "base64": return base64_decode((string)($data ?? ""));
 		case "base64uf": return $this->base64ufDecode($data);
 		}
 	}
 
 	// encode base64-URL-Friendly
 	function base64ufEncode($d) {
-		$d=base64_encode($d);
+		$d=base64_encode((string)($d ?? ""));
 		$d=str_replace(["+", "/", "="], [".", "_", "-"], $d);
 		return $d;
 	}
@@ -255,7 +255,7 @@ class Crypt {
 	// decode base64-URL-Friendly
 	function base64ufDecode($d) {
 		$d=str_replace([".", "_", "-"], ["+", "/", "="], $d);
-		return base64_decode($d);
+		return base64_decode((string)($d ?? ""));
 	}
 
 	// get/set error

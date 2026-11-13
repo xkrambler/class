@@ -4,8 +4,8 @@
 function axmailer() {
 	global $ajax, $adata;
 	if ($ajax == "mailer:send") {
-		if (!strlen($adata["from"])) ajax(Array("field"=>"from", "err"=>"Especifique un correo electrónico para el emisor."));
-		if (!strlen($adata["to"])) ajax(Array("field"=>"to", "err"=>"Especifique un correo electrónico para el destinatario."));
+		if (!strlen((string)($adata["from"] ?? ""))) ajax(Array("field"=>"from", "err"=>"Especifique un correo electrónico para el emisor."));
+		if (!strlen((string)($adata["to"] ?? ""))) ajax(Array("field"=>"to", "err"=>"Especifique un correo electrónico para el destinatario."));
 		if (Kernel::mailto(Array(
 			"from"=>$adata["from"],
 			"to"=>$adata["to"],

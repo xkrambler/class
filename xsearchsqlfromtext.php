@@ -87,10 +87,10 @@ class xSearchSQLfromText {
 		}
 		if ($this->options["translate"] === true || $r) {
 			$s=(function_exists("mb_strtolower")
-				?mb_strtolower($s)
+				?mb_strtolower((string)($s ?? ""))
 				:(function_exists("strtolower_utf8")
 					?strtolower_utf8($s)
-					:strtolower($s)
+					:strtolower((string)($s ?? ""))
 				)
 			);
 			$s=str_replace(
@@ -104,11 +104,11 @@ class xSearchSQLfromText {
 	function sql() {
 		$sql="";
 		if (isset($this->search) && is_string($this->search)) {
-			$busqueda=explode(" ", $this->search);
+			$busqueda=explode(" ", (string)($this->search ?? ""));
 			foreach ($busqueda as $i=>$w) {
 				$sql.=($sql?" AND ":"")."(";
 				foreach ($this->fields as $i=>$f)
-					$sql.=($i?" OR ":"").$this->fieldsql($f)." LIKE '".$this->valuesql((substr_count($w, "%")?$w:"%".str_replace("_", "\\_", $w)."%"), $f)."'";
+					$sql.=($i?" OR ":"").$this->fieldsql($f)." LIKE '".$this->valuesql((substr_count((string)($w ?? ""), "%")?$w:"%".str_replace("_", "\\_", $w)."%"), $f)."'";
 				$sql.=")";
 			}
 		}
@@ -117,32 +117,32 @@ class xSearchSQLfromText {
 
 	function texto($html_enhancer="b") {
 		$texto="";
-		$busqueda=explode(" ", $this->search);
+		$busqueda=explode(" ", (string)($this->search ?? ""));
 		foreach ($busqueda as $i=>$w) {
-			$s=strpos($w, "=");
+			$s=strpos((string)($w ?? ""), "=");
 			if ($s) {
-				$f=substr($w, 0, $s);
-				$w=substr($w, $s+1);
+				$f=substr((string)($w ?? ""), 0, $s);
+				$w=substr((string)($w ?? ""), $s+1);
 				$texto.=($texto?", ":"")." con la columna ".($this->fields_oem[$f]["th"]?$this->fields_oem[$f]["th"]:$f);
-				$texto.=(substr($w, 0, 1)=="%"
-						?(substr($w, -1, 1)=="%"?" que contenga ":" que termine por ")
-						:(substr($w, -1, 1)=="%"?" que empiece por ":" igual a ")
+				$texto.=(substr((string)($w ?? ""), 0, 1)=="%"
+						?(substr((string)($w ?? ""), -1, 1)=="%"?" que contenga ":" que termine por ")
+						:(substr((string)($w ?? ""), -1, 1)=="%"?" que empiece por ":" igual a ")
 					);						
-				$w=(substr($w, 0, 1)=="%"?substr($w, 1):$w);
-				$w=(substr($w, -1, 1)=="%"?substr($w, 0, strlen($w)-1):$w);
+				$w=(substr((string)($w ?? ""), 0, 1)=="%"?substr((string)($w ?? ""), 1):$w);
+				$w=(substr((string)($w ?? ""), -1, 1)=="%"?substr((string)($w ?? ""), 0, strlen((string)($w ?? ""))-1):$w);
 				$texto.="<".$html_enhancer.">".$w."</".$html_enhancer.">";
 			} else {
-				$s=strpos($w, "!");
+				$s=strpos((string)($w ?? ""), "!");
 				if ($s) {
-					$f=substr($w, 0, $s);
-					$w=substr($w, $s+1);
+					$f=substr((string)($w ?? ""), 0, $s);
+					$w=substr((string)($w ?? ""), $s+1);
 					$texto.=($texto?", ":"")." con la columna ".($this->fields_oem[$f]["th"]?$this->fields_oem[$f]["th"]:$f);
-					$texto.=(substr($w, 0, 1) == "%"
-							?(substr($w, -1, 1) == "%"?" que no contenga ":" que no termine por ")
-							:(substr($w, -1, 1) == "%"?" que no empiece por ":" diferente a ")
+					$texto.=(substr((string)($w ?? ""), 0, 1) == "%"
+							?(substr((string)($w ?? ""), -1, 1) == "%"?" que no contenga ":" que no termine por ")
+							:(substr((string)($w ?? ""), -1, 1) == "%"?" que no empiece por ":" diferente a ")
 						);						
-					$w=(substr($w, 0, 1) == "%"?substr($w, 1):$w);
-					$w=(substr($w, -1, 1) == "%"?substr($w, 0, strlen($w)-1):$w);
+					$w=(substr((string)($w ?? ""), 0, 1) == "%"?substr((string)($w ?? ""), 1):$w);
+					$w=(substr((string)($w ?? ""), -1, 1) == "%"?substr((string)($w ?? ""), 0, strlen((string)($w ?? ""))-1):$w);
 					$texto.="<".$html_enhancer.">".$w."</".$html_enhancer.">";
 				} else {
 					$texto.=($texto?", con ":"")." <".$html_enhancer.">".$w."</".$html_enhancer."> en todos los campos";

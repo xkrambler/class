@@ -36,16 +36,16 @@ class xOTP {
 	}
 	function __get($k) { return $this->o[$k]; }
 	function __set($k, $v) {
-		if ($k == "algorithm") $v=strtolower($v);
+		if ($k == "algorithm") $v=strtolower((string)($v ?? ""));
 		else if ($k == "totp") $v=$this->trim($v);
 		else if ($k == "url") {
-			$ui=parse_url($v);
+			$ui=parse_url((string)($v ?? ""));
 			if ($ui["scheme"] == "otpauth" && $ui["host"] == "totp") {
 				$qs=[];
 				if ($ui["query"]) parse_str($ui["query"], $qs);
-				if ($ui["path"]) $this->label=substr(rawurldecode($ui["path"]), 1);
-				if (strlen($qs["issuer"])) $this->o["issuer"]=$qs["issuer"];
-				if (strlen($qs["secret"])) $this->secret($qs["secret"]);
+				if ($ui["path"]) $this->label=substr(rawurldecode((string)($ui["path"] ?? "")), 1);
+				if (strlen((string)($qs["issuer"] ?? ""))) $this->o["issuer"]=$qs["issuer"];
+				if (strlen((string)($qs["secret"] ?? ""))) $this->secret($qs["secret"]);
 			}
 		}
 		$this->o[$k]=$v;
@@ -87,7 +87,7 @@ class xOTP {
 
 	// encode Base32 key
 	function base32enc($key, $pad=false) {
-		$len=strlen($key);
+		$len=strlen((string)($key ?? ""));
 		$s='';
 		$remainder=0;
 		$remainder_size=0;
@@ -120,13 +120,13 @@ class xOTP {
 		$s='';
 		foreach (str_split($secret) as $c) {
 			if ($c === "=") break;
-			$i=strpos($this->base32, $c);
+			$i=strpos((string)($this->base32 ?? ""), (string)($c ?? ""));
 			if ($i === false) return $this->error('Invalid base32 character in secret');
 			$s.=str_pad(decbin($i), 5, '0', STR_PAD_LEFT);
 		}
 		$r='';
 		foreach (str_split($s, 8) as $b) {
-			$r.=chr(bindec(str_pad($b, 8, '0', STR_PAD_RIGHT)));
+			$r.=chr(bindec(str_pad((string)($b ?? ""), 8, '0', STR_PAD_RIGHT)));
 		}
 		return $r;
 	}
@@ -137,10 +137,10 @@ class xOTP {
 
 		// checks
 		$this->valid=$this->defaults["valid"];
-		if (!strlen($this->secret)) return $this->error("no secret specified.");
+		if (!strlen((string)($this->secret ?? ""))) return $this->error("no secret specified.");
 		if ($this->digits < 1) return $this->error("digits must be more than 1.");
 		if ($this->period < 1) return $this->error("period must be one or more seconds.");
-		if (!($algorithm=$this->algorithms[$this->algorithm])) return $this->error("algorithm not supported.");
+		if (!($algorithm=$this->algorithms[($this->algorithm ?? "")])) return $this->error("algorithm not supported.");
 
 		// decode Base32 secret to binary
 		$binsecret=$this->base32dec($this->secret);
@@ -159,7 +159,7 @@ class xOTP {
 		$base_s=pack('N*', 0).pack('N*', $base);
 
 		// generate hash
-		$hash=hash_hmac(strtolower($this->algorithm), $base_s, $binsecret, true);
+		$hash=hash_hmac(strtolower((string)($this->algorithm ?? "")), (string)($base_s ?? ""), (string)($binsecret ?? ""), true);
 
 		// determine dynamic position to truncate hash
 		$offset=ord($hash[$algorithm["size"]-1]) & 0xf;
@@ -173,7 +173,7 @@ class xOTP {
 		) % pow(10, $this->digits);
 
 		// padding with leading zeros, if needed
-		return str_pad($code, $this->digits, '0', STR_PAD_LEFT);
+		return str_pad((string)($code ?? ""), $this->digits, '0', STR_PAD_LEFT);
 
 	}
 
@@ -204,7 +204,7 @@ class xOTP {
 			"algorithm"=>($this->algorithm == $this->defaults["algorithm"]?null:$this->algorithm),
 			"digits"=>($this->digits == $this->defaults["digits"]?null:$this->digits),
 			"period"=>($this->period == $this->defaults["period"]?null:$this->period),
-		], "otpauth://totp/".urlencode($this->label));
+		], "otpauth://totp/".urlencode((string)($this->label ?? "")));
 
 	}
 

@@ -53,7 +53,7 @@ class Process {
 		$in_s=false;
 		$in_d=false;
 		$escape=false;
-		for ($i=0; $i < strlen($o); $i++) {
+		for ($i=0; $i < strlen((string)($o ?? "")); $i++) {
 			$c=$o[$i];
 			if ($escape) {
 				$s.=$c;
@@ -101,7 +101,7 @@ class Process {
 			stream_set_blocking($this->rpipes[1], 0);
 			stream_set_blocking($this->rpipes[2], 0);
 			if (is_string($this->in)) {
-				fwrite($this->rpipes[0], $this->in);
+				fwrite($this->rpipes[0], (string)($this->in ?? ""));
 			} else if (is_callable($this->in)) {
 				$callback=$this->in;
 				$callback($this, $this->rpipes[0]);
@@ -157,7 +157,7 @@ class Process {
 		if (!is_resource($this->rpipes[1])) return false;
 		do {
 			$b=fread($this->rpipes[1], $this->buffer);
-			if (is_string($b) && strlen($b)) {
+			if (is_string($b) && strlen((string)($b ?? ""))) {
 				$this->out.=$b;
 				if (is_callable($this->output)) { $callback=$this->output; $callback($this, $b); }
 			}
@@ -169,7 +169,7 @@ class Process {
 	function err($flush=false) {
 		if (!is_resource($this->rpipes[2])) return false;
 		$b=($flush?stream_get_contents($this->rpipes[2]):fread($this->rpipes[2], $this->buffer));
-		if (is_string($b) && strlen($b)) {
+		if (is_string($b) && strlen((string)($b ?? ""))) {
 			$this->err.=$b;
 			if (is_callable($this->error)) { $callback=$this->error; $callback($this, $b); }
 		}

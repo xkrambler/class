@@ -21,15 +21,15 @@
 		global $ajax,$adata,$me,$kernel,$view;
 		switch ($ajax) {
 		case "filer:capture":
-			$filer=$_REQUEST["filer"];
-			$path=utf8_decode_compat($_REQUEST["path"]);
-			if (strpos($path,"..")!==false) die("Acceso denegado a ruta.");
-			if (substr($path,0,1)=="/") die("Acceso denegado a ruta.");
-			$filename=$_REQUEST["file"];
+			$filer=($_REQUEST["filer"] ?? "");
+			$path=utf8_decode_compat(($_REQUEST["path"] ?? ""));
+			if (strpos((string)($path ?? ""),"..")!==false) die("Acceso denegado a ruta.");
+			if (substr((string)($path ?? ""),0,1)=="/") die("Acceso denegado a ruta.");
+			$filename=($_REQUEST["file"] ?? "");
 			if (!$filename) die("Se debe especificar una carpeta/archivo.");
-			if (strpos($filename,"..")!==false || strpos($filename,"/")!==false) die("Nombre de fichero incorrecto");
-			$w=intval($_REQUEST["w"]);
-			$h=intval($_REQUEST["h"]);
+			if (strpos((string)($filename ?? ""),"..")!==false || strpos((string)($filename ?? ""),"/")!==false) die("Nombre de fichero incorrecto");
+			$w=intval(($_REQUEST["w"] ?? ""));
+			$h=intval(($_REQUEST["h"] ?? ""));
 			if ($w<16 || $w>1900 || $h<16 || $h>1080) die("Resolución no soportada o fuera de rango.");
 			$o=$dirs[$filer];
 			if ($o) {
@@ -44,16 +44,16 @@
 		case "filer:newfolder":
 			$filer=$adata["filer"];
 			$path=utf8_decode_compat($adata["path"]);
-			if (strpos($path,"..")!==false) ajax(Array("err"=>"Acceso denegado a ruta."));
-			if (substr($path,0,1)=="/") ajax(Array("err"=>"Acceso denegado a ruta."));
+			if (strpos((string)($path ?? ""),"..")!==false) ajax(Array("err"=>"Acceso denegado a ruta."));
+			if (substr((string)($path ?? ""),0,1)=="/") ajax(Array("err"=>"Acceso denegado a ruta."));
 			$folder=utf8_decode_compat($adata["folder"]);
-			if (strpos($folder,"..")!==false || strpos($folder,"/")!==false) ajax(Array("err"=>"Nombre de carpeta incorrecto"));
+			if (strpos((string)($folder ?? ""),"..")!==false || strpos((string)($folder ?? ""),"/")!==false) ajax(Array("err"=>"Nombre de carpeta incorrecto"));
 			$o=$dirs[$filer];
 			if ($o["upload"]) {
 				$rpath=null;
 				if ($o["upload"]===true) $o["upload"]=Array("");
 				foreach ($o["upload"] as $p) {
-					if (substr($path,0,strlen($p))==$p) {
+					if (substr((string)($path ?? ""),0,strlen((string)($p ?? "")))==$p) {
 						$rpath=$o["root"].$path;
 						break;
 					}
@@ -67,19 +67,19 @@
 		case "filer:delete":
 			$filer=$adata["filer"];
 			$path=utf8_decode_compat($adata["path"]);
-			if (strpos($path,"..")!==false) ajax(Array("err"=>"Acceso denegado a ruta."));
-			if (substr($path,0,1)=="/") ajax(Array("err"=>"Acceso denegado a ruta."));
+			if (strpos((string)($path ?? ""),"..")!==false) ajax(Array("err"=>"Acceso denegado a ruta."));
+			if (substr((string)($path ?? ""),0,1)=="/") ajax(Array("err"=>"Acceso denegado a ruta."));
 			if (!$adata["items"]) ajax(Array("err"=>"No ha indicado ningún elemento a borrar."));
 			foreach ($adata["items"] as $item) {
 				$filename=trim(utf8_decode_compat($item));
 				if (!$filename) ajax(Array("err"=>"Se debe especificar una carpeta/archivo."));
-				if (strpos($filename,"..")!==false || strpos($filename,"/")!==false) ajax(Array("err"=>"Nombre de fichero incorrecto"));
+				if (strpos((string)($filename ?? ""),"..")!==false || strpos((string)($filename ?? ""),"/")!==false) ajax(Array("err"=>"Nombre de fichero incorrecto"));
 				$o=$dirs[$filer];
 				if ($o["upload"]) {
 					$rpath=null;
 					if ($o["upload"]===true) $o["upload"]=Array("");
 					foreach ($o["upload"] as $p) {
-						if (substr($path,0,strlen($p))==$p) {
+						if (substr((string)($path ?? ""),0,strlen((string)($p ?? "")))==$p) {
 							$rpath=$o["root"].$path;
 							break;
 						}
@@ -120,18 +120,18 @@
 			ajax(Array("ok"=>true));
 
 		case "filer:upload":
-			$filer=$_REQUEST["filer"];
-			$path=utf8_decode_compat($_REQUEST["path"]);
-			if (strpos($path,"..")!==false) die("Access forbidden.");
-			if (substr($path,0,1)=="/") die("Location forbidden.");
+			$filer=($_REQUEST["filer"] ?? "");
+			$path=utf8_decode_compat(($_REQUEST["path"] ?? ""));
+			if (strpos((string)($path ?? ""),"..")!==false) die("Access forbidden.");
+			if (substr((string)($path ?? ""),0,1)=="/") die("Location forbidden.");
 			$o=$dirs[$filer];
 			if ($o["upload"]) {
-				$name=utf8_decode_compat(str_replace("'","_",str_replace("\"","_",basename($_FILES["file"]["name"]))));
+				$name=utf8_decode_compat(str_replace("'","_",str_replace("\"","_",basename((string)($_FILES["file"]["name"] ?? "")))));
 				$size=filesize($_FILES["file"]["tmp_name"]);
 				$rpath=null;
 				if ($o["upload"]===true) $o["upload"]=Array("");
 				foreach ($o["upload"] as $p) {
-					if (substr($path,0,strlen($p))==$p) {
+					if (substr((string)($path ?? ""),0,strlen((string)($p ?? "")))==$p) {
 						$rpath=$o["root"].$path;
 						break;
 					}
@@ -167,10 +167,10 @@
 			exit;
 		
 		case "filer:uploader":
-			$filer=$_REQUEST["filer"];
-			$path=utf8_decode_compat($_REQUEST["path"]);
-			if (strpos($path,"..")!==false) die("Access forbidden.");
-			if (substr($path,0,1)=="/") die("Location forbidden.");
+			$filer=($_REQUEST["filer"] ?? "");
+			$path=utf8_decode_compat(($_REQUEST["path"] ?? ""));
+			if (strpos((string)($path ?? ""),"..")!==false) die("Access forbidden.");
+			if (substr((string)($path ?? ""),0,1)=="/") die("Location forbidden.");
 			$o=$dirs[$filer];
 			if (!$o["upload"]) die("En esta carpeta no se puede escribir.");
 			?><!doctype html>
@@ -214,22 +214,22 @@
 		case "filer:list":
 			
 			// filtrar parámetros y obtener opciones
-			$o=$dirs[$adata["filer"]];
+			$o=$dirs[($adata["filer"] ?? "")];
 			$raiz=utf8_decode_compat($o["root"]);
 			$path=trim(utf8_decode_compat($adata["path"]));
 			$ext=($adata["ext"]?$adata["ext"]:"");
-			if (strpos($path,"..")!==false) ajax(Array("err"=>"Access forbidden."));
-			if (substr($path,0,1)=="/") ajax(Array("err"=>"Location forbidden."));
+			if (strpos((string)($path ?? ""),"..")!==false) ajax(Array("err"=>"Access forbidden."));
+			if (substr((string)($path ?? ""),0,1)=="/") ajax(Array("err"=>"Location forbidden."));
 			if ($o["ext"]) {
 				if (!$o["ext"][$ext])
 					ajax(Array("err"=>"Extension ".$ext." not allowed."));
 				$ext_allowed=Array();
 				if ($ext) {
-					foreach ($i=explode("|",$ext) as $e)
+					foreach ($i=explode("|",(string)($ext ?? "")) as $e)
 						$ext_allowed[$e]=$o["ext"][$ext];
 				} else {
 					foreach ($o["ext"] as $extensions=>$name)
-						foreach ($i=explode("|",$extensions) as $e)
+						foreach ($i=explode("|",(string)($extensions ?? "")) as $e)
 							$ext_allowed[$e]=$name;
 				}
 			}
@@ -245,8 +245,8 @@
 					$isdir=(is_dir($raiz.$path.$e)?true:false);
 					if (!$all[($isdir?"dirs":"files")])
 						$all[($isdir?"dirs":"files")]=Array();
-					$p=strrpos($e,".");
-					$extension=strtolower($p?substr($e,$p+1):"");
+					$p=strrpos((string)($e ?? ""),".");
+					$extension=strtolower($p?substr((string)($e ?? ""),$p+1):"");
 					if (!$isdir && $ext_allowed && !$ext_allowed[$extension] && !$ext_allowed[""]) continue;
 					$ico="images/ext16/".$extension.".png";
 					$ico=(file_exists($ico)?$ico:($isdir?"images/ext16/folder.png":"images/ext16/file.png"));
@@ -256,9 +256,9 @@
 							="?ajax=filer:capture"
 							."&w=128"
 							."&h=96"
-							."&filer=".urlencode($adata["filer"])
+							."&filer=".urlencode((string)($adata["filer"] ?? ""))
 							."&path=".urlencode(utf8_encode_compat($path))
-							."&file=".urlencode($e);
+							."&file=".urlencode((string)($e ?? ""));
 						break;
 					default:
 						$imagen="images/ext48/".$extension.".png";
@@ -273,7 +273,7 @@
 						"path"=>$raiz,
 						"dir"=>$isdir,
 						"size"=>$size,
-						"sizet"=>(!$isdir?number_format($size,0,0,"."):""),
+						"sizet"=>(!$isdir?number_format((float)($size ?? 0),0,"0","."):""),
 						"mtime"=>$mtime,
 						"mtimet"=>date("d/m/Y H:i",$mtime),
 					);
@@ -285,8 +285,8 @@
 			// ordenar
 			function sortdir($a,$b) {
 				if ($a["dir"] && !$b["dir"]) return -1;
-				if ($a["dir"] && $b["dir"] && strtolower($a["file"])<strtolower($b["file"])) return -1;
-				if (!$a["dir"] && !$b["dir"] && strtolower($a["file"])<strtolower($b["file"])) return -1;
+				if ($a["dir"] && $b["dir"] && strtolower((string)($a["file"] ?? ""))<strtolower((string)($b["file"] ?? ""))) return -1;
+				if (!$a["dir"] && !$b["dir"] && strtolower((string)($a["file"] ?? ""))<strtolower((string)($b["file"] ?? ""))) return -1;
 				return 1;
 			}
 			usort($directorio,"sortdir");

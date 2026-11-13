@@ -426,14 +426,14 @@ class dbMySQLi extends dbbase {
 
 	// check if a word is a keyword
 	function iskeyword($k) {
-		return in_array(strtoupper($k), $this->keywords);
+		return in_array(strtoupper((string)($k ?? "")), $this->keywords);
 	}
 
 	// return filtered field name
 	function sqlfield($t) {
 		$q="`";
 		$s="";
-		if ($t=explode(".", $t)) foreach ($t as $f)
+		if ($t=explode(".", (string)($t ?? ""))) foreach ($t as $f)
 			$s.=($s?".":"").$q.$this->escape(str_replace($q, "", $f)).$q;
 		return $s;
 	}
@@ -446,7 +446,7 @@ class dbMySQLi extends dbbase {
 	// return filtered limit
 	function sqllimit($s) {
 		$s=(string)$s;
-		return (strlen($s) && preg_match('/^\b\d+(?:,\d+)?\b$/', $s)?$s:"");
+		return (strlen((string)($s ?? "")) && preg_match('/^\b\d+(?:,\d+)?\b$/', (string)($s ?? ""))?$s:"");
 	}
 
 	// return server database version

@@ -136,7 +136,7 @@ class dbAccess extends dbbase {
 		if (!$this->idcon>0) return(false);
 		if (!$querynum) $querynum="%".$this->lastquerynum;
 		$this->lastrow=$this->rowtoutf8(odbc_fetch_array($this->idquery[$querynum]));
-		if (strlen($field)) return($this->lastrow[$field]);
+		if (strlen((string)($field ?? ""))) return($this->lastrow[$field]);
 		else {
 			if ($this->lastrow)
 				foreach ($this->lastrow as $field=>$value)
@@ -170,11 +170,11 @@ class dbAccess extends dbbase {
 	// ESPECÍFICA: Convertir un UID de binario al formato hexadecimal de Microsoft
 	function bin2uid($bin) {
 		$hex=bin2hex($bin);
-		return substr($hex,6,2).substr($hex,4,2).substr($hex,2,2).substr($hex,0,2)
-		       ."-".substr($hex,10,2).substr($hex,8,2)
-		       ."-".substr($hex,14,2).substr($hex,12,2)
-		       ."-".substr($hex,16,4)
-		       ."-".substr($hex,20,12)
+		return substr((string)($hex ?? ""),6,2).substr((string)($hex ?? ""),4,2).substr((string)($hex ?? ""),2,2).substr((string)($hex ?? ""),0,2)
+		       ."-".substr((string)($hex ?? ""),10,2).substr((string)($hex ?? ""),8,2)
+		       ."-".substr((string)($hex ?? ""),14,2).substr((string)($hex ?? ""),12,2)
+		       ."-".substr((string)($hex ?? ""),16,4)
+		       ."-".substr((string)($hex ?? ""),20,12)
 		;
 	}
 	

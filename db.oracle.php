@@ -31,10 +31,10 @@ class dbORACLE extends dbbase {
 		if (!function_exists($oci_connect)) die("ERROR: La librería dbOracle no iniciada: Función ".$oci_connect." inexistente.");
 		if (!$this->setup["connection_string"]) {
 			// check if port is specified in host
-			$i=strpos($this->setup["host"], ":");
+			$i=strpos((string)($this->setup["host"] ?? ""), ":");
 			if ($i !== false) {
-				$this->setup["port"]=substr($this->setup["host"], $i+1);
-				$this->setup["host"]=substr($this->setup["host"], 0, $i);
+				$this->setup["port"]=substr((string)($this->setup["host"] ?? ""), $i+1);
+				$this->setup["host"]=substr((string)($this->setup["host"] ?? ""), 0, $i);
 			}
 			// generate connection string
 			$this->setup["connection_string"]="
@@ -161,7 +161,7 @@ class dbORACLE extends dbbase {
 		if (!$this->idcon>0) return false;
 		if (!$querynum) $querynum="%".$this->lastquerynum;
 		$this->lastrow=oci_fetch_assoc($this->stmt[$querynum]);
-		if (strlen($field)) return $this->lastrow[$field];
+		if (strlen((string)($field ?? ""))) return $this->lastrow[$field];
 		else {
 			if ($this->lastrow)
 				foreach ($this->lastrow as $field=>$value)

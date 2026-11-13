@@ -62,14 +62,14 @@ class xCache {
 	
 	// establece un tiempo de expiración futuro
 	function expiration($seconds=3600) {
-		header("Expires: ".date(DATE_RFC822,($seconds?(is_string($seconds)?strtotime($seconds):time()+$seconds):time())));
+		header("Expires: ".date(DATE_RFC822,($seconds?(is_string($seconds)?strtotime((string)($seconds ?? "")):time()+$seconds):time())));
 		header("Cache-Control: private, max-age=".$seconds);
 	}
 	
 	// control de modificación de la página, si no está modificada, se manda un not modified
 	function modified($lastModifiedTime=null) {
 		if ($lastModifiedTime) {
-			if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) && strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE']) >= $lastModifiedTime) {
+			if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) && strtotime((string)($_SERVER['HTTP_IF_MODIFIED_SINCE'] ?? "")) >= $lastModifiedTime) {
 				header(
 					php_sapi_name()=='CGI'
 					?"Status: 304 Not Modified"
@@ -87,7 +87,7 @@ class xCache {
 	// establece una ruta donde se guardará una caché de ficheros físicos
 	// debe terminar en /
 	function filePath($path="cache/") {
-		if (substr($path,-1,1)!="/") return false;
+		if (substr((string)($path ?? ""),-1,1)!="/") return false;
 		$this->path=$path;
 		return (@mkdir($path,$this->mask,true));
 	}
@@ -105,7 +105,7 @@ class xCache {
 		if (!$file) return false;
 		// comprobar si el nombre del fichero incluye rutas, y crear rutas de acceso
 		// en caso de no existir
-		$subpath=dirname($file);
+		$subpath=dirname((string)($file ?? ""));
 		if ($subpath)
 			if (!file_exists($this->path.$subpath))
 				@mkdir($this->path.$subpath,$this->mask,true);
@@ -146,7 +146,7 @@ class xCache {
 		// actualizar lastfile
 		$this->lastfile=$file;
 		// si se solicita que no haya caché, regenerar
-		if ($_SERVER["HTTP_CACHE_CONTROL"]=="no-cache" || $_SERVER["HTTP_PRAGMA"]=="no-cache") return false;
+		if (($_SERVER["HTTP_CACHE_CONTROL"] ?? "")=="no-cache" || ($_SERVER["HTTP_PRAGMA"] ?? "")=="no-cache") return false;
 		// si no hay fichero de caché, sale de la función para permitir guardar uno
 		if (!file_exists($this->path.$file)) return false;
 		// buscar fecha de modificación

@@ -47,8 +47,8 @@ class WebSocketClient {
 	function connect() {
 
 		// parse URL
-		if (!strlen($this->url)) return $this->error("No websocket URL but required (url).");
-		$url=parse_url($this->url);
+		if (!strlen((string)($this->url ?? ""))) return $this->error("No websocket URL but required (url).");
+		$url=parse_url((string)($this->url ?? ""));
 
 		// generate a key (to convince server that the update is not random)
 		// the key is for the server to prove it is websocket aware. (we know it is)
@@ -97,18 +97,18 @@ class WebSocketClient {
 		if (!$this->persistant || ftell($con) === 0) {
 
 			// request upgrade to websocket
-			$rc=fwrite($con, $header);
+			$rc=fwrite($con, (string)($header ?? ""));
 			if (!$rc) return $this->error("Unable to send upgrade header to websocket server #".$errno.": ".$errstr);
 
 			// read response into an assotiative array of headers, fails if upgrade failes
 			$this->buffer=fread($con, $this->maxheader);
-			if ($i=strpos($this->buffer, "\r\n\r\n")) {
-				$response_header=substr($this->buffer, 0, $i+2);
-				$this->buffer=substr($this->buffer, $i+4);
+			if ($i=strpos((string)($this->buffer ?? ""), "\r\n\r\n")) {
+				$response_header=substr((string)($this->buffer ?? ""), 0, $i+2);
+				$this->buffer=substr((string)($this->buffer ?? ""), $i+4);
 			}
 
 			// status code 101 indicates that the WebSocket handshake has completed
-			if (stripos($response_header, ' 101 ') === false || stripos($response_header, 'Sec-WebSocket-Accept: ') === false)
+			if (stripos((string)($response_header ?? ""), ' 101 ') === false || stripos((string)($response_header ?? ""), 'Sec-WebSocket-Accept: ') === false)
 				return $this->error("Server did not accept to upgrade connection to websocket: ".$response_header);
 
 			// the key we send is returned, concatenate with "258EAFA5-E914-47DA-95CA-
@@ -162,16 +162,16 @@ class WebSocketClient {
 		$header=chr(($final?0x80:0x00)|($binary?0x02:0x01));
 
 		// mask 0x80 | payload length (0-125)
-		if (strlen($data) < 126) $header.=chr(0x80|strlen($data));
-		elseif (strlen($data) < 0xFFFF) $header.=chr(0x80|126).pack("n", strlen($data));
-		else $header.=chr(0x80|127).pack("N", 0).pack("N", strlen($data));
+		if (strlen((string)($data ?? "")) < 126) $header.=chr(0x80|strlen((string)($data ?? "")));
+		elseif (strlen((string)($data ?? "")) < 0xFFFF) $header.=chr(0x80|126).pack("n", strlen((string)($data ?? "")));
+		else $header.=chr(0x80|127).pack("N", 0).pack("N", strlen((string)($data ?? "")));
 
 		// add mask
 		$mask=pack("N", rand(1, 0x7FFFFFFF));
 		$header.=$mask;
 
 		// mask application data
-		for ($i=0; $i < strlen($data); $i++) $data[$i]=chr(ord($data[$i]) ^ ord($mask[$i % 4]));
+		for ($i=0; $i < strlen((string)($data ?? "")); $i++) $data[$i]=chr(ord($data[$i]) ^ ord($mask[$i % 4]));
 
 		// write
 		$n=fwrite($this->con, $header.$data);
@@ -188,12 +188,12 @@ class WebSocketClient {
 		//stream_set_blocking($this->con, true);
 		$st=microtime(true);
 		while (microtime(true) - $st < $this->timeout) {
-			if (strlen($this->buffer) >= $len) {
-				$s=substr($this->buffer, 0, $len);
-				$this->buffer=substr($this->buffer, $len);
+			if (strlen((string)($this->buffer ?? "")) >= $len) {
+				$s=substr((string)($this->buffer ?? ""), 0, $len);
+				$this->buffer=substr((string)($this->buffer ?? ""), $len);
 				return $s;
 			}
-			$size=$len-strlen($this->buffer);
+			$size=$len-strlen((string)($this->buffer ?? ""));
 			if ($size > 0) {
 				//$r=fread($this->con, $size);
 				$r=stream_get_contents($this->con, $size);
@@ -245,7 +245,7 @@ class WebSocketClient {
 			$frame_data='';
 			while ($payload_len > 0) {
 				if (!($frame=$this->fread($payload_len))) return $this->error("Reading payload from websocket failed.");
-				$payload_len-=strlen($frame);
+				$payload_len-=strlen((string)($frame ?? ""));
 				$frame_data.=$frame;
 			}
 
@@ -260,7 +260,7 @@ class WebSocketClient {
 			// 0=continuation frame, 1=text frame, 2=binary frame
 			} elseif ($opcode < 3) {
 					// unmask data
-					$data_len=strlen($frame_data);
+					$data_len=strlen((string)($frame_data ?? ""));
 					if ($masked) {
 						for ($i=0; $i < $data_len; $i++)
 							$data.=$frame_data[$i]^$mask[$i%4];
@@ -279,7 +279,7 @@ class WebSocketClient {
 	function data($data=null) {
 		if ($data === null) {
 			$r=$this->recv();
-			return ($r === null || $r === false?$r:json_decode($r, true));
+			return ($r === null || $r === false?$r:json_decode((string)($r ?? ""), true));
 		} else {
 			return $this->send(json_encode($data));
 		}

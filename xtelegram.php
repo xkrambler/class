@@ -31,7 +31,7 @@ class xTelegram {
 				$body.='--'.$boundary."\r\n"
 					.'Content-Disposition: form-data;'
 						.' name="'.$fd["name"].'"'
-						.($fd['filename']?'; filename="'.basename($fd['filename']).'"':'')
+						.($fd['filename']?'; filename="'.basename((string)($fd['filename'] ?? "")).'"':'')
 						."\r\n"
 					.($fd['mime']?'Content-Type: '.$fd['mime']."\r\n":'')
 					//.'Content-Transfer-Encoding: base64'."\r\n"
@@ -112,7 +112,7 @@ class xTelegram {
 			];
 		}
 		$r=$this->curlAPI($url, $o);
-		$json=json_decode($r, true);
+		$json=json_decode((string)($r ?? ""), true);
 		return ($json?$json:$r);
 	}
 
@@ -139,7 +139,7 @@ class xTelegram {
 
 		}
 		$r=$this->curlAPI($url, $o);
-		$json=json_decode($r, true);
+		$json=json_decode((string)($r ?? ""), true);
 		return ($json?$json:$r);
 	}
 

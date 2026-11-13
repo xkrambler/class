@@ -226,7 +226,7 @@ abstract class dbbase {
 					." rows(<b>".$t["rows"]."</b>)"
 					." lastid(<b>".$t["lastid"]."</b>):"
 					."</div>";
-			echo "<pre class='sqltimesdump_box sqltimesdump_sql'>".htmlentities($t["sql"], ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401, "UTF-8")."</pre>";
+			echo "<pre class='sqltimesdump_box sqltimesdump_sql'>".htmlentities((string)($t["sql"] ?? ""), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401, "UTF-8")."</pre>";
 			if ($t["explain"]) {
 				echo "<div class='sqltimesdump_explain'>";
 				echo "<table class='sqltimesdump_explaintable'><tr>";
@@ -305,7 +305,7 @@ abstract class dbbase {
 		if (!$querynum) $querynum="%".$this->lastquerynum;
 		$a=array();
 		for ($i=0; $row=$this->row($querynum); $i++)
-			$a[$row[$fieldkey]]=$row;
+			$a[($row[$fieldkey] ?? "")]=$row;
 		$this->freequery();
 		return($a);
 	}
@@ -316,8 +316,8 @@ abstract class dbbase {
 		if (!$querynum) $querynum="%".$this->lastquerynum;
 		$a=array();
 		for ($i=0; $row=$this->row($querynum); $i++) {
-			if (!$a[$row[$fieldkey]]) $a[$row[$fieldkey]]=array();
-			array_push($a[$row[$fieldkey]], $row);
+			if (!$a[($row[$fieldkey] ?? "")]) $a[($row[$fieldkey] ?? "")]=array();
+			array_push($a[($row[$fieldkey] ?? "")], $row);
 		}
 		$this->freequery();
 		return($a);
@@ -329,7 +329,7 @@ abstract class dbbase {
 		if (!$querynum) $querynum="%".$this->lastquerynum;
 		$a=array();
 		for ($i=0; $row=$this->row($querynum); $i++)
-			$a[$row[$k]]=$row[$v];
+			$a[($row[$k] ?? "")]=$row[$v];
 		$this->freequery();
 		return $a;
 	}
@@ -337,53 +337,53 @@ abstract class dbbase {
 	// get date in ISO format
 	static function date($timestamp=null) {
 		if ($timestamp === null) $timestamp=time();
-		return date("Y-m-d", (float)$timestamp);
+		return date("Y-m-d", (int)$timestamp);
 	}
 
 	// get date and time in ISO format
 	static function datetime($timestamp=null) {
 		if ($timestamp === null) $timestamp=time();
-		return date("Y-m-d H:i:s", (float)$timestamp);
+		return date("Y-m-d H:i:s", (int)$timestamp);
 	}
 
 	// return complete or partial ISO date/date-time as an Spanish notation dd/mm/yyyy [hh:mm:ss]
 	static function spdate($sqldate) {
 		$sqldate=(string)$sqldate;
-		if (strlen($sqldate) == 19) return substr($sqldate, 8, 2)."/".substr($sqldate, 5, 2)."/".substr($sqldate, 0, 4)." ".substr($sqldate, 11);
-		if (strlen($sqldate) == 16) return substr($sqldate, 8, 2)."/".substr($sqldate, 5, 2)."/".substr($sqldate, 0, 4)." ".substr($sqldate, 11).":00";
-		if (strlen($sqldate) == 13) return substr($sqldate, 8, 2)."/".substr($sqldate, 5, 2)."/".substr($sqldate, 0, 4)." ".substr($sqldate, 11).":00:00";
-		if (strlen($sqldate) == 10) return substr($sqldate, 8, 2)."/".substr($sqldate, 5, 2)."/".substr($sqldate, 0, 4);
-		if (strlen($sqldate) == 8) return $sqldate;
+		if (strlen((string)($sqldate ?? "")) == 19) return substr((string)($sqldate ?? ""), 8, 2)."/".substr((string)($sqldate ?? ""), 5, 2)."/".substr((string)($sqldate ?? ""), 0, 4)." ".substr((string)($sqldate ?? ""), 11);
+		if (strlen((string)($sqldate ?? "")) == 16) return substr((string)($sqldate ?? ""), 8, 2)."/".substr((string)($sqldate ?? ""), 5, 2)."/".substr((string)($sqldate ?? ""), 0, 4)." ".substr((string)($sqldate ?? ""), 11).":00";
+		if (strlen((string)($sqldate ?? "")) == 13) return substr((string)($sqldate ?? ""), 8, 2)."/".substr((string)($sqldate ?? ""), 5, 2)."/".substr((string)($sqldate ?? ""), 0, 4)." ".substr((string)($sqldate ?? ""), 11).":00:00";
+		if (strlen((string)($sqldate ?? "")) == 10) return substr((string)($sqldate ?? ""), 8, 2)."/".substr((string)($sqldate ?? ""), 5, 2)."/".substr((string)($sqldate ?? ""), 0, 4);
+		if (strlen((string)($sqldate ?? "")) == 8) return $sqldate;
 	}
 
 	// parses Spanish date-time notation to ISO date[time]
 	static function sqldate($spdate) {
 		$spdate=(string)$spdate;
-		if (strlen($spdate) < 10) return($spdate);
-		$t=substr($spdate, 11);
-		if (strlen($t) == 2) $t.=":00:00";
-		if (strlen($t) == 5) $t.=":00";
-		return substr($spdate, 6, 4)."-".substr($spdate, 3, 2)."-".substr($spdate, 0, 2).($t?" ".$t:"");
+		if (strlen((string)($spdate ?? "")) < 10) return($spdate);
+		$t=substr((string)($spdate ?? ""), 11);
+		if (strlen((string)($t ?? "")) == 2) $t.=":00:00";
+		if (strlen((string)($t ?? "")) == 5) $t.=":00";
+		return substr((string)($spdate ?? ""), 6, 4)."-".substr((string)($spdate ?? ""), 3, 2)."-".substr((string)($spdate ?? ""), 0, 2).($t?" ".$t:"");
 	}
 
 	// returns age between one date (timestamp/ISO) and other or current date (timestamp)
 	static function sqlage($sqldate, $dateref=null) {
 		$sqldate=(string)$sqldate;
-		if ($dateref === null) $dateref=time();
-		list($Y, $m, $d)=(is_numeric($sqldate)?array(date("Y", $sqldate), date("m", $sqldate), date("d", $sqldate)):explode("-", substr($sqldate, 0, 10)));
+		if ($dateref === null) $dateref=time(); else $dateref=(int)$dateref;
+		list($Y, $m, $d)=(is_numeric($sqldate)?array(date("Y", (int)$sqldate), date("m", (int)$sqldate), date("d", (int)$sqldate)):explode("-", substr((string)($sqldate ?? ""), 0, 10)));
 		return ((date('m', $dateref)-$m) >0 || (date('m', $dateref)-$m) == 0 && (date('d', $dateref)-$d) >= 0) ? (date('Y', $dateref)-$Y) : ((date('Y', $dateref)-$Y) - 1);
 	}
 
 	// convert ISO date[+time] to UNIX timestamp
 	static function timestamp($sqldate) {
 		$sqldate=(string)$sqldate;
-		if (strlen($sqldate) == 10) {
-			$f=explode("-", $sqldate);
+		if (strlen((string)($sqldate ?? "")) == 10) {
+			$f=explode("-", (string)($sqldate ?? ""));
 			return mktime(0, 0, 0, $f[1], $f[2], $f[0]);
-		} else if (strlen($sqldate) == 19) {
-			$f=explode(" ", $sqldate);
-			$h=explode(":", $f[1]);
-			$d=explode("-", $f[0]);
+		} else if (strlen((string)($sqldate ?? "")) == 19) {
+			$f=explode(" ", (string)($sqldate ?? ""));
+			$h=explode(":", (string)($f[1] ?? ""));
+			$d=explode("-", (string)($f[0] ?? ""));
 			return mktime($h[0], $h[1], $h[2], $d[1], $d[2], $d[0]);
 		}
 		return false;
@@ -577,7 +577,7 @@ abstract class dbbase {
 					$in.=($in?",":"")."'".$this->escape($v)."'";
 			}
 		}
-		return (strlen($in)?$in:"NULL");
+		return (strlen((string)($in ?? ""))?$in:"NULL");
 	}
 
 	// return SQL UPDATE or INSERT table sentence
@@ -588,12 +588,12 @@ abstract class dbbase {
 	// search by words in such fields (partial/total)
 	function sqlwordsearch($search, $fields, $total=false) {
 		$sql="";
-		if ($fields && strlen($search)) {
-			$s=explode(" ", $search);
+		if ($fields && strlen((string)($search ?? ""))) {
+			$s=explode(" ", (string)($search ?? ""));
 			foreach ($s as $i=>$w) {
 				$sql.=($sql?" AND ":"")."(";
 				foreach ($fields as $i=>$f)
-					$sql.=($i?" OR ":"").$this->sqlfield($f).($total?"=":" LIKE ")."'".$this->escape($total?$w:(substr_count($w,"%")?$w:"%".$w."%"))."'";
+					$sql.=($i?" OR ":"").$this->sqlfield($f).($total?"=":" LIKE ")."'".$this->escape($total?$w:(substr_count((string)($w ?? ""),"%")?$w:"%".$w."%"))."'";
 				$sql.=")";
 			}
 		}
@@ -790,7 +790,7 @@ if ((!defined("DB_SETUP") || DB_SETUP) && (isset($db_setup) && is_array($db_setu
 	if ((!defined("DB_ERRORS") || DB_ERRORS || (!defined("DB_ERRORS") && ini_get("display_errors"))) && isset($db_errors) && $db_errors) {
 		$_ishtml=true;
 		foreach (headers_list() as $_h)
-			if (strtolower(substr($_h, 0, 24)) == "content-type: text/plain") {
+			if (strtolower(substr((string)($_h ?? ""), 0, 24)) == "content-type: text/plain") {
 				$_ishtml=false;
 				break;
 			}

@@ -126,7 +126,7 @@ class WebSocketServer {
 			return $this->errorSocket($this->socket);
 		}
 		// bind socket to specified port
-		if (!(@socket_bind($this->socket, 0, $this->port))) {
+		if (!(@socket_bind($this->socket, "0.0.0.0", $this->port))) {
 			error_reporting($e);
 			return $this->errorSocket($this->socket);
 		}
@@ -165,7 +165,7 @@ class WebSocketServer {
 	// mask outgoing message
 	function mask($data) {
 		$b1=0x80 | (0x1 & 0x0f);
-		$len=strlen($data);
+		$len=strlen((string)($data ?? ""));
 		if ($len < 126) $header=pack('CC', $b1, $len);
 		elseif ($len >= 126 && $len <= 65535) $header=pack('CCn', $b1, 126, $len);
 		else $header=pack('CCJ', $b1, 127, $len); // if ($len > 65535)
@@ -176,38 +176,38 @@ class WebSocketServer {
 	function unmask($packet) {
 
 		// if packet does not contain opcode or length, not completed
-		if (strlen($packet) < 2) return false;
+		if (strlen((string)($packet ?? "")) < 2) return false;
 
 		// decode using RFC
 		$opcode=ord($packet[0]) & 0x0F;
 		$len=ord($packet[1]) & 127;
 		if ($len == 126) {
-			$masks=substr($packet, 4, 4);
+			$masks=substr((string)($packet ?? ""), 4, 4);
 			$len=(ord($packet[2]) << 8)+ord($packet[3]);
-			$payload=substr($packet, 8, $len);
-			$packet=substr($packet, 8+$len);
+			$payload=substr((string)($packet ?? ""), 8, $len);
+			$packet=substr((string)($packet ?? ""), 8+$len);
 		} elseif ($len == 127) {
-			$masks=substr($packet, 10, 4);
+			$masks=substr((string)($packet ?? ""), 10, 4);
 			$len=
 				(ord($packet[2]) << 56) + (ord($packet[3]) << 48) +
 				(ord($packet[4]) << 40) + (ord($packet[5]) << 32) +
 				(ord($packet[6]) << 24) + (ord($packet[7]) << 16) +
 				(ord($packet[8]) <<  8) +  ord($packet[9])
 			;
-			$payload=substr($packet, 14, $len);
-			$packet=substr($packet, 14+$len);
+			$payload=substr((string)($packet ?? ""), 14, $len);
+			$packet=substr((string)($packet ?? ""), 14+$len);
 		} else {
-			$masks=substr($packet, 2, 4);
-			$payload=substr($packet, 6, $len);
-			$packet=substr($packet, 6+$len);
+			$masks=substr((string)($packet ?? ""), 2, 4);
+			$payload=substr((string)($packet ?? ""), 6, $len);
+			$packet=substr((string)($packet ?? ""), 6+$len);
 		}
 
 		// incomplete messages, do not unmask
-		if (strlen($payload) < $len) return false;
+		if (strlen((string)($payload ?? "")) < $len) return false;
 
 		// unmask
 		$data="";
-		for ($i=0; $i < strlen($payload); ++$i)
+		for ($i=0; $i < strlen((string)($payload ?? "")); ++$i)
 			$data.=$payload[$i]^$masks[$i%4];
 
 		// return unmasked opcode, data, length and return next packet
@@ -243,7 +243,7 @@ class WebSocketServer {
 	function send($client, $msg) {
 		if ($socket=$this->clients[$client]) {
 			$data=$this->mask($msg);
-			$sent=socket_write($socket, $data, strlen($data));
+			$sent=socket_write($socket, $data, strlen((string)($data ?? "")));
 			if ($event=$this->onsend) {
 				@socket_getpeername($socket, $ip);
 				$event($this, $client, $ip, $msg, $sent);
@@ -258,16 +258,16 @@ class WebSocketServer {
 
 		// reset headers
 		$this->headers=[];
-		$lines=preg_split("/\r\n/", $header);
+		$lines=preg_split("/\r\n/", (string)($header ?? ""));
 
 		// obtain method, url and http protocol
-		list($this->method, $this->url, $this->http)=explode(" ", $lines[0]);
+		list($this->method, $this->url, $this->http)=explode(" ", (string)($lines[0] ?? ""));
 
 		// parse headers
 		foreach ($lines as $line) {
-			$line=chop($line);
-			if (preg_match('/\A(\S+): (.*)\z/', $line, $matches))
-				$this->headers[$matches[1]]=$matches[2];
+			$line=chop((string)($line ?? ""));
+			if (preg_match('/\A(\S+): (.*)\z/', (string)($line ?? ""), $matches))
+				$this->headers[($matches[1] ?? "")]=$matches[2];
 		}
 		$sec_key=$this->headers['Sec-WebSocket-Key'];
 		$sec_accept=base64_encode(pack('H*', sha1($sec_key.'258EAFA5-E914-47DA-95CA-C5AB0DC85B11')));
@@ -283,7 +283,7 @@ class WebSocketServer {
 			."Sec-WebSocket-Accept: ".$sec_accept."\r\n"
 			."\r\n"
 		;
-		socket_write($socket, $upgrade, strlen($upgrade));
+		socket_write($socket, $upgrade, strlen((string)($upgrade ?? "")));
 
 	}
 
@@ -323,10 +323,10 @@ class WebSocketServer {
 
 				// read header
 				$buf=@socket_read($socket_new, $this->headersize);
-				if ($p=strpos($buf, "\r\n\r\n")) {
+				if ($p=strpos((string)($buf ?? ""), "\r\n\r\n")) {
 					// perform websocket handshake
-					$this->handshaking($socket_new, substr($buf, 0, $p+4));
-					$buf=substr($buf, $p+4);
+					$this->handshaking($socket_new, substr((string)($buf ?? ""), 0, $p+4));
+					$buf=substr((string)($buf ?? ""), $p+4);
 					// connection event
 					if ($event=$this->onready) $event($this, $client, $ip, $this->headers);
 				} else {
@@ -352,7 +352,7 @@ class WebSocketServer {
 						$packet.=$buf;
 
 						// check packet size limit
-						if (strlen($packet) < $this->packetsize) {
+						if (strlen((string)($packet ?? "")) < $this->packetsize) {
 
 							// unmask data, if false, packet is not complete, continue receiving
 							while ($info=$this->unmask($packet)) {
@@ -369,12 +369,12 @@ class WebSocketServer {
 
 									// call recv/data events (RAW/JSON)
 									if ($event=$this->onrecv) $event($this, $client, $ip, $info["data"]);
-									if ($event=$this->ondata) $event($this, $client, $ip, json_decode($info["data"], true), $info["data"]);
+									if ($event=$this->ondata) $event($this, $client, $ip, json_decode((string)($info["data"] ?? ""), true), $info["data"]);
 
 								} else {
 
 									// opcodes events
-									if (strlen($info["data"]) == 2) {
+									if (strlen((string)($info["data"] ?? "")) == 2) {
 										$statuscode=(ord($info["data"][0])*256+ord($info["data"][1]));
 										if ($event=$this->onstatuscode) $event($this, $client, $ip, $info["opcode"], $statuscode, $this->statuscodes[$statuscode]);
 									} else {
@@ -388,7 +388,7 @@ class WebSocketServer {
 							}
 
 							// exit this loop
-							if (!strlen($packet)) break 2;
+							if (!strlen((string)($packet ?? ""))) break 2;
 
 						} else {
 

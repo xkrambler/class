@@ -121,17 +121,17 @@ class xForm3 {
 
 	// strtolower w/o multibyte
 	function strtolower($s) {
-		return (function_exists("mb_strtolower")?mb_strtolower($s):(function_exists("strtolower_utf8")?strtolower_utf8($s):strtolower($s)));
+		return (function_exists("mb_strtolower")?mb_strtolower((string)($s ?? "")):(function_exists("strtolower_utf8")?strtolower_utf8($s):strtolower((string)($s ?? ""))));
 	}
 
 	// strtoupper w/o multibyte
 	function strtoupper($s) {
-		return (function_exists("mb_strtoupper")?mb_strtoupper($s):strtoupper($s));
+		return (function_exists("mb_strtoupper")?mb_strtoupper((string)($s ?? "")):strtoupper((string)($s ?? "")));
 	}
 
 	// ucwords w/o multibyte
 	function ucwords($s) {
-		return (function_exists("mb_convert_case")?mb_convert_case($s, MB_CASE_TITLE):ucwords($s));
+		return (function_exists("mb_convert_case")?mb_convert_case((string)($s ?? ""), MB_CASE_TITLE):ucwords((string)($s ?? "")));
 	}
 
 	// return AJAX action
@@ -141,7 +141,7 @@ class xForm3 {
 	function mimeByMagic($bytes) {
 		foreach ($this->magicMimes as $mime=>$magics)
 			foreach ($magics as $magic)
-				if (substr($bytes, 0, strlen($magic)) == $magic)
+				if (substr((string)($bytes ?? ""), 0, strlen((string)($magic ?? ""))) == $magic)
 					return $mime;
 		return false;
 	}
@@ -169,7 +169,7 @@ class xForm3 {
 
 	// filter HTML entities
 	function entities($value) {
-		return (method_exists("x", "entities")?x::entities($value):htmlentities($value, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401, "UTF-8"));
+		return (method_exists("x", "entities")?x::entities($value):htmlentities((string)($value ?? ""), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401, "UTF-8"));
 	}
 
 	// convert typical CSS styles to one line style attribute
@@ -296,17 +296,17 @@ class xForm3 {
 	// store/delete file from field
 	function fileUpdate($field, $filename=null) {
 		if ($file=$this->file($field)) {
-			if ($filename === null) $filename=basename($file["name"]);
-			if (!strlen($filename)) return null;
-			$path=dirname($filename);
+			if ($filename === null) $filename=basename((string)($file["name"] ?? ""));
+			if (!strlen((string)($filename ?? ""))) return null;
+			$path=dirname((string)($filename ?? ""));
 			if (!is_dir($path)) mkdir($path, 0775, true);
 			if ($file["deleted"] && file_exists($file["file"])) {
 				unlink($file["file"]);
-				@rmdir(dirname($file["file"]));
+				@rmdir(dirname((string)($file["file"] ?? "")));
 			} else if ($file["uploaded"]) {
 				if (file_exists($file["file"])) {
 					unlink($file["file"]);
-					@rmdir(dirname($file["file"]));
+					@rmdir(dirname((string)($file["file"] ?? "")));
 				}
 				file_put_contents($filename, $file["data"]);
 			} else if ($file["renamed"] && $file["file"]) {
@@ -321,17 +321,17 @@ class xForm3 {
 	function filesUpdate($field, $path=null) {
 		$f=$this->field($field);
 		if ($path === null) $path=$f["path"];
-		if (!strlen($path)) return null;
+		if (!strlen((string)($path ?? ""))) return null;
 		if ($files=$this->files($field)) foreach ($files as $file) {
 			if (!is_dir($path)) mkdir($path, 0775, true);
-			$filename=$path.basename($file["name"]);
+			$filename=$path.basename((string)($file["name"] ?? ""));
 			if ($file["deleted"] && file_exists($file["file"])) {
 				unlink($file["file"]);
-				@rmdir(dirname($file["file"]));
+				@rmdir(dirname((string)($file["file"] ?? "")));
 			} else if ($file["uploaded"]) {
 				if (file_exists($file["file"])) {
 					unlink($file["file"]);
-					@rmdir(dirname($file["file"]));
+					@rmdir(dirname((string)($file["file"] ?? "")));
 				}
 				file_put_contents($filename, $file["data"]);
 			} else if ($file["renamed"] && $file["file"]) {
@@ -360,7 +360,7 @@ class xForm3 {
 			return $a;
 		}
 		if ($f=$this->fields[$field]) {
-			$limit=$this->filesLimit[$f["type"]];
+			$limit=$this->filesLimit[($f["type"] ?? "")];
 			if (isset($limit)) {
 				$svalue=$svalue_last=$this->svalue($field);
 				$svalue_store=!$svalue; // if in session, mark to save it
@@ -374,12 +374,12 @@ class xForm3 {
 						if (file_exists($f["file"]) || $f["data"]) {
 							if (!$svalue_last["files"]) $svalue_store=true;
 							if ($f["file"]) {
-								if (!$f["name"]) $f["name"]=basename($f["file"]);
-								if (!$f["ext"] && (($j=strrpos($f["name"], ".")) !== false)) $f["ext"]=substr((string)$f["name"], $j+1);
+								if (!$f["name"]) $f["name"]=basename((string)($f["file"] ?? ""));
+								if (!$f["ext"] && (($j=strrpos((string)($f["name"] ?? ""), ".")) !== false)) $f["ext"]=substr((string)$f["name"], $j+1);
 								if (!$f["type"]) $f["type"]=""; // asegurarse que el campo está creado
 								if (file_exists($f["file"])) $f["size"]=filesize($f["file"]);
 							}
-							if (!isset($f["size"]) && isset($f["data"])) $f["size"]=strlen($f["data"]);
+							if (!isset($f["size"]) && isset($f["data"])) $f["size"]=strlen((string)($f["data"] ?? ""));
 							require_once(__DIR__."/mimetypes.php");
 							if (!$f["type"]) $f["type"]=($f["data"]?$this->mimeByMagic(substr((string)$f["data"], 0, 16)):Mimetypes::file($f["name"]));
 							$this->fields[$field]["files"][$index]=$f;
@@ -437,7 +437,7 @@ class xForm3 {
 		case "positive": return abs(doubleval($value));
 		case "checkboxes": if (!is_array($value)) return [];
 		}
-		if ($field["base64"]) $value=base64_decode($value);
+		if ($field["base64"]) $value=base64_decode((string)($value ?? ""));
 		return $value;
 	}
 
@@ -450,27 +450,27 @@ class xForm3 {
 		if ($field["decimal"]) return doubleval($value);
 		if ($field["positive"]) return abs(doubleval($value));
 		if ($field["string"]) return (string)$value;
-		if ($field["nozero"] && !strlen($value)) return 0;
-		if ($field["base64"]) $value=base64_encode($value);
+		if ($field["nozero"] && !strlen((string)($value ?? ""))) return 0;
+		if ($field["base64"]) $value=base64_encode((string)($value ?? ""));
 		return $value;
 	}
 
 	// DEPRECATED: convert ISO date to Spanish date
 	function spdate($sqldate) {
-		if (strlen($sqldate)==19) return substr($sqldate,8,2)."/".substr($sqldate,5,2)."/".substr($sqldate,0,4)." ".substr($sqldate,11);
-		if (strlen($sqldate)==16) return substr($sqldate,8,2)."/".substr($sqldate,5,2)."/".substr($sqldate,0,4)." ".substr($sqldate,11).":00";
-		if (strlen($sqldate)==13) return substr($sqldate,8,2)."/".substr($sqldate,5,2)."/".substr($sqldate,0,4)." ".substr($sqldate,11).":00:00";
-		if (strlen($sqldate)==10) return substr($sqldate,8,2)."/".substr($sqldate,5,2)."/".substr($sqldate,0,4);
-		if (strlen($sqldate)==8) return $sqldate;
+		if (strlen((string)($sqldate ?? ""))==19) return substr((string)($sqldate ?? ""),8,2)."/".substr((string)($sqldate ?? ""),5,2)."/".substr((string)($sqldate ?? ""),0,4)." ".substr((string)($sqldate ?? ""),11);
+		if (strlen((string)($sqldate ?? ""))==16) return substr((string)($sqldate ?? ""),8,2)."/".substr((string)($sqldate ?? ""),5,2)."/".substr((string)($sqldate ?? ""),0,4)." ".substr((string)($sqldate ?? ""),11).":00";
+		if (strlen((string)($sqldate ?? ""))==13) return substr((string)($sqldate ?? ""),8,2)."/".substr((string)($sqldate ?? ""),5,2)."/".substr((string)($sqldate ?? ""),0,4)." ".substr((string)($sqldate ?? ""),11).":00:00";
+		if (strlen((string)($sqldate ?? ""))==10) return substr((string)($sqldate ?? ""),8,2)."/".substr((string)($sqldate ?? ""),5,2)."/".substr((string)($sqldate ?? ""),0,4);
+		if (strlen((string)($sqldate ?? ""))==8) return $sqldate;
 	}
 
 	// DEPRECATED: convert localized date format (only Spanish supported) to ISO
 	function sqldate($spdate) {
-		if (strlen($spdate)<10) return($spdate);
-		$t=substr($spdate,11);
-		if (strlen($t)==2) $t.=":00:00";
-		if (strlen($t)==5) $t.=":00";
-		return(substr($spdate,6,4)."-".substr($spdate,3,2)."-".substr($spdate,0,2).($t?" ".$t:""));
+		if (strlen((string)($spdate ?? ""))<10) return($spdate);
+		$t=substr((string)($spdate ?? ""),11);
+		if (strlen((string)($t ?? ""))==2) $t.=":00:00";
+		if (strlen((string)($t ?? ""))==5) $t.=":00";
+		return(substr((string)($spdate ?? ""),6,4)."-".substr((string)($spdate ?? ""),3,2)."-".substr((string)($spdate ?? ""),0,2).($t?" ".$t:""));
 	}
 
 	// purge all fields values
@@ -501,13 +501,13 @@ class xForm3 {
 		if ($this->trimHTML) do {
 			$f=false;
 			foreach ($this->trimHTML as $e) {
-				$l=strlen($e);
-				if (strtolower(substr($s, 0, $l)) == $e) { $f=true; $s=substr($s, $l); }
-				if (strtolower(substr($s, -$l, $l)) == $e) { $f=true; $s=substr($s, 0, -$l); }
+				$l=strlen((string)($e ?? ""));
+				if (strtolower(substr((string)($s ?? ""), 0, $l)) == $e) { $f=true; $s=substr((string)($s ?? ""), $l); }
+				if (strtolower(substr((string)($s ?? ""), -$l, $l)) == $e) { $f=true; $s=substr((string)($s ?? ""), 0, -$l); }
 			}
 		} while ($f);
-		$s=trim($s);
-		if (in_array(strtolower($s), ["<br>","<br/>","<br />","</br>","<br></br>"])) $s="";
+		$s=trim((string)($s ?? ""));
+		if (in_array(strtolower((string)($s ?? "")), ["<br>","<br/>","<br />","</br>","<br></br>"])) $s="";
 		return $s;
 	}
 
@@ -526,7 +526,7 @@ class xForm3 {
 		// if no purge enabled, return now
 		if (!$this->purgeFieldEnabled($f, $value)) return $value;
 		// filters
-		if ($field["trim"]) $value=trim($value);
+		if ($field["trim"]) $value=trim((string)($value ?? ""));
 		if ($field["lowercase"] || $field["type"] == "email") $value=$this->strtolower($value);
 		if ($field["uppercase"]) $value=$this->strtoupper($value);
 		if ($field["capitalize"]) $value=$this->ucwords($this->strtolower($value));
@@ -543,7 +543,7 @@ class xForm3 {
 		if ($field["string"]) $value=(string)$value;
 		// nullables
 		if (
-			   ($field["nullifempty"] || $field["date"] || $field["datetime"]) && !strlen($value)
+			   ($field["nullifempty"] || $field["date"] || $field["datetime"]) && !strlen((string)($value ?? ""))
 			|| ($field["nullifzero"] && !doubleval($value))
 		) $value=null;
 		// return
@@ -587,7 +587,7 @@ class xForm3 {
 			// rest of verifications
 			if (!isset($f["verify"]) || $r === null) {
 				// match regexp
-				if ($v !== null && ($regexp=$f["regexp"]) && !preg_match($regexp, (string)$v)) $this->errorsFieldAdd($field, $prefix."El campo no cumple el formato requerido.");
+				if ($v !== null && ($regexp=$f["regexp"]) && !preg_match((string)($regexp ?? ""), (string)$v)) $this->errorsFieldAdd($field, $prefix."El campo no cumple el formato requerido.");
 				// required field
 				if ($f["required"]) {
 					switch ($f["type"]) {
@@ -620,7 +620,7 @@ class xForm3 {
 					}
 					break;
 				case "email":
-					if (strlen($v) && !filter_var($v, FILTER_VALIDATE_EMAIL))
+					if (strlen((string)($v ?? "")) && !filter_var($v, FILTER_VALIDATE_EMAIL))
 						$this->errorsFieldAdd($field, $prefix."El e-mail no es válido");
 					break;
 				case "date":
@@ -742,7 +742,7 @@ class xForm3 {
 
 	// get field name
 	function fieldName($field) {
-		return (strlen($this->o["name"])?$this->o["name"]."_":"").(
+		return (strlen((string)($this->o["name"] ?? ""))?$this->o["name"]."_":"").(
 			$this->fields[$field]["name"]
 			?$this->fields[$field]["name"]
 			:$field
@@ -1124,11 +1124,11 @@ class xForm3 {
 	// ensure valid hex RGB color
 	function colorValue($c) {
 		$d="000000";
-		if (!strlen($c)) return $d;
+		if (!strlen((string)($c ?? ""))) return $d;
 		$c=strtoupper(substr("".$c, 0, 6));
 		$c=preg_replace("/[^0-9A-F]/", "", $c);
-		if (strlen($c) == 3) $c=substr($c, 0, 1).substr($c, 0, 1).substr($c, 1, 1).substr($c, 1, 1).substr($c, 2, 1).substr($c, 2, 1);
-		return (strlen($c) == 6?$c:$d);
+		if (strlen((string)($c ?? "")) == 3) $c=substr((string)($c ?? ""), 0, 1).substr((string)($c ?? ""), 0, 1).substr((string)($c ?? ""), 1, 1).substr((string)($c ?? ""), 1, 1).substr((string)($c ?? ""), 2, 1).substr((string)($c ?? ""), 2, 1);
+		return (strlen((string)($c ?? "")) == 6?$c:$d);
 	}
 
 	// get/set session name
@@ -1139,10 +1139,10 @@ class xForm3 {
 
 	// clear session
 	function sclean() {
-		if ($_SESSION["xform3"]
+		if (($_SESSION["xform3"] ?? "")
 			&& $_SESSION["xform3"][$this->ssid()]
-			&& $_SESSION["xform3"][$this->ssid()][$this->o["name"]]
-		) unset($_SESSION["xform3"][$this->ssid()][$this->o["name"]]);
+			&& $_SESSION["xform3"][$this->ssid()][($this->o["name"] ?? "")]
+		) unset($_SESSION["xform3"][$this->ssid()][($this->o["name"] ?? "")]);
 	}
 
 	// start session
@@ -1160,10 +1160,10 @@ class xForm3 {
 	// get/set session data for a field
 	function svalue($field, $value=null) {
 		if ($value === false) {
-			unset($_SESSION["xform3"][$this->ssid()][$this->o["name"]][$field]);
+			unset($_SESSION["xform3"][$this->ssid()][($this->o["name"] ?? "")][$field]);
 		} else {
-			if ($value !== null) $_SESSION["xform3"][$this->ssid()][$this->o["name"]][$field]=$value;
-			return $_SESSION["xform3"][$this->ssid()][$this->o["name"]][$field];
+			if ($value !== null) $_SESSION["xform3"][$this->ssid()][($this->o["name"] ?? "")][$field]=$value;
+			return $_SESSION["xform3"][$this->ssid()][($this->o["name"] ?? "")][$field];
 		}
 	}
 
@@ -1208,8 +1208,8 @@ class xForm3 {
 		$adata=(isset($GLOBALS["adata"])?$GLOBALS["adata"]:[]);
 
 		// required fields can be used via GET/POST
-		if (!$adata["name"]) $adata["name"]=$_REQUEST["name"];
-		if (!$adata["field"]) $adata["field"]=$_REQUEST["field"];
+		if (!$adata["name"]) $adata["name"]=($_REQUEST["name"] ?? "");
+		if (!$adata["field"]) $adata["field"]=($_REQUEST["field"] ?? "");
 
 		// ensure form name is set and matches
 		if (!$adata["name"] || ($adata["name"] != $this->o["name"])) return true;
@@ -1218,21 +1218,21 @@ class xForm3 {
 		if (is_array($this->fields)) foreach ($this->fields as $field=>$f) if ($adata["field"] == $field) {
 
 			// if field has upload limit...
-			$limit=$this->filesLimit[$f["type"]];
+			$limit=$this->filesLimit[($f["type"] ?? "")];
 			if (isset($limit)) {
 
 				// actions for files
 				switch ($ajax) {
 
 				case "xform3.file.get":
-					$this->ssid($_REQUEST["ssid"]);
+					$this->ssid(($_REQUEST["ssid"] ?? ""));
 					$svalue=$this->svalue($field);
-					$index=($_REQUEST["index"]?intval($_REQUEST["index"]):0);
+					$index=(($_REQUEST["index"] ?? "")?intval(($_REQUEST["index"] ?? "")):0);
 					$file=$svalue["files"][$index];
 					// try to get mimetype
 					if (!$file["type"]) $file["type"]=$this->mimeByMagic(substr((string)$file["data"], 0, 16));
 					// scale, if requested
-					if (($w=intval($_REQUEST["w"])) && ($h=intval($_REQUEST["h"])) && $file["type"]) {
+					if (($w=intval(($_REQUEST["w"] ?? ""))) && ($h=intval(($_REQUEST["h"] ?? ""))) && $file["type"]) {
 						$xi=$this->imageScale(array_merge(($f["scale"]?$f["scale"]:array()), array(
 							"file"=>$file["file"],
 							"data"=>$file["data"],
@@ -1277,7 +1277,7 @@ class xForm3 {
 					ajax(array("ok"=>true));
 
 				case "xform3.files.upload":
-					$this->ssid($_REQUEST["ssid"]);
+					$this->ssid(($_REQUEST["ssid"] ?? ""));
 					// load required classes (required: xuploader)
 					require_once(__DIR__."/xuploader.php");
 					// process uploaded files
@@ -1304,11 +1304,11 @@ class xForm3 {
 							foreach ($svalue["files"] as $i=>$v) if ($i >= $index) $index=($i+1);
 							if ($limit && $index+1 >= $limit) $index=$limit-1;
 							// entry
-							$j=strrpos($upload["name"], ".");
+							$j=strrpos((string)($upload["name"] ?? ""), ".");
 							$file=array(
 								"uploaded"=>true,
 								"name"=>$upload["name"],
-								"ext"=>($j !== false?substr($upload["name"], $j+1):""),
+								"ext"=>($j !== false?substr((string)($upload["name"] ?? ""), $j+1):""),
 								"size"=>$upload["size"],
 								"sizeo"=>$upload["size"],
 								"type"=>$upload["type"],
@@ -1317,8 +1317,8 @@ class xForm3 {
 							if (($check=$f["check"]) && is_callable($check) && !$check($f, $file)) return $o["_warns"]($o, "No se permite subir el fichero especificado.");
 							// check if extensions is in allowed list
 							if ($exts=$f["allowedext"]) {
-								$ext=strtolower($file["ext"]);
-								foreach ($exts as $e) if ($ext == strtolower($e)) {
+								$ext=strtolower((string)($file["ext"] ?? ""));
+								foreach ($exts as $e) if ($ext == strtolower((string)($e ?? ""))) {
 									$ext=false;
 									break;
 								}
@@ -1348,7 +1348,7 @@ class xForm3 {
 								$file["data"]=file_get_contents($upload["tmp"]);
 							}
 							// update size
-							$file["size"]=strlen($file["data"]);
+							$file["size"]=strlen((string)($file["data"] ?? ""));
 							// save in session
 							$svalue["files"][$index]=$file;
 							$o["_xf"]->svalue($o["_field"], $svalue);

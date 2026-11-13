@@ -17,7 +17,7 @@ if (isset($page["shorttags"]) && ((bool)$page["shorttags"] != (bool)ini_get("sho
 $_css=array();
 $_js=array();
 if ($_b=x::inc()) foreach ($_b as $_c) {
-	if (strpos($_c, "/")) {
+	if (strpos((string)($_c ?? ""), "/")) {
 		$_f="";
 	} else {
 		$_f=__DIR__;
@@ -32,8 +32,8 @@ if (file_exists("kernel.css") && !isset($css["kernel.css"])) $_css["kernel.css"]
 if (file_exists("kernel.js") && !isset($js["kernel.js"])) $_js["kernel.js"]=false;
 
 // page basefile and page autoloads
-if (($_v=x::_server("SCRIPT_FILENAME")) && file_exists($_v) && substr($_v, -4, 4) == ".php") {
-	$page["basefile"]=substr(basename($_v), 0, -4);
+if (($_v=x::_server("SCRIPT_FILENAME")) && file_exists($_v) && substr((string)($_v ?? ""), -4, 4) == ".php") {
+	$page["basefile"]=substr(basename((string)($_v ?? "")), 0, -4);
 	if (file_exists($page["basefile"].".css") && !isset($css[$page["basefile"].".css"])) $_css[$page["basefile"].".css"]=false;
 	if (file_exists($page["basefile"].".js") && !isset($js[$page["basefile"].".js"])) $_js[$page["basefile"].".js"]=false;
 }
@@ -54,8 +54,8 @@ foreach ($_e=array("css", "js") as $_i) {
 	$$_t=$$_t+(is_array($$_i)?$$_i:array());
 	foreach ($$_t as $_n=>$_v)
 		if ($_v !== 0)
-			if (!$_v && substr($_n, -strlen($_i)-1) == ".".$_i)
-				$_b.=($_b?"|":"").substr($_n, 0, -strlen($_i)-1);
+			if (!$_v && substr((string)($_n ?? ""), -strlen((string)($_i ?? ""))-1) == ".".$_i)
+				$_b.=($_b?"|":"").substr((string)($_n ?? ""), 0, -strlen((string)($_i ?? ""))-1);
 	if ($_b) {
 		if ($_pc && ($_b=$_pc->encrypt($_b)) === false) $_pc->err();
 		$page[$_i]=(x::page("relative")
@@ -71,14 +71,14 @@ foreach ($_e=array("css", "js") as $_i) {
 if (!is_array($data)) $data=array();
 if (!isset($data["me"]) && $page["me"]) $data["me"]=$page["me"];
 if (!isset($data["base"]) && $page["base"]) $data["base"]=$page["base"];
-if (!isset($data["uri"]) && ($_v=$_SERVER["REQUEST_URI"])) $data["uri"]=$_v;
+if (!isset($data["uri"]) && ($_v=($_SERVER["REQUEST_URI"] ?? ""))) $data["uri"]=$_v;
 if (!isset($data["server"]) && ($_v=x::server())) $data["server"]=$_v;
 
 // ensure charset and document type by default
 if ($_b=x::page("content-type")) {
-	foreach ($_e=explode(";", $_b) as $_i) {
-		$_i=trim($_i);
-		if (strtolower(substr($_i, 0, 8)) === "charset=") $page["charset"]=strtoupper(substr($_i, 8));
+	foreach ($_e=explode(";", (string)($_b ?? "")) as $_i) {
+		$_i=trim((string)($_i ?? ""));
+		if (strtolower(substr((string)($_i ?? ""), 0, 8)) === "charset=") $page["charset"]=strtoupper(substr((string)($_i ?? ""), 8));
 	}
 	if (!headers_sent()) header("Content-Type: ".$page["content-type"]);
 }

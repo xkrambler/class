@@ -26,7 +26,7 @@ class xItemsSearch {
 		$sqlsort="";
 		if ($sort=(isset($o["sort"])?$o["sort"]:$adata["sort"])) if (is_array($sort)) foreach ($sort as $f=>$t) {
 			if (isset($o["orders"]) && is_array($o["orders"]) && ($ordersf=$o["orders"][$f])) {
-				$ordersf=explode(",", $ordersf);
+				$ordersf=explode(",", (string)($ordersf ?? ""));
 				if ($ordersf)
 					foreach ($ordersf as $orderf)
 						$sqlsort.=($sqlsort?",":"").$orderf.($t?" DESC":" ASC");
@@ -36,7 +36,7 @@ class xItemsSearch {
 		}
 
 		// ensure query has SQL_CALC_FOUND_ROWS if no count query
-		if (!isset($o["count"]) && !strpos($o["sql"], "SQL_CALC_FOUND_ROWS"))
+		if (!isset($o["count"]) && !strpos((string)($o["sql"] ?? ""), "SQL_CALC_FOUND_ROWS"))
 			ajax(array("err"=>"Query requires SQL_CALC_FOUND_ROWS!"));
 
 		// search

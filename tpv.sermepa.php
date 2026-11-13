@@ -57,7 +57,7 @@ class TPVSERMEPA extends TPV {
 	// obtener/establecer localizador
 	function localizador($v=null) {
 		if ($v !== null) $this->operation["id"]=$v;
-		return str_pad($this->operation["id"], 10, "0", STR_PAD_LEFT).$this->operation["tipo"];
+		return str_pad((string)($this->operation["id"] ?? ""), 10, "0", STR_PAD_LEFT).$this->operation["tipo"];
 	}
 
 	// obtener valores del formulario
@@ -88,7 +88,7 @@ class TPVSERMEPA extends TPV {
 				$fields=array_merge($fields, array(
 					"DS_MERCHANT_PAYMETHODS"=>"C",
 					"DS_MERCHANT_PAN"       =>$pan,
-					"DS_MERCHANT_EXPIRYDATE"=>substr($expirydate, 2, 2).substr($expirydate, 0, 2),
+					"DS_MERCHANT_EXPIRYDATE"=>substr((string)($expirydate ?? ""), 2, 2).substr((string)($expirydate ?? ""), 0, 2),
 					"DS_MERCHANT_CVV2"      =>$cvv2,
 				));
 			}
@@ -126,30 +126,30 @@ class TPVSERMEPA extends TPV {
 	// encriptar usando 3DES
 	private function encrypt3DES($message, $key) {
 		$message_padded = $message;
-		if (strlen($message_padded) % 8) {
-			$message_padded = str_pad($message_padded,
-			strlen($message_padded) + 8 - strlen($message_padded) % 8, "\0");
+		if (strlen((string)($message_padded ?? "")) % 8) {
+			$message_padded = str_pad((string)($message_padded ?? ""),
+			strlen((string)($message_padded ?? "")) + 8 - strlen((string)($message_padded ?? "")) % 8, "\0");
 		}
 		return openssl_encrypt($message_padded, "des-ede3-cbc", $key, OPENSSL_RAW_DATA | OPENSSL_NO_PADDING, implode(array_map("chr", array(0,0,0,0,0,0,0,0))));
 	}
 
 	// firmar MAC256
 	function mac256($ent, $key) {
-		return hash_hmac('sha256', $ent, $key, true);
+		return hash_hmac('sha256', (string)($ent ?? ""), (string)($key ?? ""), true);
 	}
 
 	// vergüenza de funciones hechas por un gañán para in-necesidades
-	function base64_url_encode($input) { return strtr(base64_encode($input), '+/', '-_'); }
-	function base64_url_decode($input) { return base64_decode(strtr($input, '-_', '+/')); }
+	function base64_url_encode($input) { return strtr(base64_encode((string)($input ?? "")), '+/', '-_'); }
+	function base64_url_decode($input) { return base64_decode(strtr((string)($input ?? ""), '-_', '+/')); }
 
 	// firmar operación
 	function getSignature($fields) {
 		if ($this->setup["secret_key256"]) {
-			$key=base64_decode($this->setup["secret_key256"]);
+			$key=base64_decode((string)($this->setup["secret_key256"] ?? ""));
 			$ent=base64_encode(json_encode($fields)); // Se genera el parámetro Ds_MerchantParameters
 			$key=$this->encrypt3DES($fields["DS_MERCHANT_ORDER"], $key); // Se diversifica la clave con el Número de Pedido
 			$res=$this->mac256($ent, $key); // MAC256 del parámetro Ds_MerchantParameters
-			return base64_encode($res); // Se codifican los datos Base64
+			return base64_encode((string)($res ?? "")); // Se codifican los datos Base64
 		} else if ($this->setup["secret_key"]) {
 			//return sha1($this->merchantAmount().$this->localizador().$this->claveComercio().$this->moneda()."0".$this->urlnotify().$this->secretKey());
 			$signfields=array('Ds_Merchant_Amount','Ds_Merchant_Order','Ds_Merchant_MerchantCode','Ds_Merchant_Currency');
@@ -173,7 +173,7 @@ class TPVSERMEPA extends TPV {
 	// firmar operación de notificación
 	function getNotifySignature($ent) {
 		if ($this->setup["secret_key256"]) {
-			$key=base64_decode($this->setup["secret_key256"]);
+			$key=base64_decode((string)($this->setup["secret_key256"] ?? ""));
 			$fields=$this->getNotifyFields($ent);
 			$key=$this->encrypt3DES($fields["Ds_Order"], $key); // Se diversifica la clave con el Número de Pedido
 			$res=$this->mac256($ent, $key); // MAC256 del parámetro Ds_MerchantParameters
@@ -191,9 +191,9 @@ class TPVSERMEPA extends TPV {
 	// devolver si estamos en una notificación online
 	function isNotify() {
 		if ($this->setup["secret_key256"]) {
-			return ($_REQUEST["Ds_Signature"]?true:false);
+			return (($_REQUEST["Ds_Signature"] ?? "")?true:false);
 		} else if ($this->setup["secret_key"]) {
-			return ($_REQUEST["Ds_Response"]?true:false);
+			return (($_REQUEST["Ds_Response"] ?? "")?true:false);
 		}
 		$this->lasterr='No secret keys defined.';
 		return null;
@@ -204,23 +204,23 @@ class TPVSERMEPA extends TPV {
 		if (!$this->isNotify()) return false;
 		if ($tpv && !$this->checkOperation($tpv)) return false;
 		if ($this->setup["secret_key256"]) {
-			if ($_POST["Ds_SignatureVersion"] != 'HMAC_SHA256_V1') return array("err"=>"Ds_SignatureVersion not valid");
-			if (!$_POST["Ds_MerchantParameters"]) return array("err"=>"Ds_MerchantParameters not set");
-			$parameters=$this->getNotifyFields($_POST["Ds_MerchantParameters"]);
-			$signature=$_POST["Ds_Signature"];
-			$signature_calc=$this->getNotifySignature($_POST["Ds_MerchantParameters"]);
+			if (($_POST["Ds_SignatureVersion"] ?? "") != 'HMAC_SHA256_V1') return array("err"=>"Ds_SignatureVersion not valid");
+			if (!($_POST["Ds_MerchantParameters"] ?? "")) return array("err"=>"Ds_MerchantParameters not set");
+			$parameters=$this->getNotifyFields(($_POST["Ds_MerchantParameters"] ?? ""));
+			$signature=($_POST["Ds_Signature"] ?? "");
+			$signature_calc=$this->getNotifySignature(($_POST["Ds_MerchantParameters"] ?? ""));
 			$response=$parameters["Ds_Response"];
 			if ($signature == $signature_calc) {
-				if ($parameters["Ds_ErrorCode"]) return array("err"=>"Ds_ErrorCode present (".strip_tags($parameters["Ds_ErrorCode"]).")","parameters"=>$parameters);
+				if ($parameters["Ds_ErrorCode"]) return array("err"=>"Ds_ErrorCode present (".strip_tags((string)($parameters["Ds_ErrorCode"] ?? "")).")","parameters"=>$parameters);
 				if ($this->isOK($response)) return array("ok"=>true, "parameters"=>$parameters);
 				$err=$this->responsecode($response);
-				return array("err"=>($err?$err:"Ds_Response not 0000 (".strip_tags($response).")"), "parameters"=>$parameters);
+				return array("err"=>($err?$err:"Ds_Response not 0000 (".strip_tags((string)($response ?? "")).")"), "parameters"=>$parameters);
 			}
-			return array("err"=>"Ds_Signature verified NOT OK (".strip_tags($signature)."!=".strip_tags($signature_calc).")");
+			return array("err"=>"Ds_Signature verified NOT OK (".strip_tags((string)($signature ?? ""))."!=".strip_tags((string)($signature_calc ?? "")).")");
 		} else if ($this->setup["secret_key"]) {
-			if ($this->isOK($_REQUEST["Ds_Response"])) return array("ok"=>true);
-			$err=$this->responsecode($_REQUEST["Ds_Response"]);
-			return array("err"=>($err?$err:"Ds_Response not valid (".strip_tags($_REQUEST["Ds_Response"]).")"));
+			if ($this->isOK(($_REQUEST["Ds_Response"] ?? ""))) return array("ok"=>true);
+			$err=$this->responsecode(($_REQUEST["Ds_Response"] ?? ""));
+			return array("err"=>($err?$err:"Ds_Response not valid (".strip_tags((string)($_REQUEST["Ds_Response"] ?? "")).")"));
 		}
 		$this->lasterr='No secret keys defined.';
 		return null;
@@ -251,11 +251,11 @@ class TPVSERMEPA extends TPV {
 	// firmar respuesta SOAP
 	function getSignatureSOAP($response, $ds_merchant_order) {
 		if ($this->setup["secret_key256"]) {
-			$key=base64_decode($this->setup["secret_key256"]);
+			$key=base64_decode((string)($this->setup["secret_key256"] ?? ""));
 			$key=$this->encrypt3DES($ds_merchant_order, $key); // Se diversifica la clave con el Número de Pedido
 			$res=$this->mac256($response, $key); // MAC256 del parámetro Ds_MerchantParameters
 			//file_put_contents("sermepafirma.txt",$this->setup["secret_key256"]."-".$response."-".$ds_merchant_order."-".base64_encode($res));
-			return base64_encode($res); // Se codifican los datos Base64
+			return base64_encode((string)($res ?? "")); // Se codifican los datos Base64
 		}
 	}
 
@@ -285,7 +285,7 @@ class TPVSERMEPA extends TPV {
 		if (!($operacion=$this->dbGet($tpv_id))) return $this->error("cancelOperation: operación ".$tpv_id." no encontrada.");
 
 		// obtener operación, solicitud realizada y preparar campos
-		if (!($resultado=json_decode($operacion["resultado"], true))) return $this->error("cancelOperation: no se puede decodificar notificacion.");
+		if (!($resultado=json_decode((string)($operacion["resultado"] ?? ""), true))) return $this->error("cancelOperation: no se puede decodificar notificacion.");
 		$fields=array();
 		foreach ($_fields=array(
 			"DS_MERCHANT_AMOUNT"      =>"Ds_Amount",
@@ -323,10 +323,10 @@ class TPVSERMEPA extends TPV {
 		if (PHP_VERSION_ID < 80500) curl_close($ch);
 
 		// decodificar JSON inicial
-		if (!($cr=json_decode($this->cancel_result, true))) return $this->error("cancelOperation: Error desconocido, salida RAW: ".$this->cancel_result);
+		if (!($cr=json_decode((string)($this->cancel_result ?? ""), true))) return $this->error("cancelOperation: Error desconocido, salida RAW: ".$this->cancel_result);
 
 		// decodificar parámetros
-		if (!($Ds_MerchantParameters=json_decode(base64_decode($cr["Ds_MerchantParameters"]), true))) return $this->error("cancelOperation: No se puede decodificar JSON de Ds_MerchantParameters, salida RAW: ".$this->cancel_result);
+		if (!($Ds_MerchantParameters=json_decode(base64_decode((string)($cr["Ds_MerchantParameters"] ?? "")), true))) return $this->error("cancelOperation: No se puede decodificar JSON de Ds_MerchantParameters, salida RAW: ".$this->cancel_result);
 
 		// comprobar respuesta
 		if ($Ds_MerchantParameters["Ds_Response"] != "0400") return $this->error("cancelOperation: Respuesta no válida, parámetros: ".json_encode($Ds_MerchantParameters));

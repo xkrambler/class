@@ -38,7 +38,7 @@
 function aget($data=null) {
 	if ($data === "") return "";
 	$json=$data; // magic quotes were removed in PHP 5.4
-	return json_decode($json, true); // siempre es UTF-8
+	return json_decode((string)($json ?? ""), true); // siempre es UTF-8
 }
 
 // función interna: comprueba si un array no es lineal
@@ -88,22 +88,22 @@ function ajson($av, $level=0, $utf8=false) {
 function ajaxws($action, $data, $url=null) {
 	$p="";
 	if ($url===null) {
-		$parseurl=parse_url($_SERVER["REQUEST_URI"]);
-		$url="http".($_SERVER["HTTPS"]?"s":"")."://".$_SERVER["SERVER_NAME"].$parseurl["path"];
+		$parseurl=parse_url((string)($_SERVER["REQUEST_URI"] ?? ""));
+		$url="http".(($_SERVER["HTTPS"] ?? "")?"s":"")."://".($_SERVER["SERVER_NAME"] ?? "").$parseurl["path"];
 		foreach ($_GET as $k=>$v)
 			if ($k!="ajax")
-				$p=($p?"&":"?").$k."=".urlencode($v);
+				$p=($p?"&":"?").$k."=".urlencode((string)($v ?? ""));
 	}
-	$url_ajax=$url.$p.(strpos($url.$p,"?")===false?"?":"&")."ajax=".urlencode($action);
+	$url_ajax=$url.$p.(strpos($url.$p,"?")===false?"?":"&")."ajax=".urlencode((string)($action ?? ""));
 	$r=ws($url_ajax, array("data"=>json_encode($data)));
-	return json_decode($r, true);
+	return json_decode((string)($r ?? ""), true);
 }
 
 // petición WebService
 function ws($url, $fields=null, $options=array()) {
 	// preparar URL si es relativa a la actual
-	if (strpos($url, "://") === false)
-		$url="http".($_SERVER["HTTPS"]?"s":"")."://".$_SERVER["SERVER_NAME"].(substr($url, 0, 1)=="/"?"":"/").$url;
+	if (strpos((string)($url ?? ""), "://") === false)
+		$url="http".(($_SERVER["HTTPS"] ?? "")?"s":"")."://".($_SERVER["SERVER_NAME"] ?? "").(substr((string)($url ?? ""), 0, 1)=="/"?"":"/").$url;
 	// acciones CURL
 	if (!function_exists("curl_init")) return false;
 	$ch=curl_init();
@@ -137,9 +137,9 @@ function ajax($data) {
 }
 
 // generar variables útiles
-if (!isset($ajax)) $ajax=(isset($_REQUEST["ajax"])?$_REQUEST["ajax"]:null);
-if (!isset($me)) $me=(isset($_SERVER["PHP_SELF"])?$_SERVER["PHP_SELF"]:null);
+if (!isset($ajax)) $ajax=(isset($_REQUEST["ajax"])?($_REQUEST["ajax"] ?? ""):null);
+if (!isset($me)) $me=(isset($_SERVER["PHP_SELF"])?($_SERVER["PHP_SELF"] ?? ""):null);
 
 // comprobar si se ha usado el método genérico de paso de datos AJAX,
 // y de ser así, crear variable $adata con todos los datos enviados.
-if ($ajax && isset($_REQUEST["data"])) $adata=aget($_REQUEST["data"]);
+if ($ajax && isset($_REQUEST["data"])) $adata=aget(($_REQUEST["data"] ?? ""));

@@ -5,12 +5,12 @@
 		foreach ($photos as $p) {
 			list($w,$h,$t,$a)=(@getimagesize($p));
 			if ($w && $h) {
-				$d=dirname($p);
-				$t=$d.($d?"/":"").$thumbnail_prefix.basename($p);
+				$d=dirname((string)($p ?? ""));
+				$t=$d.($d?"/":"").$thumbnail_prefix.basename((string)($p ?? ""));
 				if ($thumbnail_sufix) {
 					if ($sufix_replace_extension) {
-						$i=stripos($t,".");
-						if ($i) $t=substr($t,0,$i).$thumbnail_sufix;
+						$i=stripos((string)($t ?? ""),".");
+						if ($i) $t=substr((string)($t ?? ""),0,$i).$thumbnail_sufix;
 					} else {
 						$t.=$thumbnail_sufix;
 					}
@@ -25,8 +25,8 @@
 		$l=Array();
 		$d=dir($path?$path:".");
 		while ($e=$d->read()) {
-			if ($prefix && substr($e,0,strlen($prefix))!=$prefix) continue;
-			if ($sufix && substr($e,-strlen($sufix),strlen($sufix))!=$sufix) continue;
+			if ($prefix && substr((string)($e ?? ""),0,strlen((string)($prefix ?? "")))!=$prefix) continue;
+			if ($sufix && substr((string)($e ?? ""),-strlen((string)($sufix ?? "")),strlen((string)($sufix ?? "")))!=$sufix) continue;
 			array_push($l,$path.$e);
 		}
 		$d->close();

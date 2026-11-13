@@ -79,7 +79,7 @@ function ws($url, $fields=null, $options=[]) {
 // convert ajax data from JSON
 function aget($data=null) {
 	if ($data === "") return "";
-	return json_decode($data, true); // siempre es UTF-8 (magic quotes removed in PHP 5.4)
+	return json_decode((string)($data ?? ""), true); // siempre es UTF-8 (magic quotes removed in PHP 5.4)
 }
 
 // output AJAX data as JSON
@@ -90,5 +90,5 @@ function ajax($data) {
 }
 
 // generate $ajax and $adata global variables
-if (!isset($ajax)) $ajax=(isset($_REQUEST["ajax"])?$_REQUEST["ajax"]:null);
-if ($ajax && isset($_REQUEST["data"])) $adata=aget($_REQUEST["data"]);
+if (!isset($ajax)) $ajax=(isset($_REQUEST["ajax"])?($_REQUEST["ajax"] ?? ""):null);
+if ($ajax && isset($_REQUEST["data"])) $adata=aget(($_REQUEST["data"] ?? ""));

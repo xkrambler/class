@@ -118,7 +118,7 @@ class xCaptcha {
 	
 	// last sessioned captcha value
 	function get() {
-		return $_SESSION[$this->session];
+		return ($_SESSION[($this->session ?? "")] ?? "");
 	}
 
 	// get last image
@@ -128,15 +128,15 @@ class xCaptcha {
 
 	// verify sessioned captcha
 	function verify($captcha) {
-		$captcha=strtolower(trim($captcha));
+		$captcha=strtolower(trim((string)($captcha ?? "")));
 		if (!$captcha) return false;
-		if (!$_SESSION[$this->session]) return false;
-		return ($captcha == strtolower($_SESSION[$this->session]));
+		if (!($_SESSION[($this->session ?? "")] ?? "")) return false;
+		return ($captcha == strtolower((string)($_SESSION[($this->session ?? "")] ?? "")));
 	}
 
 	// destroy sessioned captcha to prevent reuse
 	function destroy() {
-		unset($_SESSION[$this->session]);
+		unset($_SESSION[($this->session ?? "")]);
 	}
 
 	// render
@@ -147,7 +147,7 @@ class xCaptcha {
 		$this->imageAllocate();
 
 		// captcha text insertion
-		$_SESSION[$this->session]=$text=$this->GetCaptchaText();
+		$_SESSION[($this->session ?? "")]=$text=$this->GetCaptchaText();
 		$this->WriteText($text);
 		if ($this->noise) $this->imageNoise();
 		if ($this->line) $this->writeLine($this->lineWidth);
@@ -227,8 +227,8 @@ class xCaptcha {
 		$vocal=rand(0, 1);
 		for ($i=0; $i<$length; $i++) {
 			$text.=($vocal
-				?substr($vocals, mt_rand(0, 4), 1)
-				:substr($words, mt_rand(0, 22), 1)
+				?substr((string)($vocals ?? ""), mt_rand(0, 4), 1)
+				:substr((string)($words ?? ""), mt_rand(0, 22), 1)
 			);
 			$vocal=!$vocal;
 		}
@@ -247,7 +247,7 @@ class xCaptcha {
 		fclose($fp);
 		// change ramdom volcals
 		if ($this->dictRandomVocals) {
-			$text=preg_split('//', $text, -1, PREG_SPLIT_NO_EMPTY);
+			$text=preg_split('//', (string)($text ?? ""), -1, PREG_SPLIT_NO_EMPTY);
 			$vocals=array('a','e','i','o','u');
 			foreach ($text as $i=>$c)
 				if (mt_rand(0, 1) && in_array($c, $vocals))
@@ -274,16 +274,16 @@ class xCaptcha {
 		$fontcfg=$this->fonts[array_rand($this->fonts)];
 		$fontfile=$this->fontPath.$fontcfg['file'];
 		// increase font-size for shortest words: 9% for each glyp missing
-		$lettersMissing=$this->maxWordLength-strlen($text);
+		$lettersMissing=$this->maxWordLength-strlen((string)($text ?? ""));
 		$fontSizefactor=1+($lettersMissing*0.09);
 		// text generation (char by char)
 		$x     =15*$this->scale;
 		$y     =10+round(($this->height*27/40)*$this->scale);
-		$length=strlen($text);
+		$length=strlen((string)($text ?? ""));
 		for ($i=0; $i<$length; $i++) {
 			$degree  =rand($this->maxRotation*-1, $this->maxRotation);
 			$fontsize=rand($fontcfg['minSize'], $fontcfg['maxSize'])*$this->scale*$fontSizefactor;
-			$letter  =substr($text, $i, 1);
+			$letter  =substr((string)($text ?? ""), $i, 1);
 			if ($this->imShadowcolor) {
 				$coords=imagettftext($this->im, $fontsize, $degree,
 				$x+$this->scale, $y+$this->scale,
