@@ -201,14 +201,14 @@ class WS {
 	// output
 	function out($d=null, $out=null) {
 		if ($d === null) exit; // empty
-		if (is_string(($_GET["jsonp"] ?? ""))) {
+		if (isset($_GET["jsonp"]) && is_string(($_GET["jsonp"]))) {
 			// clean/protect data
 			$data=$this->data;
 			unset($data["jsonp"]);
 			unset($data["key"]);
 			// send JSONP
 			header("Content-type: text/javascript");
-			echo ($_GET["jsonp"] ?? "")."(".json_encode($data).",".json_encode($d).");\n";
+			echo $_GET["jsonp"]."(".json_encode($data).",".json_encode($d).");\n";
 			exit;
 		} else {
 			switch (isset($out)?$out:$this->out) {
