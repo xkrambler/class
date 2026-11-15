@@ -27,12 +27,12 @@ class WS {
 
 		// autoselect request type data
 		$this->json=null;
-		if (is_string(($_REQUEST["action"] ?? ""))) {
+		if (is_string(($_REQUEST["action"]??""))) {
 			$this->action=($_REQUEST["action"] ?? "");
 			$this->json=$this->data=$_REQUEST;
 			unset($this->json["action"]);
 			$this->json=json_encode($this->json);
-		} else if ($this->action=$GLOBALS["ajax"]) {
+		} else if ($this->action=$GLOBALS["ajax"]??null) {
 			$this->data=$GLOBALS["adata"];
 			$this->json=json_encode($this->data);
 		} else if (isset($_REQUEST["data"])) {

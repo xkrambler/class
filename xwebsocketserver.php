@@ -125,8 +125,18 @@ class WebSocketServer {
 			error_reporting($e);
 			return $this->errorSocket($this->socket);
 		}
+<<<<<<< HEAD
+		// bind socket to specified address and port (0.0.0.0 by default)
+		$host=($this->host ?: "0.0.0.0");
+		if (!filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+			error_reporting($e);
+			return $this->error("Invalid bind address: ".$host);
+		}
+		if (!(@socket_bind($this->socket, $host, $this->port))) {
+=======
 		// bind socket to specified port
 		if (!(@socket_bind($this->socket, "0.0.0.0", $this->port))) {
+>>>>>>> refs/remotes/origin/master
 			error_reporting($e);
 			return $this->errorSocket($this->socket);
 		}
