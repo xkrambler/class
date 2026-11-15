@@ -371,7 +371,7 @@ class xForm3 {
 					$this->fields[$field]["files"]=array();
 					foreach ($files as $f) {
 						if (is_string($f)) $f=["file"=>$f];
-						if (file_exists($f["file"]) || $f["data"]) {
+						if (file_exists((string)($f["file"] ?? "")) || $f["data"]) {
 							if (!$svalue_last["files"]) $svalue_store=true;
 							if ($f["file"]) {
 								if (!$f["name"]) $f["name"]=basename((string)($f["file"] ?? ""));
