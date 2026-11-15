@@ -259,8 +259,10 @@ class x {
 
 	// start and get + clean buffer
 	static function ob($continue_ob=true) {
-		$d=(@ob_get_contents());
-		ob_end_clean();
+		if (ob_get_level() > 0) {
+			$d=(@ob_get_contents());
+			ob_end_clean();
+		}
 		if ($continue_ob) ob_start();
 		return $d;
 	}
