@@ -12,12 +12,15 @@ class PSession extends \xData {
 	];
 
 	// extended cookie expiration
-	function expiration() {
-		$is_secure=\x::ishttps();
+	function expiration($expires=null) {
+		if ($expires === null) $expires=time()+$this->expiration;
 		$expiration=[
-			"expires"=>time()+$this->expiration,
+			"expires"=>$expires,
+			"path"=>"/",
+			"domain"=>"",
 			"samesite"=>$this->samesite,
-			"secure"=>($this->secure?$is_secure:false),
+			"secure"=>($this->secure?\x::ishttps():false),
+			"httponly"=>true,
 		];
 		\x::setcookie(session_name(), session_id(), $expiration);
 		return $expiration;
@@ -32,6 +35,7 @@ class PSession extends \xData {
 
 	// session file (if path defined)
 	function file(string $sid) {
+		if (!preg_match('/^[-,a-zA-Z0-9]{1,128}$/', $sid)) return false;
 		return (($path=$this->path())?$path.$sid:false);
 	}
 
@@ -53,7 +57,9 @@ class PSession extends \xData {
 	// save session data in file (if defined)
 	function fileSave($sdata) {
 		if ($f=$this->file($sdata["sid"])) {
-			if (!@file_put_contents($f, json_encode($sdata))) return false;
+			$tmp=$f.".tmp.".getmypid();
+			if (@file_put_contents($tmp, json_encode($sdata), LOCK_EX) === false) return false;
+			if (!@rename($tmp, $f)) { @unlink($tmp); return false; }
 		}
 		return true;
 	}
@@ -62,48 +68,62 @@ class PSession extends \xData {
 	function dbCreate() {
 		if (!$this->db->atomic("
 			CREATE TABLE ".$this->db->sqltable($this->table)." (
-				`sid` VARCHAR(40) NOT NULL,
+				`sid` VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
 				`updated` DATETIME NOT NULL,
 				`expires` DATETIME NOT NULL,
-				`ip` VARCHAR(64) NULL DEFAULT NULL,
+				`ip` VARCHAR(45) NULL DEFAULT NULL,
 				`useragent` VARCHAR(255) NULL DEFAULT NULL,
-				`userdata` VARCHAR(4096) NULL DEFAULT NULL,
+				`userdata` INT UNSIGNED NOT NULL DEFAULT 0,
 				PRIMARY KEY (`sid`) USING BTREE,
 				INDEX `expires` (`expires`) USING BTREE
 			)
 			COMMENT='Persistent Sessions'
-			COLLATE='utf8_general_ci'
+			COLLATE='utf8mb4_general_ci'
 			ENGINE=InnoDB
 		")) $this->db->err();
+		return true;
+	}
+
+	// delete persistent session rows (tolerates a not yet created table)
+	protected function dbDelete($where) {
+		if (!$this->db) return true;
+		if (!$this->db->query($this->db->sqldelete($this->table, $where)) && $this->db->errnum() != 1146) $this->db->err();
 		return true;
 	}
 
 	// persistent session login
 	function login($userdata=null) {
 
-		// set cookie expiration
-		$session=$this->expiration();
+		// a session must be active
+		if (session_status() !== PHP_SESSION_ACTIVE) return false;
+		if (!($old_sid=session_id())) return false;
+
+		// rotate session id to prevent session fixation
+		if (!session_regenerate_id(true)) return false;
 
 		// session data
+		$expires=time()+$this->expiration;
 		$sdata=[
 			"sid"      =>session_id(),
 			"updated"  =>date("Y-m-d H:i:s"),
-			"expires"  =>date("Y-m-d H:i:s", $session["expires"]),
-			"ip"       =>($_SERVER["REMOTE_ADDR"] ?? ""),
-			"useragent"=>($_SERVER["HTTP_USER_AGENT"] ?? ""),
-			"userdata" =>$userdata,
+			"expires"  =>date("Y-m-d H:i:s", $expires),
+			"ip"       =>substr((string)($_SERVER["REMOTE_ADDR"] ?? ""), 0, 45),
+			"useragent"=>substr((string)($_SERVER["HTTP_USER_AGENT"] ?? ""), 0, 255),
+			"userdata" =>($userdata === null?0:intval($userdata)),
 		];
 
-		// delete expired sessions and save current session
+		// delete old/expired sessions and save current session
 		if ($this->db) {
 			do {
 				$retry=false;
 				if (!$this->db->atomic([
+					$this->db->sqldelete($this->table, ["sid"=>$old_sid]),
 					$this->db->sqldelete($this->table, "expires<NOW()"),
 					$this->db->sqlreplace($this->table, $sdata),
 				])) {
 					if ($this->db->errnum() == 1146) {
-						if ($this->dbCreate()) $retry=true;
+						$this->dbCreate();
+						$retry=true;
 					} else {
 						$this->db->err();
 					}
@@ -111,39 +131,116 @@ class PSession extends \xData {
 			} while ($retry);
 		}
 		$this->filesCleanup();
-		if (!$this->fileSave($sdata)) return false;
+		$this->fileSave($sdata); // best effort (optional file storage)
 
-		// all ok
+		// all ok: mark as persistent and extend cookie
+		$_SESSION["persistent"]=true;
+		$this->expiration($expires);
 		return true;
 
 	}
 
 	// persistent session logout
 	function logout() {
-		if (!($sid=session_id())) return false;
-		if ($this->db) {
-			if (!$this->db->atomic($this->db->sqldelete($this->table, ["sid"=>$sid]))) $this->db->err();
+		$sid=session_id();
+		if ($sid) $this->dbDelete(["sid"=>$sid]);
+		if ($sid && ($f=$this->file($sid)) && file_exists($f)) @unlink($f);
+
+		// remove cookie from client
+		\x::delcookie(session_name(), [
+			"path"=>"/",
+			"domain"=>"",
+			"samesite"=>$this->samesite,
+			"secure"=>($this->secure?\x::ishttps():false),
+			"httponly"=>true,
+		]);
+
+		// destroy local session data
+		$_SESSION=[];
+		if (session_status() === PHP_SESSION_ACTIVE) session_destroy();
+		return true;
+	}
+
+	// forget persistent session but keep current authenticated session
+	function forget() {
+		$sid=session_id();
+		if (!$sid) return false;
+		$this->dbDelete(["sid"=>$sid]);
+		if (($f=$this->file($sid)) && file_exists($f)) @unlink($f);
+
+		// rotate current session id
+		if (session_status() === PHP_SESSION_ACTIVE) {
+			if (!session_regenerate_id(true)) return false;
 		}
-		if ($f=$this->file($sid)) {
-			if (file_exists($f)) if (!@unlink($f)) return false;
+
+		// keep a normal (non persistent) session cookie
+		$_SESSION["persistent"]=false;
+		return true;
+	}
+
+	// revoke persistent sessions for an user (or current one)
+	// rotates current session id so old token is no longer valid
+	function revoke($userdata=null, bool $rotate=true) {
+		if (session_status() !== PHP_SESSION_ACTIVE) return false;
+		$sid=session_id();
+		$uid=intval($_SESSION["user"]["id"] ?? 0);
+		$is_current=($userdata === null || ($uid && intval($userdata) === $uid));
+
+		// delete persistent records (all devices or current one)
+		if ($sid) {
+			$where=($userdata !== null?["userdata"=>intval($userdata)]:["sid"=>$sid]);
+			$this->dbDelete($where);
+		}
+
+		// rotate current session id
+		if ($rotate && $is_current && $sid) {
+			$old_sid=$sid;
+			if (!session_regenerate_id(true)) return false;
+			if (($f=$this->file($old_sid)) && file_exists($f)) @unlink($f);
+
+			// if current device was persistent, recreate under new session id
+			if (!empty($_SESSION["persistent"])) {
+				$expires=time()+$this->expiration;
+				$sdata=[
+					"sid"      =>session_id(),
+					"updated"  =>date("Y-m-d H:i:s"),
+					"expires"  =>date("Y-m-d H:i:s", $expires),
+					"ip"       =>substr((string)($_SERVER["REMOTE_ADDR"] ?? ""), 0, 45),
+					"useragent"=>substr((string)($_SERVER["HTTP_USER_AGENT"] ?? ""), 0, 255),
+					"userdata" =>($uid?$uid:intval($userdata)),
+				];
+				if ($this->db) {
+					if (!$this->db->atomic($this->db->sqlreplace($this->table, $sdata))) $this->db->err();
+				}
+				$this->fileSave($sdata);
+				$this->expiration($expires);
+			}
 		}
 		return true;
 	}
 
 	// persistent session load
 	function load() {
-		if ($sid=($_COOKIE[session_name()] ?? "")) {
-			if ($this->db) {
-				if (!$this->db->query("SELECT * FROM ".$this->db->sqltable($this->table)." WHERE sid='".$this->db->escape($sid)."' AND expires>NOW()")) $this->db->err();
-				$sdata=$this->db->row();
-				$this->db->freequery();
-				return $sdata;
+		$sid=($_COOKIE[session_name()] ?? "");
+		if (!is_string($sid) || !preg_match('/^[-,a-zA-Z0-9]{1,128}$/', $sid)) return false;
+		if ($this->db) {
+			if (!$this->db->query("SELECT * FROM ".$this->db->sqltable($this->table)." WHERE sid='".$this->db->escape($sid)."' AND expires>NOW()")) {
+				if ($this->db->errnum() == 1146) return false;
+				$this->db->err();
 			}
-			if ($f=$this->file($sid)) {
-				if (file_exists($f)) {
-					$sdata=@json_decode(file_get_contents($f), true);
-					return $sdata;
+			$sdata=$this->db->row();
+			$this->db->freequery();
+			return $sdata;
+		}
+		if ($f=$this->file($sid)) {
+			if (file_exists($f)) {
+				$sdata=@json_decode(file_get_contents($f), true);
+				if (!is_array($sdata)) return false;
+				if (($sdata["expires"] ?? "") < date("Y-m-d H:i:s")) {
+					@unlink($f);
+					return false;
 				}
+				return $sdata;
 			}
 		}
 		return false;
@@ -151,42 +248,58 @@ class PSession extends \xData {
 
 	// revalidate cookie
 	function revalidate() {
-		return (!isset($_SESSION["psession"]) || (time()-($_SESSION["psession"] ?? "") > $this->revalidate)?$this->check():false);
+		$last=intval($_SESSION["psession"] ?? 0);
+		if ($last && (time()-$last) < $this->revalidate) return false;
+		return $this->check();
 	}
 
 	// persistent session check
 	function check() {
 
+		// an active session is required
+		if (session_status() !== PHP_SESSION_ACTIVE) return false;
+
 		// try load session data
-		if ($sdata=$this->load()) {
+		if (!($sdata=$this->load())) return false;
 
-			// change session id
-			if (session_id() != $sdata["sid"]) {
-				$session=$_SESSION; // save session
-				session_destroy(); // close session
-				session_id($sdata["sid"]); // set session id
-				session_start(); // start session
-				$_SESSION=$session; // restore session
-			}
-			$_SESSION["psession"]=time();
+		// "use_strict_mode" may have rotated the id if the old session
+		// storage was removed (gc). Re-key the row to the current id
+		// instead of forcing the old (now invalid) session id.
+		$old_sid=$sdata["sid"];
+		$sid=session_id();
+		$expires=time()+$this->expiration;
 
-			// set cookie expiration
-			$session=$this->expiration();
-
-			// update new expiration time
-			$values=[
-				"updated"=>date("Y-m-d H:i:s"),
-				"expires"=>date("Y-m-d H:i:s", $session["expires"]),
-			];
-			$sdata=$values+$sdata;
+		if ($sid !== $old_sid) {
+			$sdata["sid"]=$sid;
+			$sdata["updated"]=date("Y-m-d H:i:s");
+			$sdata["expires"]=date("Y-m-d H:i:s", $expires);
 			if ($this->db) {
-				if (!$this->db->atomic($this->db->sqlupdate($this->table, $values, ["sid"=>session_id()]))) $this->db->err();
+				if (!$this->db->atomic([
+					$this->db->sqldelete($this->table, ["sid"=>$old_sid]),
+					$this->db->sqlreplace($this->table, $sdata),
+				])) $this->db->err();
 			}
-			if (!$this->fileSave($sdata)) return false;
-
+			if (($f=$this->file($old_sid)) && file_exists($f)) @unlink($f);
 		}
 
-		// return session data (if exists)
+		$_SESSION["psession"]=time();
+		$_SESSION["persistent"]=true;
+
+		// update new expiration time
+		$values=[
+			"updated"=>date("Y-m-d H:i:s"),
+			"expires"=>date("Y-m-d H:i:s", $expires),
+		];
+		$sdata=$values+$sdata;
+		if ($this->db) {
+			if (!$this->db->atomic($this->db->sqlupdate($this->table, $values, ["sid"=>session_id()]))) $this->db->err();
+		}
+		$this->fileSave($sdata); // best effort (optional file storage)
+
+		// set cookie expiration (after persistence)
+		$this->expiration($expires);
+
+		// return session data
 		return $sdata;
 
 	}

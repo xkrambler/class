@@ -342,9 +342,20 @@ if ($_e=x::page("error_reporting")) error_reporting($_e);
 
 // session control
 if (is_string(x::page("sessionname"))) {
-	session_set_cookie_params(0, '/; samesite=Lax', '');
+	if (PHP_VERSION_ID >= 70300) {
+		session_set_cookie_params([
+			"lifetime"=>0,
+			"path"=>"/",
+			"domain"=>"",
+			"secure"=>x::ishttps(),
+			"httponly"=>true,
+			"samesite"=>"Lax",
+		]);
+	} else {
+		session_set_cookie_params(0, '/; samesite=Lax', '', x::ishttps(), true);
+	}
 	if ($_x=x::page("sessionname")) session_name($_x);
-	if (($_x=x::page("sessionid")) && isset($_x) && preg_match('/^[-,a-zA-Z0-9]{1,128}$/', (string)$_x)) session_id($_x);
+	if (($_x=x::page("sessionid")) && is_string($_x) && preg_match('/^[-,a-zA-Z0-9]{1,128}$/', $_x)) session_id($_x);
 	session_start();
 }
 
