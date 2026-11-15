@@ -241,9 +241,16 @@ class xError {
 	// check if an error was silenced with the @ operator
 	function silenced($type) {
 		$reporting=error_reporting();
+
+		// PHP >= 8 keeps the fatal mask under @; PHP < 8 sets it to 0
 		$silence=(E_ERROR|E_CORE_ERROR|E_COMPILE_ERROR|E_USER_ERROR|E_RECOVERABLE_ERROR|E_PARSE) & $this->reporting;
 		foreach ($this->criticals as $c) $silence&=~$c;
-		return ($silence && $reporting === $silence && !($reporting & $type));
+
+		// compatibility with PHP < 8 targets: accept the legacy @ mask (0)
+		$silenced=($reporting === $silence);
+		if ($this->phpc < 8) $silenced=$silenced || ($reporting === 0);
+
+		return ($silenced && !($reporting & $type));
 	}
 
 	// register pending errors produced before the error handler was installed
