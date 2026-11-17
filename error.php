@@ -225,7 +225,7 @@ class xError {
 
 	// log
 	function log($m) {
-		if ($f=$this->access) file_put_contents($f, (string)$m, FILE_APPEND);
+		if ($f=$this->access) @file_put_contents($f, (string)$m, FILE_APPEND);
 	}
 
 	// check if an error type must be registered in the error log
@@ -382,7 +382,7 @@ class xError {
 			// error log
 			if ($f=$this->errors_path) {
 				$text=date("YmdHis ").str_replace("\n", "\n\t", $this->error["text"]);
-				file_put_contents($f, ($this->access?"":$this->accessEntry()).$text."\n", FILE_APPEND);
+				@file_put_contents($f, ($this->access?"":$this->accessEntry()).$text."\n", FILE_APPEND);
 			}
 		}
 		// always returns false!
