@@ -610,7 +610,7 @@ abstract class dbbase {
 	function err($querynum=null, $doexit=1) {
 		global $ajax, $argv;
 		// if error handler defined, call it
-		if ($this->events["error"]) {
+		if (!empty($this->events["error"])) {
 			$this->events["error"](array(
 				"db"=>$this,
 				"ajax"=>$ajax,
