@@ -91,10 +91,10 @@ class WebSocketServer {
 
 	// initialize setup and parse values
 	function set($o=[]) {
-		if ($o["loopdelay"]??0  < 1) $o["loopdelay"] =10000; // 10ms
-		if ($o["headersize"]??0 < 1) $o["headersize"]=1024*64; // 64KB
-		if ($o["buffersize"]??0 < 1) $o["buffersize"]=1024*4; // 4KB
-		if ($o["packetsize"]??0 < 1) $o["packetsize"]=4*1024*1024+1024; // 4MB+1KB
+		if (($o["loopdelay"]  ?? 0) < 1) $o["loopdelay"] =10000; // 10ms
+		if (($o["headersize"] ?? 0) < 1) $o["headersize"]=1024*64; // 64KB
+		if (($o["buffersize"] ?? 0) < 1) $o["buffersize"]=1024*4; // 4KB
+		if (($o["packetsize"] ?? 0) < 1) $o["packetsize"]=4*1024*1024+1024; // 4MB+1KB
 		$this->o=$o;
 	}
 
@@ -143,7 +143,7 @@ class WebSocketServer {
 		// create & add listening socket to the list
 		$this->clients=[$this->socket];
 		// on start event
-		if ($event=$this->onstart) $event($this, $socket);
+		if ($event=$this->onstart) $event($this, $this->socket);
 		// all OK
 		return true;
 	}
